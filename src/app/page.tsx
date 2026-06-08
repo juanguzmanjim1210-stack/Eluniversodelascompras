@@ -392,15 +392,7 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
           {hasDiscount && <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-lg shadow-lg">-{discountPct}%</span>}
           {isOutOfStock && <span className="absolute top-3 left-3 bg-gray-800 text-white text-sm font-bold px-3 py-1.5 rounded-lg shadow-lg">AGOTADO</span>}
           {product.images.length > 1 && <span className="absolute top-3 right-12 bg-black/40 text-white text-[10px] px-2 py-0.5 rounded-full">{currentImage + 1}/{product.images.length}</span>}
-          {/* Added animation overlay */}
-          {(addedToCart === product.id || justAdded) && (
-            <div className="absolute inset-0 bg-green-500/90 flex items-center justify-center animate-cart-added">
-              <div className="text-center text-white">
-                <span className="text-5xl block mb-2 animate-bounce">🛒 ✓</span>
-                <span className="font-bold text-xl">¡Agregado al carrito!</span>
-              </div>
-            </div>
-          )}
+          {/* no overlay here — moved to full modal */}
         </div>
 
         {/* Product info */}
@@ -457,12 +449,27 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
             <button disabled className="w-full bg-gray-300 text-gray-500 py-3 rounded-2xl font-semibold cursor-not-allowed flex items-center justify-center gap-2 text-base">
               Agotado
             </button>
+          ) : justAdded ? (
+            <button className="w-full bg-green-500 text-white py-3 rounded-2xl font-semibold flex items-center justify-center gap-2 text-base animate-save-success">
+              ✅ ¡Agregado al carrito!
+            </button>
           ) : (
             <button onClick={handleAddToCart} style={{ backgroundColor: primaryColor }} className="w-full text-white py-3 rounded-2xl font-semibold hover:opacity-90 transition-all active:scale-95 flex items-center justify-center gap-2 text-base">
               <CartIcon className="w-5 h-5" /> Agregar al Carrito
             </button>
           )}
         </div>
+
+        {/* Full modal overlay animation when added */}
+        {justAdded && (
+          <div className="absolute inset-0 bg-green-500/85 flex items-center justify-center z-30 rounded-t-3xl sm:rounded-2xl animate-cart-added pointer-events-none">
+            <div className="text-center text-white">
+              <span className="text-6xl block mb-3 animate-bounce">🛒 ✓</span>
+              <span className="font-bold text-2xl block">¡Agregado!</span>
+              <span className="text-green-100 text-sm mt-1 block">Se añadió al carrito</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
