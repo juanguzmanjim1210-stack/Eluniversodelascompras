@@ -72,7 +72,7 @@ export default function CatalogPage() {
   useEffect(() => { fetchStore(); fetchCategories(); }, [fetchStore, fetchCategories]);
   useEffect(() => { setLoading(true); fetchProducts(); }, [fetchProducts]);
   useEffect(() => {
-    const i = setInterval(() => { fetchProducts(); fetchStore(); fetchCategories(); }, 1000);
+    const i = setInterval(() => { fetchProducts(); fetchStore(); fetchCategories(); }, 15000);
     return () => clearInterval(i);
   }, [fetchProducts, fetchStore, fetchCategories]);
 
