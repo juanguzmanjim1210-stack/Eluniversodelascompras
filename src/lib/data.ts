@@ -30,7 +30,7 @@ export async function getStoreSettings() {
     coverUrl: null, facebook: null, whatsapp: null, instagram: null, tiktok: null,
     primaryColor: "#16a34a", buttonText: "Comprar", currency: "$",
     footerText: null, announcementText: null, announcementActive: false,
-    announcementColor: "#16a34a", updatedAt: new Date().toISOString(),
+    announcementColor: "#16a34a", announcementSpeed: 40, updatedAt: new Date().toISOString(),
   };
 
   if (useFirebase()) {
@@ -67,8 +67,9 @@ export async function updateStoreSettings(data: Record<string, unknown>) {
   const announcementText = (data.announcementText as string) || null;
   const announcementActive = (data.announcementActive as boolean) ?? false;
   const announcementColor = (data.announcementColor as string) || "#16a34a";
+  const announcementSpeed = (data.announcementSpeed as number) || 40;
 
-  const clean = { storeName, storeDescription, logoUrl, coverUrl, facebook, whatsapp, instagram, tiktok, primaryColor, buttonText, currency, footerText, announcementText, announcementActive, announcementColor, updatedAt: new Date().toISOString() };
+  const clean = { storeName, storeDescription, logoUrl, coverUrl, facebook, whatsapp, instagram, tiktok, primaryColor, buttonText, currency, footerText, announcementText, announcementActive, announcementColor, announcementSpeed, updatedAt: new Date().toISOString() };
 
   if (useFirebase()) {
     await fs().collection("settings").doc("store").set(clean, { merge: true });
