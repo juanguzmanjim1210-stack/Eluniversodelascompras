@@ -93,7 +93,6 @@ export async function createProduct(body: Record<string, unknown>) {
     categoryId: (body.categoryId as string) || null,
     basePrice: (body.basePrice as string) || "0",
     comparePrice: (body.comparePrice as string) || null,
-    stock: (body.stock as number) ?? 0,
     active: (body.active as boolean) ?? true,
   }).returning();
   return row;
@@ -106,7 +105,6 @@ export async function updateProduct(id: string, body: Record<string, unknown>) {
     categoryId: (body.categoryId as string) || null,
     basePrice: (body.basePrice as string) || "0",
     comparePrice: (body.comparePrice as string) || null,
-    stock: (body.stock as number) ?? 0,
     active: (body.active as boolean) ?? true,
     updatedAt: new Date(),
   }).where(eq(schema.products.id, id)).returning();
