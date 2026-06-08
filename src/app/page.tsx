@@ -246,7 +246,7 @@ export default function CatalogPage() {
                 </div>
 
                 <div className="p-2.5 sm:p-4 flex-1 flex flex-col">
-                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base leading-tight line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
+                  <h3 className="font-semibold text-gray-900 text-xs sm:text-sm leading-tight line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
                   <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5 flex-wrap">
                     <span className="text-sm sm:text-lg font-bold" style={{ color: btnColor }}>{formatPrice(product.basePrice)}</span>
                     {hasDiscount && <span className="text-[10px] sm:text-xs text-gray-400 line-through">{formatPrice(product.comparePrice!)}</span>}
@@ -339,7 +339,7 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
     return () => clearInterval(timer);
   }, [product.images.length]);
 
-  const price = selectedVariant ? parseFloat(selectedVariant.price) : parseFloat(product.basePrice);
+  const price = selectedVariant && parseFloat(selectedVariant.price) > 0 ? parseFloat(selectedVariant.price) : parseFloat(product.basePrice);
   const hasDiscount = !selectedVariant && product.comparePrice && parseFloat(product.comparePrice) > parseFloat(product.basePrice);
   const discountPct = hasDiscount ? Math.round(((parseFloat(product.comparePrice!) - parseFloat(product.basePrice)) / parseFloat(product.comparePrice!)) * 100) : 0;
   const categoryName = categories.find((c) => c.id === product.categoryId)?.name || null;
@@ -409,11 +409,11 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
           </div>
 
           {/* Stock info */}
-          {!isOutOfStock && (
-            <p className="text-base sm:text-lg text-green-600 font-bold">📦 {totalStock} disponible{totalStock !== 1 ? "s" : ""}</p>
+          {!isOutOfStock && totalStock > 0 && (
+            <p className="text-lg sm:text-xl text-green-600 font-bold">📦 {totalStock} disponible{totalStock !== 1 ? "s" : ""}</p>
           )}
           {isOutOfStock && (
-            <p className="text-base sm:text-lg text-red-500 font-bold">❌ Agotado</p>
+            <p className="text-lg sm:text-xl text-red-500 font-bold">❌ Agotado</p>
           )}
 
           {/* Description */}
