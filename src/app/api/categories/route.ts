@@ -6,7 +6,7 @@ export async function GET() {
     return NextResponse.json(await getCategories());
   } catch (e) {
     console.error("GET categories error:", e);
-    return NextResponse.json([]);
+    return NextResponse.json({ error: "Error" }, { status: 500 });
   }
 }
 
