@@ -808,20 +808,19 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
         <p className="text-xs text-gray-400">Si pones un precio antes mayor al precio de venta, se mostrará el descuento automáticamente</p>
       </div>
 
-      {/* Stock del producto (para productos sin variantes) */}
-      <div className="bg-orange-50 rounded-xl p-4 space-y-3 border border-orange-200">
-        <h4 className="font-semibold text-sm text-orange-800">📦 Stock del Producto</h4>
-        <p className="text-xs text-orange-600">Cantidad disponible. Se descuenta automáticamente cuando un cliente hace un pedido.</p>
-        <div className="flex items-center gap-3">
-          <button onClick={() => setProductStock(Math.max(0, productStock - 1))} className="w-9 h-9 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 flex items-center justify-center font-bold text-lg">−</button>
-          <input type="number" min="0" value={productStock} onChange={(e) => setProductStock(parseInt(e.target.value) || 0)} className="w-20 text-center border rounded-lg py-2 text-lg font-bold" />
-          <button onClick={() => setProductStock(productStock + 1)} className="w-9 h-9 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center font-bold text-lg">+</button>
-          <span className={`text-sm font-bold ml-2 ${productStock <= 0 ? "text-red-500" : "text-green-600"}`}>
-            {productStock <= 0 ? "❌ Agotado" : `✅ ${productStock} disponible${productStock !== 1 ? "s" : ""}`}
+      {/* Stock del producto */}
+      <div className="bg-orange-50 rounded-xl p-3 space-y-2 border border-orange-200">
+        <h4 className="font-semibold text-xs text-orange-800">📦 Stock</h4>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setProductStock(Math.max(0, productStock - 1))} className="w-7 h-7 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 flex items-center justify-center font-bold text-sm">−</button>
+          <input type="number" min="0" value={productStock} onChange={(e) => setProductStock(parseInt(e.target.value) || 0)} className="w-16 text-center border rounded-lg py-1.5 text-sm font-bold" />
+          <button onClick={() => setProductStock(productStock + 1)} className="w-7 h-7 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center font-bold text-sm">+</button>
+          <span className={`text-xs font-bold ml-1 ${productStock <= 0 ? "text-red-500" : "text-green-600"}`}>
+            {productStock <= 0 ? "Agotado" : `${productStock} disp.`}
           </span>
         </div>
         {product && product.variants.length > 0 && (
-          <p className="text-[10px] text-orange-500">⚠️ Este producto tiene variantes — el stock de cada variante se edita abajo</p>
+          <p className="text-[10px] text-orange-500">⚠️ Con variantes, el stock se edita por variante abajo</p>
         )}
       </div>
 
