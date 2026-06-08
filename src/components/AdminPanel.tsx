@@ -638,17 +638,20 @@ function SettingsTab() {
       {/* Footer */}
       <div className="bg-gray-50 rounded-xl p-4 space-y-3">
         <h4 className="font-semibold text-sm text-gray-700">🦶 Pie de Página</h4>
-        <p className="text-xs text-gray-500">Personaliza el pie de página de tu catálogo</p>
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Logo del pie de página (opcional)</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Logo (opcional — si no se pone, no aparece)</label>
           <div className="flex gap-2 items-center">
             {footerLogoUrl && <img src={footerLogoUrl} alt="" className="w-10 h-10 rounded object-contain bg-white border" />}
-            <input value={footerLogoUrl} onChange={(e) => setFooterLogoUrl(e.target.value)} placeholder="URL del logo o dejar vacío para usar el principal" className="flex-1 px-3 py-2 border rounded-lg text-sm font-mono" />
+            <input value={footerLogoUrl} onChange={(e) => setFooterLogoUrl(e.target.value)} placeholder="Dejar vacío para no mostrar logo" className="flex-1 px-3 py-2 border rounded-lg text-sm font-mono" />
           </div>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Nombre en el pie de página (opcional)</label>
-          <input value={footerName} onChange={(e) => setFooterName(e.target.value)} placeholder="Dejar vacío para usar el nombre de la tienda" className="w-full px-3 py-2 border rounded-lg text-sm" />
+          <label className="block text-xs font-medium text-gray-600 mb-1">Título sobre las redes sociales (ej: Síguenos)</label>
+          <input value={footerName} onChange={(e) => setFooterName(e.target.value)} placeholder="Ej: Síguenos" className="w-full px-3 py-2 border rounded-lg text-sm" />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Texto central (ej: Calidad y Cumplimiento)</label>
+          <input value={footerText} onChange={(e) => setFooterText(e.target.value)} placeholder="Ej: Calidad y Cumplimiento" className="w-full px-3 py-2 border rounded-lg text-sm" />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Color de fondo</label>
@@ -662,16 +665,14 @@ function SettingsTab() {
             ))}
           </div>
         </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Texto adicional (opcional)</label>
-          <textarea value={footerText} onChange={(e) => setFooterText(e.target.value)} placeholder="Ej: Envíos a todo el país · Pagos contra entrega" rows={2} className="w-full px-3 py-2 border rounded-lg text-sm resize-none" />
-        </div>
         {/* Vista previa */}
-        <div style={{ backgroundColor: footerColor }} className="rounded-lg p-4 text-white text-center space-y-2">
+        <div style={{ backgroundColor: footerColor }} className="rounded-lg p-3 text-white text-center space-y-1.5">
           <p className="text-[10px] text-white/50 uppercase">Vista previa</p>
-          {(footerLogoUrl || logoUrl) && <img src={footerLogoUrl || logoUrl} alt="" className="w-10 h-10 mx-auto object-contain" />}
-          <p className="font-bold text-sm">{footerName || storeName}</p>
+          {footerLogoUrl && <img src={footerLogoUrl} alt="" className="w-10 h-10 mx-auto object-contain" />}
+          {footerName && <p className="font-bold text-sm">{footerName}</p>}
+          <p className="text-white/50 text-xs">🔵 🟢 🟣 (redes sociales)</p>
           {footerText && <p className="text-white/60 text-xs">{footerText}</p>}
+          <p className="text-white/30 text-[10px]">© 2026 {storeName}</p>
         </div>
       </div>
 
