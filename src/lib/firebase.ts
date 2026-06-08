@@ -22,7 +22,9 @@ export function getFirestoreDb(): Firestore {
 
   const projectId = process.env.FIREBASE_PROJECT_ID!;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL!;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY!.replace(/\\n/g, "\n");
+  // Handle both "\\n" (literal backslash-n from env) and actual newlines
+  const rawKey = process.env.FIREBASE_PRIVATE_KEY!;
+  const privateKey = rawKey.includes("\\n") ? rawKey.split("\\n").join("\n") : rawKey;
 
   const app = initializeApp({
     credential: cert({ projectId, clientEmail, privateKey } as ServiceAccount),
