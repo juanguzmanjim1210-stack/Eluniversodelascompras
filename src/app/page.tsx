@@ -49,23 +49,39 @@ export default function CatalogPage() {
   const cartCount = cartItems.reduce((s, i) => s + i.quantity, 0);
 
   const fetchProducts = useCallback(async () => {
-    const p = new URLSearchParams();
-    p.set("_t", Date.now().toString());
-    if (selectedCategory) p.set("categoryId", selectedCategory);
-    if (search) p.set("search", search);
-    const res = await fetch(`/api/products?${p}`, { cache: "no-store" });
-    setProducts(await res.json());
+    try {
+      const p = new URLSearchParams();
+      p.set("_t", Date.now().toString());
+      if (selectedCategory) p.set("categoryId", selectedCategory);
+      if (search) p.set("search", search);
+      const res = await fetch(`/api/products?${p}`, { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) setProducts(data);
+      }
+    } catch { /* no sobreescribir datos buenos */ }
     setLoading(false);
   }, [selectedCategory, search]);
 
   const fetchStore = useCallback(async () => {
-    const r = await fetch(`/api/store-settings?_t=${Date.now()}`, { cache: "no-store" });
-    setStore(await r.json());
-  }, []);
+    try {
+      const r = await fetch(`/api/store-settings?_t=${Date.now()}`, { cache: "no-store" });
+      if (r.ok) {
+        const data = await r.json();
+        if (data && data.storeName && data.storeName !== "Mi Tienda") setStore(data);
+        else if (!store) setStore(data);
+      }
+    } catch { /* no sobreescribir datos buenos */ }
+  }, [store]);
 
   const fetchCategories = useCallback(async () => {
-    const r = await fetch(`/api/categories?_t=${Date.now()}`, { cache: "no-store" });
-    setCategories(await r.json());
+    try {
+      const r = await fetch(`/api/categories?_t=${Date.now()}`, { cache: "no-store" });
+      if (r.ok) {
+        const data = await r.json();
+        if (Array.isArray(data)) setCategories(data);
+      }
+    } catch { /* no sobreescribir datos buenos */ }
   }, []);
 
   useEffect(() => { fetchStore(); fetchCategories(); }, [fetchStore, fetchCategories]);
@@ -230,10 +246,10 @@ export default function CatalogPage() {
                 </div>
 
                 <div className="p-2.5 sm:p-4 flex-1 flex flex-col">
-                  <h3 className={`font-semibold text-xs sm:text-sm leading-tight line-clamp-2 min-h-[2.5rem] ${isOutOfStock ? "text-gray-400" : "text-gray-900"}`}>{product.name}</h3>
+                  <h3 className={`font-semibold text-sm sm:text-base leading-tight line-clamp-2 min-h-[2.5rem] ${isOutOfStock ? "text-gray-400" : "text-gray-900"}`}>{product.name}</h3>
                   <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5 flex-wrap">
-                    <span className={`text-sm sm:text-lg font-bold ${isOutOfStock ? "text-gray-400" : ""}`} style={isOutOfStock ? {} : { color: btnColor }}>{formatPrice(product.basePrice)}</span>
-                    {hasDiscount && !isOutOfStock && <span className="text-[10px] sm:text-xs text-gray-400 line-through">{formatPrice(product.comparePrice!)}</span>}
+                    <span className={`text-base sm:text-xl font-bold ${isOutOfStock ? "text-gray-400" : ""}`} style={isOutOfStock ? {} : { color: btnColor }}>{formatPrice(product.basePrice)}</span>
+                    {hasDiscount && !isOutOfStock && <span className="text-xs sm:text-sm text-gray-400 line-through">{formatPrice(product.comparePrice!)}</span>}
                   </div>
                   {product.variants.length > 0 && !isOutOfStock && (
                     <div className="mt-1 flex flex-wrap gap-0.5">
