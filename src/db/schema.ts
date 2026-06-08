@@ -34,6 +34,7 @@ export const storeSettings = pgTable("store_settings", {
   announcementText: text("announcement_text"),
   announcementActive: boolean("announcement_active").notNull().default(false),
   announcementColor: varchar("announcement_color", { length: 20 }).notNull().default("#16a34a"),
+  announcementSpeed: integer("announcement_speed").notNull().default(40),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
