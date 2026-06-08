@@ -288,30 +288,38 @@ export default function CatalogPage() {
 
       {/* Footer */}
       {store && (
-        <footer className="bg-gray-900 text-white mt-10 sm:mt-16">
+        <footer style={{ backgroundColor: store.footerColor || "#111827" }} className="text-white mt-10 sm:mt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-            {/* Logo y nombre */}
-            <div className="flex flex-col items-center text-center gap-3">
-              {store.logoUrl && <div className="w-14 h-14 sm:w-16 sm:h-16 overflow-hidden"><img src={store.logoUrl} alt="Logo" className="w-full h-full object-contain" /></div>}
-              <h3 className="font-bold text-lg sm:text-2xl">{store.storeName}</h3>
-            </div>
+            {/* Logo y nombre del footer */}
+            {(store.footerLogoUrl || store.footerName || store.logoUrl) && (
+              <div className="flex flex-col items-center text-center gap-3">
+                {(store.footerLogoUrl || store.logoUrl) && (
+                  <div className="w-14 h-14 sm:w-20 sm:h-20 overflow-hidden">
+                    <img src={store.footerLogoUrl || store.logoUrl!} alt="Logo" className="w-full h-full object-contain" />
+                  </div>
+                )}
+                {(store.footerName || store.storeName) && (
+                  <h3 className="font-bold text-lg sm:text-2xl">{store.footerName || store.storeName}</h3>
+                )}
+              </div>
+            )}
 
             {/* Síguenos + redes sociales */}
             {hasSocial && (
               <div className="flex flex-col items-center mt-6 sm:mt-8">
                 <h4 className="text-base sm:text-xl font-bold text-white mb-3 sm:mb-4">Síguenos</h4>
                 <div className="flex items-center gap-3 sm:gap-4">
-                  {store.facebook && <a href={store.facebook} target="_blank" rel="noopener noreferrer" className="w-11 h-11 sm:w-12 sm:h-12 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-all hover:scale-110"><FacebookIcon /></a>}
-                  {store.whatsapp && <a href={store.whatsapp} target="_blank" rel="noopener noreferrer" className="w-11 h-11 sm:w-12 sm:h-12 bg-gray-800 rounded-full flex items-center justify-center hover:bg-green-600 transition-all hover:scale-110"><WhatsAppIcon /></a>}
-                  {store.instagram && <a href={store.instagram} target="_blank" rel="noopener noreferrer" className="w-11 h-11 sm:w-12 sm:h-12 bg-gray-800 rounded-full flex items-center justify-center hover:bg-pink-600 transition-all hover:scale-110"><InstagramIcon /></a>}
-                  {store.tiktok && <a href={store.tiktok} target="_blank" rel="noopener noreferrer" className="w-11 h-11 sm:w-12 sm:h-12 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-600 transition-all hover:scale-110"><TikTokIcon /></a>}
+                  {store.facebook && <a href={store.facebook} target="_blank" rel="noopener noreferrer" className="w-11 h-11 sm:w-12 sm:h-12 bg-white/10 rounded-full flex items-center justify-center hover:bg-blue-600 transition-all hover:scale-110"><FacebookIcon /></a>}
+                  {store.whatsapp && <a href={store.whatsapp} target="_blank" rel="noopener noreferrer" className="w-11 h-11 sm:w-12 sm:h-12 bg-white/10 rounded-full flex items-center justify-center hover:bg-green-600 transition-all hover:scale-110"><WhatsAppIcon /></a>}
+                  {store.instagram && <a href={store.instagram} target="_blank" rel="noopener noreferrer" className="w-11 h-11 sm:w-12 sm:h-12 bg-white/10 rounded-full flex items-center justify-center hover:bg-pink-600 transition-all hover:scale-110"><InstagramIcon /></a>}
+                  {store.tiktok && <a href={store.tiktok} target="_blank" rel="noopener noreferrer" className="w-11 h-11 sm:w-12 sm:h-12 bg-white/10 rounded-full flex items-center justify-center hover:bg-gray-600 transition-all hover:scale-110"><TikTokIcon /></a>}
                 </div>
               </div>
             )}
 
-            {store.footerText && <p className="text-gray-400 text-sm sm:text-base text-center mt-6">{store.footerText}</p>}
-            <div className="border-t border-gray-800 mt-6 sm:mt-8 pt-4 sm:pt-6 text-center">
-              <p className="text-gray-500 text-xs sm:text-sm">© {new Date().getFullYear()} {store.storeName}</p>
+            {store.footerText && <p className="text-white/60 text-sm sm:text-base text-center mt-6">{store.footerText}</p>}
+            <div className="border-t border-white/10 mt-6 sm:mt-8 pt-4 sm:pt-6 text-center">
+              <p className="text-white/40 text-xs sm:text-sm">© {new Date().getFullYear()} {store.footerName || store.storeName}</p>
             </div>
           </div>
         </footer>
