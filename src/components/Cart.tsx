@@ -29,7 +29,7 @@ export default function Cart({
   primaryColor,
   onOrderSent,
 }: CartProps) {
-  const fmt = (v: number) => `${currency}${v.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
+  const fmt = (v: number) => `${currency}${Math.round(v).toLocaleString("es-CO")}`;
   const [showCheckout, setShowCheckout] = useState(false);
   const [customerData, setCustomerData] = useState<CustomerData>({
     fullName: "",
