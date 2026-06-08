@@ -68,11 +68,10 @@ export default function CatalogPage() {
       const r = await fetch(`/api/store-settings?_t=${Date.now()}`, { cache: "no-store" });
       if (r.ok) {
         const data = await r.json();
-        if (data && data.storeName && data.storeName !== "Mi Tienda") setStore(data);
-        else if (!store) setStore(data);
+        if (data && data.updatedAt) setStore(data);
       }
     } catch { /* no sobreescribir datos buenos */ }
-  }, [store]);
+  }, []);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -247,7 +246,7 @@ export default function CatalogPage() {
 
                 <div className="p-2.5 sm:p-4 flex-1 flex flex-col">
                   <h3 className={`font-semibold text-[13px] sm:text-sm leading-tight line-clamp-2 min-h-[2.5rem] ${isOutOfStock ? "text-gray-400" : "text-gray-900"}`}>{product.name}</h3>
-                  <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5 flex-wrap">
+                  <div className="mt-0.5 sm:mt-1 flex items-center gap-1.5 flex-wrap">
                     <span className={`text-base sm:text-xl font-bold ${isOutOfStock ? "text-gray-400" : ""}`} style={isOutOfStock ? {} : { color: btnColor }}>{formatPrice(product.basePrice)}</span>
                     {hasDiscount && !isOutOfStock && <span className="text-xs sm:text-sm text-gray-400 line-through">{formatPrice(product.comparePrice!)}</span>}
                   </div>
