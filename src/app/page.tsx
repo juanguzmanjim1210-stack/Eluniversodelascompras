@@ -327,6 +327,15 @@ function ProductModal({ product, onClose, onAddToCart, addedToCart, currency, pr
 
   useEffect(() => { setCurrentImage(0); setSelectedVariant(product.variants.length > 0 ? product.variants[0] : null); }, [product.id, product.variants]);
 
+  // Auto-play slider
+  useEffect(() => {
+    if (product.images.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => (prev === product.images.length - 1 ? 0 : prev + 1));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [product.images.length]);
+
   const price = selectedVariant ? parseFloat(selectedVariant.price) : parseFloat(product.basePrice);
   const hasDiscount = !selectedVariant && product.comparePrice && parseFloat(product.comparePrice) > parseFloat(product.basePrice);
   const discountPct = hasDiscount ? Math.round(((parseFloat(product.comparePrice!) - parseFloat(product.basePrice)) / parseFloat(product.comparePrice!)) * 100) : 0;
@@ -339,13 +348,31 @@ function ProductModal({ product, onClose, onAddToCart, addedToCart, currency, pr
         <div className="sm:hidden flex justify-center pt-2 pb-1"><div className="w-10 h-1 bg-gray-300 rounded-full" /></div>
         <button onClick={onClose} className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/90 rounded-full shadow flex items-center justify-center hover:bg-gray-100 transition text-sm">✕</button>
 
-        {/* Image */}
-        <div className="relative">
-          <div className="aspect-[4/3] bg-gray-100 overflow-hidden sm:rounded-t-2xl">
+        {/* Image with slider */}
+        <div className="relative group">
+          <div className="aspect-[4/3] bg-gray-100 overflow-hidden sm:rounded-t-2xl relative">
             {product.images.length > 0 ? (
-              <img src={product.images[currentImage]?.url} alt={product.name} className="w-full h-full object-cover" />
+              <img src={product.images[currentImage]?.url} alt={product.name} className="w-full h-full object-cover transition-opacity duration-300" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-300"><span className="text-5xl">📷</span></div>
+            )}
+            
+            {/* Arrows for sliding */}
+            {product.images.length > 1 && (
+              <>
+                <button 
+                  onClick={() => setCurrentImage((prev) => (prev === 0 ? product.images.length - 1 : prev - 1))}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-800 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <button 
+                  onClick={() => setCurrentImage((prev) => (prev === product.images.length - 1 ? 0 : prev + 1))}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-800 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                </button>
+              </>
             )}
           </div>
           {hasDiscount && <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">-{discountPct}%</span>}
@@ -361,9 +388,13 @@ function ProductModal({ product, onClose, onAddToCart, addedToCart, currency, pr
 
         {/* Thumbnails */}
         {product.images.length > 1 && (
-          <div className="flex gap-1.5 px-3 py-2 overflow-x-auto no-scrollbar bg-gray-50">
+          <div className="flex gap-1.5 px-3 py-2 overflow-x-auto no-scrollbar bg-gray-50 snap-x">
             {product.images.map((img, i) => (
-              <button key={img.id} onClick={() => setCurrentImage(i)} className={`w-11 h-11 rounded-md overflow-hidden flex-shrink-0 border-2 transition ${i === currentImage ? "border-blue-500" : "border-transparent"}`}>
+              <button 
+                key={img.id} 
+                onClick={() => setCurrentImage(i)} 
+                className={`w-11 h-11 rounded-md overflow-hidden flex-shrink-0 border-2 transition-all snap-start ${i === currentImage ? "border-blue-500 opacity-100" : "border-transparent opacity-60"}`}
+              >
                 <img src={img.url} alt="" className="w-full h-full object-cover" />
               </button>
             ))}
