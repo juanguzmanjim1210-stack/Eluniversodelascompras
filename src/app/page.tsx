@@ -251,14 +251,7 @@ export default function CatalogPage() {
                     <span className={`text-lg sm:text-2xl font-bold ${isOutOfStock ? "text-gray-400" : ""}`} style={isOutOfStock ? {} : { color: btnColor }}>{formatPrice(product.basePrice)}</span>
                     {hasDiscount && !isOutOfStock && <span className="text-sm sm:text-base text-gray-400 line-through">{formatPrice(product.comparePrice!)}</span>}
                   </div>
-                  {product.variants.length > 0 && !isOutOfStock && (
-                    <div className="mt-1 flex flex-wrap gap-0.5">
-                      {[...new Set(product.variants.map((v) => v.color).filter(Boolean))].slice(0, 2).map((c) => (
-                        <span key={c} className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">{c}</span>
-                      ))}
-                      {product.variants.length > 2 && <span className="text-[10px] text-gray-400">+{product.variants.length - 2}</span>}
-                    </div>
-                  )}
+
                   {isOutOfStock ? (
                     <button disabled className="mt-auto pt-2 sm:pt-3 w-full bg-gray-300 text-gray-500 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold cursor-not-allowed flex items-center justify-center gap-1.5 text-sm sm:text-base">
                       Agotado
