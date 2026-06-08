@@ -698,7 +698,32 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
 
   const addImage = () => {
     if (!newImageUrl.trim() || imageUrls.length >= 10) return;
-    setImageUrls((prev) => [...prev, newImageUrl.trim()]);
+    // Smart detection: extract all image URLs from pasted text
+    const text = newImageUrl.trim();
+    const urlRegex = /https?:\/\/[^\s,;"""''<>]+\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:\?[^\s,;"""''<>]*)?/gi;
+    const ibbRegex = /https?:\/\/i\.ibb\.co\/[^\s,;"""''<>]+/gi;
+    const found = new Set<string>();
+    // Match standard image URLs
+    const imgMatches = text.match(urlRegex);
+    if (imgMatches) imgMatches.forEach((u) => found.add(u));
+    // Match ibb.co URLs (even without extension)
+    const ibbMatches = text.match(ibbRegex);
+    if (ibbMatches) ibbMatches.forEach((u) => found.add(u));
+    // If no pattern matched, treat the whole thing as lines of URLs
+    if (found.size === 0) {
+      const lines = text.split(/[\n\r]+/).map((l) => l.trim()).filter((l) => l.startsWith("http"));
+      lines.forEach((l) => found.add(l));
+    }
+    if (found.size > 0) {
+      const newUrls = Array.from(found);
+      setImageUrls((prev) => {
+        const combined = [...prev, ...newUrls];
+        return combined.slice(0, 10);
+      });
+    } else {
+      // Single URL fallback
+      setImageUrls((prev) => [...prev, text]);
+    }
     setNewImageUrl("");
   };
 
@@ -782,28 +807,32 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
       {/* Images */}
       <div className="bg-gray-50 rounded-xl p-4 space-y-3">
         <h4 className="font-semibold text-sm text-gray-700">🖼️ Imágenes ({imageUrls.length}/10)</h4>
-        {/* Add image - single input */}
+        {/* Smart image input */}
         {imageUrls.length < 10 && (
-          <div className="flex gap-2">
-            <input
+          <div className="space-y-2">
+            <textarea
               value={newImageUrl}
               onChange={(e) => setNewImageUrl(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addImage(); } }}
-              placeholder="Pega el enlace de la imagen aquí..."
-              className="flex-1 px-3 py-2 border rounded-lg text-sm font-mono"
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addImage(); } }}
+              placeholder={"Pega uno o varios enlaces de imágenes aquí...\n\nEjemplo:\nhttps://i.ibb.co/xxxx/foto1.jpg\nhttps://i.ibb.co/yyyy/foto2.png"}
+              rows={3}
+              className="w-full px-3 py-2 border rounded-lg text-sm font-mono resize-none focus:ring-2 focus:ring-blue-500"
             />
-            <button onClick={addImage} disabled={!newImageUrl.trim()} className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-40">
-              + Agregar
-            </button>
+            <div className="flex gap-2">
+              <button onClick={addImage} disabled={!newImageUrl.trim()} className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-1.5">
+                🔍 Detectar y Agregar
+              </button>
+            </div>
+            <p className="text-[10px] text-blue-600 bg-blue-50 px-2 py-1.5 rounded-lg">💡 Pega varios enlaces de imgbb a la vez — se detectan automáticamente</p>
           </div>
         )}
-        {/* Image list */}
+        {/* Image grid with previews */}
         {imageUrls.length > 0 && (
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
             {imageUrls.map((url, i) => (
               <div key={i} className="relative group">
                 <div className="aspect-square rounded-lg overflow-hidden bg-white border">
-                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <img src={url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = ""; (e.target as HTMLImageElement).alt = "❌"; }} />
                 </div>
                 <button onClick={() => removeImage(i)} className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow">✕</button>
                 <span className="absolute bottom-0.5 left-0.5 bg-black/50 text-white text-[9px] px-1 rounded">{i + 1}</span>
@@ -814,7 +843,7 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
         {imageUrls.length > 0 && (
           <button onClick={handleSaveImages} className="w-full bg-green-600 text-white py-2 rounded-lg text-sm font-medium">💾 Guardar Imágenes</button>
         )}
-        <p className="text-[10px] text-gray-400">Acepta JPG, PNG, WebP, GIF — cualquier enlace de imagen</p>
+        <p className="text-[10px] text-gray-400">Acepta JPG, PNG, WebP, GIF — enlaces de imgbb.com o cualquier imagen</p>
       </div>
 
       {/* Variants */}
