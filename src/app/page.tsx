@@ -103,8 +103,9 @@ export default function CatalogPage() {
       if (idx >= 0) { const n = [...prev]; n[idx].quantity += 1; return n; }
       return [...prev, { product, variant, quantity: 1 }];
     });
-    setAddedToCart(product.id);
-    setTimeout(() => setAddedToCart(null), 1500);
+    // Cerrar modal y abrir carrito
+    setSelectedProduct(null);
+    setCartOpen(true);
   };
 
   const getCategoryName = (catId: string | null) => {
