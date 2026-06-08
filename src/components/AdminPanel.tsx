@@ -882,7 +882,7 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
               <div className="flex gap-1 flex-wrap items-center">
                 {v.color && <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{v.color}</span>}
                 {v.size && <span className="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">{v.size}</span>}
-                <span className="font-medium">${parseFloat(v.price).toFixed(2)}</span>
+                {parseFloat(v.price) > 0 ? <span className="font-medium text-green-700">${parseFloat(v.price).toFixed(2)}</span> : <span className="text-gray-400 text-[10px]">Precio del producto</span>}
               </div>
               <button onClick={() => handleDeleteVariant(v.id)} className="text-red-500 hover:bg-red-50 px-1.5 py-0.5 rounded">✕</button>
             </div>
@@ -933,11 +933,16 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
             </div>
           </div>
         ))}
-        <form onSubmit={handleAddVariant} className="grid grid-cols-4 gap-2">
-          <input value={varColor} onChange={(e) => setVarColor(e.target.value)} placeholder="Color" className="px-2 py-1.5 border rounded text-sm" />
-          <input value={varSize} onChange={(e) => setVarSize(e.target.value)} placeholder="Talla" className="px-2 py-1.5 border rounded text-sm" />
-          <input type="number" step="0.01" value={varPrice} onChange={(e) => setVarPrice(e.target.value)} placeholder="Precio" className="px-2 py-1.5 border rounded text-sm" />
-          <input type="number" value={varStock} onChange={(e) => setVarStock(e.target.value)} placeholder="Stock" className="px-2 py-1.5 border rounded text-sm" />
+        <form onSubmit={handleAddVariant} className="space-y-2">
+          <div className="grid grid-cols-3 gap-2">
+            <input value={varColor} onChange={(e) => setVarColor(e.target.value)} placeholder="Color" className="px-2 py-1.5 border rounded text-sm" />
+            <input value={varSize} onChange={(e) => setVarSize(e.target.value)} placeholder="Talla" className="px-2 py-1.5 border rounded text-sm" />
+            <input type="number" value={varStock} onChange={(e) => setVarStock(e.target.value)} placeholder="Stock" className="px-2 py-1.5 border rounded text-sm" />
+          </div>
+          <details className="text-xs">
+            <summary className="text-gray-400 cursor-pointer hover:text-gray-600">💲 Precio diferente (opcional)</summary>
+            <input type="number" step="0.01" value={varPrice} onChange={(e) => setVarPrice(e.target.value)} placeholder="Dejar en 0 = usa precio del producto" className="w-full px-2 py-1.5 border rounded text-sm mt-1" />
+          </details>
         </form>
         <button onClick={handleAddVariant} className="w-full bg-gray-800 text-white py-2 rounded-lg text-sm font-medium">+ Agregar Variante</button>
       </div>
