@@ -15,6 +15,7 @@ export interface StoreSettings {
   announcementText: string | null;
   announcementActive: boolean;
   announcementColor: string;
+  announcementSpeed: number;
   updatedAt: string;
 }
 
