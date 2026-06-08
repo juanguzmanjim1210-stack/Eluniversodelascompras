@@ -99,9 +99,9 @@ export default function CatalogPage() {
     return c ? c.name : null;
   };
 
-  const getProductTotalStock = (product: Product): number => {
+  const getProductTotalStock = (product: Product): number | null => {
     if (product.variants.length > 0) return product.variants.reduce((s, v) => s + v.stock, 0);
-    return product.stock ?? 0;
+    return null;
   };
 
   const hasSocial = useMemo(() => store && (store.facebook || store.whatsapp || store.instagram || store.tiktok), [store]);
@@ -217,20 +217,24 @@ export default function CatalogPage() {
             {products.map((product) => {
               const hasDiscount = product.comparePrice && parseFloat(product.comparePrice) > parseFloat(product.basePrice);
               const discountPct = hasDiscount ? Math.round(((parseFloat(product.comparePrice!) - parseFloat(product.basePrice)) / parseFloat(product.comparePrice!)) * 100) : 0;
+              const totalStock = getProductTotalStock(product);
+              const isOutOfStock = totalStock !== null && totalStock <= 0;
+              const hasStockInfo = totalStock !== null;
 
               return (
-              <div key={product.id} className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col">
+              <div key={product.id} className={`bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col ${isOutOfStock ? "opacity-70" : ""}`}>
                 <div onClick={() => setSelectedProduct(product)} className="cursor-pointer">
                   <div className="aspect-square bg-gray-100 relative overflow-hidden">
                     {product.images.length > 0 ? (
-                      <img src={product.images[0].url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                      <img src={product.images[0].url} alt={product.name} className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${isOutOfStock ? "grayscale" : ""}`} loading="lazy" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-200">
                         <svg className="w-10 h-10 sm:w-14 sm:h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                       </div>
                     )}
                     {hasDiscount && <span className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-md">-{discountPct}%</span>}
-                    {product.images.length > 1 && <span className="absolute top-1.5 right-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">+{product.images.length - 1}</span>}
+                    {isOutOfStock && <span className="absolute top-1.5 right-1.5 bg-gray-800 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-md">AGOTADO</span>}
+                    {!isOutOfStock && product.images.length > 1 && <span className="absolute top-1.5 right-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">+{product.images.length - 1}</span>}
                     {addedToCart === product.id && (
                       <div className="absolute inset-0 bg-green-500/80 flex items-center justify-center animate-cart-added">
                         <div className="text-center text-white animate-bounce">
@@ -256,13 +260,19 @@ export default function CatalogPage() {
                       {product.variants.length > 2 && <span className="text-[10px] text-gray-400">+{product.variants.length - 2}</span>}
                     </div>
                   )}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); product.variants.length > 0 ? setSelectedProduct(product) : addToCart(product, null); }}
-                    style={{ backgroundColor: btnColor }}
-                    className="mt-auto pt-2 sm:pt-3 w-full text-white py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-medium hover:opacity-90 transition flex items-center justify-center gap-1 text-xs sm:text-sm"
-                  >
-                    <CartIcon className="w-4 h-4" /> {btnText}
-                  </button>
+                  {isOutOfStock ? (
+                    <button disabled className="mt-auto pt-2 sm:pt-3 w-full bg-gray-300 text-gray-500 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-medium cursor-not-allowed flex items-center justify-center gap-1 text-xs sm:text-sm">
+                      Agotado
+                    </button>
+                  ) : (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); product.variants.length > 0 ? setSelectedProduct(product) : addToCart(product, null); }}
+                      style={{ backgroundColor: btnColor }}
+                      className="mt-auto pt-2 sm:pt-3 w-full text-white py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-medium hover:opacity-90 transition flex items-center justify-center gap-1 text-xs sm:text-sm"
+                    >
+                      <CartIcon className="w-4 h-4" /> {btnText}
+                    </button>
+                  )}
                 </div>
               </div>
               );
@@ -334,8 +344,9 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
   const hasDiscount = !selectedVariant && product.comparePrice && parseFloat(product.comparePrice) > parseFloat(product.basePrice);
   const discountPct = hasDiscount ? Math.round(((parseFloat(product.comparePrice!) - parseFloat(product.basePrice)) / parseFloat(product.comparePrice!)) * 100) : 0;
   const categoryName = categories.find((c) => c.id === product.categoryId)?.name || null;
-  const totalStock = product.variants.length > 0 ? product.variants.reduce((s, v) => s + v.stock, 0) : product.stock;
-  const isOutOfStock = totalStock <= 0;
+  const totalStock = product.variants.length > 0 ? product.variants.reduce((s, v) => s + v.stock, 0) : null;
+  const hasStockInfo = totalStock !== null;
+  const isOutOfStock = hasStockInfo && totalStock <= 0;
   const variantOutOfStock = selectedVariant ? selectedVariant.stock <= 0 : false;
 
   const prevImage = () => setCurrentImage((prev) => (prev - 1 + product.images.length) % product.images.length);
@@ -399,12 +410,12 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
             </div>
           </div>
 
-          {/* Stock al lado del precio */}
-          {!isOutOfStock && totalStock > 0 && (
-            <p className="text-base sm:text-lg text-green-600 font-bold">📦 {totalStock} disponible{totalStock !== 1 ? "s" : ""}</p>
+          {/* Stock info */}
+          {hasStockInfo && !isOutOfStock && totalStock !== null && totalStock > 0 && (
+            <p className="text-lg sm:text-xl text-green-600 font-bold">📦 {totalStock} disponible{totalStock !== 1 ? "s" : ""}</p>
           )}
           {isOutOfStock && (
-            <p className="text-base sm:text-lg text-red-500 font-bold">❌ Agotado</p>
+            <p className="text-lg sm:text-xl text-red-500 font-bold">❌ Agotado</p>
           )}
 
           {/* Description */}
