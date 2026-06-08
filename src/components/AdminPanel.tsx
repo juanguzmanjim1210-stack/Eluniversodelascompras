@@ -679,6 +679,9 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
 
   useEffect(() => { fetchProduct(); }, [fetchProduct]);
 
+  const [infoSaved, setInfoSaved] = useState(false);
+  const [imagesSaved, setImagesSaved] = useState(false);
+
   const handleSaveInfo = async () => {
     setSaving(true);
     await fetch(`/api/products/${productId}`, {
@@ -687,12 +690,16 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
       body: JSON.stringify({ name, description, categoryId: categoryId || null, basePrice, comparePrice: comparePrice || null, active }),
     });
     setSaving(false);
+    setInfoSaved(true);
+    setTimeout(() => setInfoSaved(false), 2500);
     fetchProduct();
   };
 
   const handleSaveImages = async () => {
     const urls = imageUrls.filter((u) => u.trim() !== "");
     await fetch(`/api/products/${productId}/images`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ urls }) });
+    setImagesSaved(true);
+    setTimeout(() => setImagesSaved(false), 2500);
     fetchProduct();
   };
 
@@ -800,8 +807,8 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
       </div>
 
       {/* Save Info */}
-      <button onClick={handleSaveInfo} disabled={saving} className="w-full bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium">
-        {saving ? "Guardando..." : "💾 Guardar Información y Precios"}
+      <button onClick={handleSaveInfo} disabled={saving} className={`w-full text-white py-2.5 rounded-lg text-sm font-medium transition-all ${infoSaved ? "bg-green-500 animate-save-success" : "bg-blue-600 hover:bg-blue-700"}`}>
+        {saving ? "⏳ Guardando..." : infoSaved ? "✅ ¡Guardado correctamente!" : "💾 Guardar Información y Precios"}
       </button>
 
       {/* Images */}
@@ -834,14 +841,16 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
                 <div className="aspect-square rounded-lg overflow-hidden bg-white border">
                   <img src={url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = ""; (e.target as HTMLImageElement).alt = "❌"; }} />
                 </div>
-                <button onClick={() => removeImage(i)} className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow">✕</button>
+                <button onClick={() => removeImage(i)} className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition shadow-lg font-bold">✕</button>
                 <span className="absolute bottom-0.5 left-0.5 bg-black/50 text-white text-[9px] px-1 rounded">{i + 1}</span>
               </div>
             ))}
           </div>
         )}
         {imageUrls.length > 0 && (
-          <button onClick={handleSaveImages} className="w-full bg-green-600 text-white py-2 rounded-lg text-sm font-medium">💾 Guardar Imágenes</button>
+          <button onClick={handleSaveImages} className={`w-full text-white py-2 rounded-lg text-sm font-medium transition-all ${imagesSaved ? "bg-green-500 animate-save-success" : "bg-green-600 hover:bg-green-700"}`}>
+            {imagesSaved ? "✅ ¡Imágenes guardadas!" : "💾 Guardar Imágenes"}
+          </button>
         )}
         <p className="text-[10px] text-gray-400">Acepta JPG, PNG, WebP, GIF — enlaces de imgbb.com o cualquier imagen</p>
       </div>
