@@ -23,6 +23,6 @@ export interface Category { id: string; name: string; description: string | null
 export interface ProductImage { id: string; productId: string; url: string; sortOrder: number; createdAt: string; }
 export interface ProductFeature { id: string; productId: string; key: string; value: string; }
 export interface ProductVariant { id: string; productId: string; color: string | null; size: string | null; price: string; stock: number; sku: string | null; }
-export interface Product { id: string; name: string; description: string | null; categoryId: string | null; basePrice: string; comparePrice: string | null; stock: number; active: boolean; createdAt: string; updatedAt: string; images: ProductImage[]; features: ProductFeature[]; variants: ProductVariant[]; }
+export interface Product { id: string; name: string; description: string | null; categoryId: string | null; basePrice: string; comparePrice: string | null; active: boolean; createdAt: string; updatedAt: string; images: ProductImage[]; features: ProductFeature[]; variants: ProductVariant[]; }
 export interface CartItem { product: Product; variant: ProductVariant | null; quantity: number; }
 export interface CustomerData { fullName: string; whatsapp: string; city: string; department: string; address: string; }
