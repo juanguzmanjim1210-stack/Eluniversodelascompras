@@ -99,9 +99,12 @@ export default function CatalogPage() {
     return c ? c.name : null;
   };
 
-  const getProductTotalStock = (product: Product): number => {
+  const getProductTotalStock = (product: Product): number | null => {
     if (product.variants.length > 0) return product.variants.reduce((s, v) => s + v.stock, 0);
-    return product.stock ?? 0;
+    // Si el producto no tiene variantes, solo mostrar stock si fue configurado (> 0 o explícitamente 0)
+    if (product.stock !== undefined && product.stock !== null && product.stock > 0) return product.stock;
+    // Si stock es 0 o no existe, no restringir — el admin aún no configuró stock
+    return null;
   };
 
   const hasSocial = useMemo(() => store && (store.facebook || store.whatsapp || store.instagram || store.tiktok), [store]);
@@ -219,6 +222,7 @@ export default function CatalogPage() {
               const discountPct = hasDiscount ? Math.round(((parseFloat(product.comparePrice!) - parseFloat(product.basePrice)) / parseFloat(product.comparePrice!)) * 100) : 0;
               const totalStock = getProductTotalStock(product);
               const isOutOfStock = totalStock !== null && totalStock <= 0;
+              const hasStockInfo = totalStock !== null;
 
               return (
               <div key={product.id} className={`bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col ${isOutOfStock ? "opacity-70" : ""}`}>
@@ -343,8 +347,9 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
   const hasDiscount = !selectedVariant && product.comparePrice && parseFloat(product.comparePrice) > parseFloat(product.basePrice);
   const discountPct = hasDiscount ? Math.round(((parseFloat(product.comparePrice!) - parseFloat(product.basePrice)) / parseFloat(product.comparePrice!)) * 100) : 0;
   const categoryName = categories.find((c) => c.id === product.categoryId)?.name || null;
-  const totalStock = product.variants.length > 0 ? product.variants.reduce((s, v) => s + v.stock, 0) : (product.stock ?? 0);
-  const isOutOfStock = totalStock <= 0;
+  const totalStock = product.variants.length > 0 ? product.variants.reduce((s, v) => s + v.stock, 0) : (product.stock && product.stock > 0 ? product.stock : null);
+  const hasStockInfo = totalStock !== null;
+  const isOutOfStock = hasStockInfo && totalStock <= 0;
   const variantOutOfStock = selectedVariant ? selectedVariant.stock <= 0 : false;
 
   const prevImage = () => setCurrentImage((prev) => (prev - 1 + product.images.length) % product.images.length);
@@ -409,7 +414,7 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
           </div>
 
           {/* Stock info */}
-          {!isOutOfStock && totalStock > 0 && (
+          {hasStockInfo && !isOutOfStock && totalStock !== null && totalStock > 0 && (
             <p className="text-lg sm:text-xl text-green-600 font-bold">📦 {totalStock} disponible{totalStock !== 1 ? "s" : ""}</p>
           )}
           {isOutOfStock && (
