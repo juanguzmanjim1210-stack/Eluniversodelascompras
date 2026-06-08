@@ -124,7 +124,7 @@ export default function CatalogPage() {
   const btnText = store?.buttonText || "Comprar";
   const cur = store?.currency || "$";
 
-  const formatPrice = (val: string) => `${cur}${parseFloat(val).toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
+  const formatPrice = (val: string) => `${cur}${Math.round(parseFloat(val)).toLocaleString("es-CO")}`;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -246,9 +246,9 @@ export default function CatalogPage() {
 
                 <div className="p-2.5 sm:p-4 flex-1 flex flex-col">
                   <h3 className={`font-semibold text-[13px] sm:text-sm leading-tight line-clamp-2 min-h-[2.5rem] ${isOutOfStock ? "text-gray-400" : "text-gray-900"}`}>{product.name}</h3>
-                  <div className="mt-0.5 sm:mt-1 flex items-center gap-1.5 flex-wrap">
-                    <span className={`text-base sm:text-xl font-bold ${isOutOfStock ? "text-gray-400" : ""}`} style={isOutOfStock ? {} : { color: btnColor }}>{formatPrice(product.basePrice)}</span>
-                    {hasDiscount && !isOutOfStock && <span className="text-xs sm:text-sm text-gray-400 line-through">{formatPrice(product.comparePrice!)}</span>}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className={`text-lg sm:text-2xl font-bold ${isOutOfStock ? "text-gray-400" : ""}`} style={isOutOfStock ? {} : { color: btnColor }}>{formatPrice(product.basePrice)}</span>
+                    {hasDiscount && !isOutOfStock && <span className="text-sm sm:text-base text-gray-400 line-through">{formatPrice(product.comparePrice!)}</span>}
                   </div>
                   {product.variants.length > 0 && !isOutOfStock && (
                     <div className="mt-1 flex flex-wrap gap-0.5">
@@ -259,16 +259,16 @@ export default function CatalogPage() {
                     </div>
                   )}
                   {isOutOfStock ? (
-                    <button disabled className="mt-auto pt-2 sm:pt-3 w-full bg-gray-300 text-gray-500 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-medium cursor-not-allowed flex items-center justify-center gap-1 text-xs sm:text-sm">
+                    <button disabled className="mt-auto pt-2 sm:pt-3 w-full bg-gray-300 text-gray-500 py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold cursor-not-allowed flex items-center justify-center gap-1.5 text-sm sm:text-base">
                       Agotado
                     </button>
                   ) : (
                     <button
                       onClick={(e) => { e.stopPropagation(); product.variants.length > 0 ? setSelectedProduct(product) : addToCart(product, null); }}
                       style={{ backgroundColor: btnColor }}
-                      className="mt-auto pt-2 sm:pt-3 w-full text-white py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-medium hover:opacity-90 transition flex items-center justify-center gap-1 text-xs sm:text-sm"
+                      className="mt-auto pt-2 sm:pt-3 w-full text-white py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold hover:opacity-90 transition flex items-center justify-center gap-1.5 text-sm sm:text-base"
                     >
-                      <CartIcon className="w-4 h-4" /> {btnText}
+                      <CartIcon className="w-4 h-4 sm:w-5 sm:h-5" /> {btnText}
                     </button>
                   )}
                 </div>
@@ -325,7 +325,7 @@ export default function CatalogPage() {
 
 /* ============ PRODUCT MODAL ============ */
 function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, currency, primaryColor }: { product: Product; categories: Category[]; onClose: () => void; onAddToCart: (p: Product, v: ProductVariant | null) => void; addedToCart: string | null; currency: string; primaryColor: string }) {
-  const fmt = (v: string) => `${currency}${parseFloat(v).toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
+  const fmt = (v: string) => `${currency}${Math.round(parseFloat(v)).toLocaleString("es-CO")}`;
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(product.variants.length > 0 ? product.variants[0] : null);
   const [justAdded, setJustAdded] = useState(false);
