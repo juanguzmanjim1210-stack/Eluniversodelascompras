@@ -404,7 +404,7 @@ function ProductModal({ product, onClose, onAddToCart, addedToCart, currency, pr
 
           {/* Description */}
           {product.description && (
-            <p className="text-[13px] text-gray-600 leading-relaxed">{product.description}</p>
+            <p className="text-[13px] text-gray-600 leading-relaxed whitespace-pre-line break-words">{product.description}</p>
           )}
 
           {/* Variants */}
