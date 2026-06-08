@@ -246,7 +246,7 @@ export default function CatalogPage() {
                 </div>
 
                 <div className="p-2.5 sm:p-4 flex-1 flex flex-col">
-                  <h3 className={`font-semibold text-sm sm:text-base leading-tight line-clamp-2 min-h-[2.5rem] ${isOutOfStock ? "text-gray-400" : "text-gray-900"}`}>{product.name}</h3>
+                  <h3 className={`font-semibold text-[13px] sm:text-sm leading-tight line-clamp-2 min-h-[2.5rem] ${isOutOfStock ? "text-gray-400" : "text-gray-900"}`}>{product.name}</h3>
                   <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5 flex-wrap">
                     <span className={`text-base sm:text-xl font-bold ${isOutOfStock ? "text-gray-400" : ""}`} style={isOutOfStock ? {} : { color: btnColor }}>{formatPrice(product.basePrice)}</span>
                     {hasDiscount && !isOutOfStock && <span className="text-xs sm:text-sm text-gray-400 line-through">{formatPrice(product.comparePrice!)}</span>}
