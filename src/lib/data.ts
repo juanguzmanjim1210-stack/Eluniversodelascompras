@@ -143,19 +143,26 @@ async function enrichProduct(id: string, data: Record<string, unknown>) {
 
 export async function getProducts(filters: { categoryId?: string; search?: string; active?: boolean }) {
   if (useFirebase()) {
-    let query: FirebaseFirestore.Query = fs().collection("products").orderBy("createdAt", "desc");
-    if (filters.categoryId) query = query.where("categoryId", "==", filters.categoryId);
-    if (filters.active) query = query.where("active", "==", true);
-    const snap = await query.get();
+    // Get all products - filter in code to avoid needing composite indexes
+    const snap = await fs().collection("products").get();
     const results = [];
     for (const doc of snap.docs) {
       const d = doc.data();
+      // Apply filters in code
+      if (filters.active && d.active !== true) continue;
+      if (filters.categoryId && d.categoryId !== filters.categoryId) continue;
       if (filters.search) {
         const name = ((d.name as string) || "").toLowerCase();
         if (!name.includes(filters.search.toLowerCase())) continue;
       }
       results.push(await enrichProduct(doc.id, d));
     }
+    // Sort by createdAt descending
+    results.sort((a, b) => {
+      const aDate = (a as Record<string, unknown>).createdAt as string || "";
+      const bDate = (b as Record<string, unknown>).createdAt as string || "";
+      return bDate.localeCompare(aDate);
+    });
     return results;
   }
 
