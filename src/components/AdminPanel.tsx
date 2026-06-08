@@ -739,6 +739,16 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
     setImageUrls((prev) => prev.filter((_, idx) => idx !== i));
   };
 
+  const moveImage = (from: number, to: number) => {
+    if (to < 0 || to >= imageUrls.length) return;
+    setImageUrls((prev) => {
+      const arr = [...prev];
+      const item = arr.splice(from, 1)[0];
+      arr.splice(to, 0, item);
+      return arr;
+    });
+  };
+
   const handleAddVariant = async (e: React.FormEvent) => {
     e.preventDefault();
     await fetch(`/api/products/${productId}/variants`, {
@@ -846,6 +856,11 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
                 </div>
                 <button onClick={() => removeImage(i)} className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition shadow-lg font-bold">✕</button>
                 <span className="absolute bottom-0.5 left-0.5 bg-black/50 text-white text-[9px] px-1 rounded">{i + 1}</span>
+                {/* Flechas para reordenar */}
+                <div className="absolute bottom-0.5 right-0.5 flex gap-0.5">
+                  {i > 0 && <button onClick={() => moveImage(i, i - 1)} className="w-5 h-5 bg-black/60 text-white rounded text-[10px] flex items-center justify-center hover:bg-black/80">←</button>}
+                  {i < imageUrls.length - 1 && <button onClick={() => moveImage(i, i + 1)} className="w-5 h-5 bg-black/60 text-white rounded text-[10px] flex items-center justify-center hover:bg-black/80">→</button>}
+                </div>
               </div>
             ))}
           </div>
