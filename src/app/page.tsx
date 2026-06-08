@@ -16,9 +16,6 @@ function InstagramIcon() {
 function TikTokIcon() {
   return <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" /></svg>;
 }
-function WhatsAppIconLg() {
-  return <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>;
-}
 function CartIcon({ className = "w-5 h-5" }: { className?: string }) {
   return <svg className={className} fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" /></svg>;
 }
@@ -96,6 +93,17 @@ export default function CatalogPage() {
     setTimeout(() => setAddedToCart(null), 1500);
   };
 
+  const getCategoryName = (catId: string | null) => {
+    if (!catId) return null;
+    const c = categories.find((cat) => cat.id === catId);
+    return c ? c.name : null;
+  };
+
+  const getProductTotalStock = (product: Product) => {
+    if (product.variants.length > 0) return product.variants.reduce((s, v) => s + v.stock, 0);
+    return null;
+  };
+
   const hasSocial = useMemo(() => store && (store.facebook || store.whatsapp || store.instagram || store.tiktok), [store]);
 
   const btnColor = store?.primaryColor || "#16a34a";
@@ -106,15 +114,15 @@ export default function CatalogPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Announcement banner — marquee */}
+      {/* Announcement banner */}
       {store?.announcementActive && store.announcementText && (
         <div style={{ backgroundColor: store.announcementColor || btnColor }} className="text-white overflow-hidden py-2.5 sm:py-3">
           <div className="marquee-track whitespace-nowrap inline-flex" style={{ animationDuration: `${store.announcementSpeed || 40}s` }}>
             {[0,1].map((half) => (
               <span key={half} className="inline-flex">
                 {[0,1,2,3,4,5].map((i) => (
-                  <span key={i} className="mx-6 sm:mx-12 text-sm sm:text-lg md:text-xl font-bold tracking-wide uppercase" style={{ fontFamily: "'Courier New', Courier, monospace" }}>
-                    ★ {store.announcementText} ★
+                  <span key={i} className="mx-6 sm:mx-12 text-base sm:text-xl md:text-2xl font-extrabold tracking-wide drop-shadow-sm">
+                    ⭐ {store.announcementText} ⭐
                   </span>
                 ))}
               </span>
@@ -122,14 +130,13 @@ export default function CatalogPage() {
           </div>
         </div>
       )}
-      {/* ====== HEADER — centered layout ====== */}
+      {/* ====== HEADER ====== */}
       {store && (
         <>
           {store.coverUrl && (
             <div className="relative w-full h-40 sm:h-52 md:h-64 overflow-hidden">
               <img src={store.coverUrl} alt="Portada" className="w-full h-full object-cover" loading="eager" />
               <div className="absolute inset-0 bg-black/30" />
-              {/* Top buttons over cover */}
               <div className="absolute top-3 right-3 flex gap-2">
                 <button onClick={() => setCartOpen(true)} className="relative w-9 h-9 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition" title="Carrito">
                   <CartIcon className="w-5 h-5" />
@@ -141,7 +148,6 @@ export default function CatalogPage() {
           )}
           <div className={`bg-white border-b ${store.coverUrl ? "-mt-16 sm:-mt-20 relative z-10" : ""}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 flex flex-col items-center text-center">
-              {/* Logo — large and centered, transparent-friendly */}
               {store.logoUrl ? (
                 <div className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 overflow-hidden">
                   <img src={store.logoUrl} alt="Logo" className="w-full h-full object-contain drop-shadow-md" loading="eager" />
@@ -151,11 +157,10 @@ export default function CatalogPage() {
                   <span className="text-white text-4xl sm:text-5xl font-bold">{store.storeName.charAt(0).toUpperCase()}</span>
                 </div>
               )}
-              {/* Store name */}
-              <h1 className="mt-3 sm:mt-4 text-lg sm:text-2xl md:text-3xl font-bold text-gray-900 leading-tight">{store.storeName}</h1>
-              {/* Description */}
-              {store.storeDescription && <p className="mt-1 sm:mt-2 text-gray-500 text-xs sm:text-sm md:text-base max-w-lg">{store.storeDescription}</p>}
-              {/* Social icons — centered */}
+              {/* Store name — bigger */}
+              <h1 className="mt-3 sm:mt-4 text-xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight">{store.storeName}</h1>
+              {/* Description — bigger and darker */}
+              {store.storeDescription && <p className="mt-1.5 sm:mt-2 text-gray-600 text-sm sm:text-base md:text-lg max-w-lg font-medium">{store.storeDescription}</p>}
               {hasSocial && (
                 <div className="flex items-center justify-center gap-2 sm:gap-3 mt-3 sm:mt-4">
                   {store.facebook && <a href={store.facebook} target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-100 transition" title="Facebook"><FacebookIcon /></a>}
@@ -164,7 +169,6 @@ export default function CatalogPage() {
                   {store.tiktok && <a href={store.tiktok} target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 text-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 transition" title="TikTok"><TikTokIcon /></a>}
                 </div>
               )}
-              {/* Cart and admin buttons when no cover */}
               {!store.coverUrl && (
                 <div className="absolute top-4 right-4 flex gap-2">
                   <button onClick={() => setCartOpen(true)} className="relative w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition text-gray-700" title="Carrito">
@@ -181,20 +185,9 @@ export default function CatalogPage() {
 
       {/* ====== MAIN ====== */}
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-3 sm:py-6">
-        {/* Filters */}
         <div className="flex gap-2 sm:gap-4 mb-4 sm:mb-8">
-          <input
-            type="text"
-            placeholder="🔍 Buscar..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 min-w-0 px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 bg-white text-sm sm:text-base"
-          />
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-2 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 bg-white text-sm sm:text-base max-w-[140px] sm:max-w-none"
-          >
+          <input type="text" placeholder="🔍 Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="flex-1 min-w-0 px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 bg-white text-sm sm:text-base" />
+          <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="px-2 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 bg-white text-sm sm:text-base max-w-[140px] sm:max-w-none">
             <option value="">Todas</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
@@ -208,7 +201,7 @@ export default function CatalogPage() {
           </div>
         </div>
 
-        {/* ====== PRODUCT GRID ====== */}
+        {/* PRODUCT GRID */}
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
             {[...Array(8)].map((_, i) => <ProductSkeleton key={i} />)}
@@ -224,23 +217,29 @@ export default function CatalogPage() {
             {products.map((product) => {
               const hasDiscount = product.comparePrice && parseFloat(product.comparePrice) > parseFloat(product.basePrice);
               const discountPct = hasDiscount ? Math.round(((parseFloat(product.comparePrice!) - parseFloat(product.basePrice)) / parseFloat(product.comparePrice!)) * 100) : 0;
+              const totalStock = getProductTotalStock(product);
+              const isOutOfStock = totalStock !== null && totalStock <= 0;
 
               return (
-              <div key={product.id} className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col">
+              <div key={product.id} className={`bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col ${isOutOfStock ? "opacity-70" : ""}`}>
                 <div onClick={() => setSelectedProduct(product)} className="cursor-pointer">
                   <div className="aspect-square bg-gray-100 relative overflow-hidden">
                     {product.images.length > 0 ? (
-                      <img src={product.images[0].url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                      <img src={product.images[0].url} alt={product.name} className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${isOutOfStock ? "grayscale" : ""}`} loading="lazy" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-200">
                         <svg className="w-10 h-10 sm:w-14 sm:h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                       </div>
                     )}
                     {hasDiscount && <span className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-md">-{discountPct}%</span>}
-                    {product.images.length > 1 && <span className="absolute top-1.5 right-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">+{product.images.length - 1}</span>}
+                    {isOutOfStock && <span className="absolute top-1.5 right-1.5 bg-gray-800 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-md">AGOTADO</span>}
+                    {!isOutOfStock && product.images.length > 1 && <span className="absolute top-1.5 right-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">+{product.images.length - 1}</span>}
                     {addedToCart === product.id && (
-                      <div className="absolute inset-0 bg-green-500/80 flex items-center justify-center">
-                        <span className="text-white font-bold text-sm sm:text-lg">✓ Agregado</span>
+                      <div className="absolute inset-0 bg-green-500/80 flex items-center justify-center animate-cart-added">
+                        <div className="text-center text-white animate-bounce">
+                          <span className="text-3xl sm:text-4xl block">🛒 ✓</span>
+                          <span className="font-bold text-sm sm:text-lg mt-1 block">¡Agregado!</span>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -248,6 +247,9 @@ export default function CatalogPage() {
 
                 <div className="p-2.5 sm:p-4 flex-1 flex flex-col">
                   <h3 className="font-semibold text-gray-900 text-xs sm:text-sm leading-tight line-clamp-2">{product.name}</h3>
+                  {totalStock !== null && !isOutOfStock && (
+                    <p className="text-[10px] sm:text-xs text-green-600 font-medium mt-0.5">📦 {totalStock} disponible{totalStock !== 1 ? "s" : ""}</p>
+                  )}
                   <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5 flex-wrap">
                     <span className="text-sm sm:text-lg font-bold" style={{ color: btnColor }}>{formatPrice(product.basePrice)}</span>
                     {hasDiscount && <span className="text-[10px] sm:text-xs text-gray-400 line-through">{formatPrice(product.comparePrice!)}</span>}
@@ -260,13 +262,19 @@ export default function CatalogPage() {
                       {product.variants.length > 2 && <span className="text-[10px] text-gray-400">+{product.variants.length - 2}</span>}
                     </div>
                   )}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); product.variants.length > 0 ? setSelectedProduct(product) : addToCart(product, null); }}
-                    style={{ backgroundColor: btnColor }}
-                    className="mt-2 sm:mt-3 w-full text-white py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-medium hover:opacity-90 transition flex items-center justify-center gap-1 text-xs sm:text-sm"
-                  >
-                    <CartIcon className="w-4 h-4" /> {btnText}
-                  </button>
+                  {isOutOfStock ? (
+                    <button disabled className="mt-2 sm:mt-3 w-full bg-gray-300 text-gray-500 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-medium cursor-not-allowed flex items-center justify-center gap-1 text-xs sm:text-sm">
+                      Agotado
+                    </button>
+                  ) : (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); product.variants.length > 0 ? setSelectedProduct(product) : addToCart(product, null); }}
+                      style={{ backgroundColor: btnColor }}
+                      className="mt-2 sm:mt-3 w-full text-white py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-medium hover:opacity-90 transition flex items-center justify-center gap-1 text-xs sm:text-sm"
+                    >
+                      <CartIcon className="w-4 h-4" /> {btnText}
+                    </button>
+                  )}
                 </div>
               </div>
               );
@@ -312,42 +320,50 @@ export default function CatalogPage() {
       )}
 
       {/* Modal */}
-      {selectedProduct && <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} onAddToCart={addToCart} addedToCart={addedToCart} currency={cur} primaryColor={btnColor} />}
-      <Cart items={cartItems} isOpen={cartOpen} onClose={() => setCartOpen(false)} onUpdateQuantity={(i, q) => setCartItems((prev) => { const n = [...prev]; n[i].quantity = q; return n; })} onRemoveItem={(i) => setCartItems((prev) => prev.filter((_, idx) => idx !== i))} onClearCart={() => setCartItems([])} storeWhatsapp={store?.whatsapp || null} storeName={store?.storeName || "Tienda"} currency={cur} primaryColor={btnColor} />
+      {selectedProduct && <ProductModal product={selectedProduct} categories={categories} onClose={() => setSelectedProduct(null)} onAddToCart={addToCart} addedToCart={addedToCart} currency={cur} primaryColor={btnColor} />}
+      <Cart items={cartItems} isOpen={cartOpen} onClose={() => setCartOpen(false)} onUpdateQuantity={(i, q) => setCartItems((prev) => { const n = [...prev]; n[i].quantity = q; return n; })} onRemoveItem={(i) => setCartItems((prev) => prev.filter((_, idx) => idx !== i))} onClearCart={() => setCartItems([])} storeWhatsapp={store?.whatsapp || null} storeName={store?.storeName || "Tienda"} currency={cur} primaryColor={btnColor} onOrderSent={fetchProducts} />
       <AdminPanel isOpen={adminOpen} onClose={() => setAdminOpen(false)} />
     </div>
   );
 }
 
 /* ============ PRODUCT MODAL ============ */
-function ProductModal({ product, onClose, onAddToCart, addedToCart, currency, primaryColor }: { product: Product; onClose: () => void; onAddToCart: (p: Product, v: ProductVariant | null) => void; addedToCart: string | null; currency: string; primaryColor: string }) {
+function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, currency, primaryColor }: { product: Product; categories: Category[]; onClose: () => void; onAddToCart: (p: Product, v: ProductVariant | null) => void; addedToCart: string | null; currency: string; primaryColor: string }) {
   const fmt = (v: string) => `${currency}${parseFloat(v).toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(product.variants.length > 0 ? product.variants[0] : null);
+  const [justAdded, setJustAdded] = useState(false);
 
   useEffect(() => { setCurrentImage(0); setSelectedVariant(product.variants.length > 0 ? product.variants[0] : null); }, [product.id, product.variants]);
 
-  // Auto-slide images every 3 seconds
   useEffect(() => {
     if (product.images.length <= 1) return;
-    const timer = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % product.images.length);
-    }, 3000);
+    const timer = setInterval(() => { setCurrentImage((prev) => (prev + 1) % product.images.length); }, 3000);
     return () => clearInterval(timer);
   }, [product.images.length]);
 
   const price = selectedVariant ? parseFloat(selectedVariant.price) : parseFloat(product.basePrice);
   const hasDiscount = !selectedVariant && product.comparePrice && parseFloat(product.comparePrice) > parseFloat(product.basePrice);
   const discountPct = hasDiscount ? Math.round(((parseFloat(product.comparePrice!) - parseFloat(product.basePrice)) / parseFloat(product.comparePrice!)) * 100) : 0;
+  const categoryName = categories.find((c) => c.id === product.categoryId)?.name || null;
+  const totalStock = product.variants.length > 0 ? product.variants.reduce((s, v) => s + v.stock, 0) : null;
+  const isOutOfStock = totalStock !== null && totalStock <= 0;
+  const variantOutOfStock = selectedVariant ? selectedVariant.stock <= 0 : false;
 
   const prevImage = () => setCurrentImage((prev) => (prev - 1 + product.images.length) % product.images.length);
   const nextImage = () => setCurrentImage((prev) => (prev + 1) % product.images.length);
+
+  const handleAddToCart = () => {
+    if (isOutOfStock || variantOutOfStock) return;
+    onAddToCart(product, selectedVariant);
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 1800);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative bg-white w-full sm:max-w-md sm:rounded-2xl shadow-2xl max-h-[92vh] overflow-y-auto rounded-t-3xl">
-        {/* Drag handle */}
         <div className="sm:hidden flex justify-center pt-2 pb-1 sticky top-0 bg-white rounded-t-3xl z-10"><div className="w-10 h-1 bg-gray-300 rounded-full" /></div>
         <button onClick={onClose} className="absolute top-3 right-3 z-20 w-8 h-8 bg-black/40 text-white rounded-full flex items-center justify-center hover:bg-black/60 transition text-xs font-bold">✕</button>
 
@@ -360,14 +376,12 @@ function ProductModal({ product, onClose, onAddToCart, addedToCart, currency, pr
               <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300"><span className="text-5xl">📷</span></div>
             )}
           </div>
-          {/* Arrows */}
           {product.images.length > 1 && (
             <>
               <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 text-white rounded-full flex items-center justify-center hover:bg-black/60 transition text-lg">‹</button>
               <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 text-white rounded-full flex items-center justify-center hover:bg-black/60 transition text-lg">›</button>
             </>
           )}
-          {/* Dots */}
           {product.images.length > 1 && (
             <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
               {product.images.map((_, i) => (
@@ -375,46 +389,54 @@ function ProductModal({ product, onClose, onAddToCart, addedToCart, currency, pr
               ))}
             </div>
           )}
-          {/* Discount badge */}
           {hasDiscount && <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-lg shadow-lg">-{discountPct}%</span>}
-          {/* Counter */}
+          {isOutOfStock && <span className="absolute top-3 left-3 bg-gray-800 text-white text-sm font-bold px-3 py-1.5 rounded-lg shadow-lg">AGOTADO</span>}
           {product.images.length > 1 && <span className="absolute top-3 right-12 bg-black/40 text-white text-[10px] px-2 py-0.5 rounded-full">{currentImage + 1}/{product.images.length}</span>}
-          {/* Added overlay */}
-          {addedToCart === product.id && (
-            <div className="absolute inset-0 bg-green-500/90 flex items-center justify-center">
+          {/* Added animation overlay */}
+          {(addedToCart === product.id || justAdded) && (
+            <div className="absolute inset-0 bg-green-500/90 flex items-center justify-center animate-cart-added">
               <div className="text-center text-white">
-                <span className="text-5xl block mb-2">✓</span>
-                <span className="font-bold text-lg">¡Agregado!</span>
+                <span className="text-5xl block mb-2 animate-bounce">🛒 ✓</span>
+                <span className="font-bold text-xl">¡Agregado al carrito!</span>
               </div>
             </div>
           )}
         </div>
 
         {/* Product info */}
-        <div className="p-4 space-y-3">
+        <div className="p-4 sm:p-5 space-y-3">
+          {/* Category badge */}
+          {categoryName && (
+            <span className="inline-block bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">📂 {categoryName}</span>
+          )}
           {/* Name & Price */}
           <div>
-            <h2 className="text-base font-bold text-gray-900 leading-snug">{product.name}</h2>
-            <div className="flex items-center gap-2 flex-wrap mt-1">
-              <span className="text-2xl font-bold" style={{ color: primaryColor }}>{fmt(price.toString())}</span>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900 leading-snug">{product.name}</h2>
+            <div className="flex items-center gap-2 flex-wrap mt-1.5">
+              <span className="text-2xl sm:text-3xl font-bold" style={{ color: primaryColor }}>{fmt(price.toString())}</span>
               {hasDiscount && <span className="text-sm text-gray-400 line-through">{fmt(product.comparePrice!)}</span>}
               {hasDiscount && <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">-{discountPct}%</span>}
             </div>
           </div>
 
+          {/* Stock info */}
+          {totalStock !== null && !isOutOfStock && (
+            <p className="text-sm text-green-600 font-semibold">📦 {totalStock} disponible{totalStock !== 1 ? "s" : ""}</p>
+          )}
+
           {/* Description */}
           {product.description && (
-            <p className="text-sm sm:text-base text-gray-600 leading-relaxed whitespace-pre-line break-words">{product.description}</p>
+            <p className="text-base sm:text-lg text-gray-700 leading-relaxed whitespace-pre-line break-words">{product.description}</p>
           )}
 
           {/* Variants */}
           {product.variants.length > 0 && (
             <div>
-              <p className="text-[11px] font-semibold text-gray-400 uppercase mb-1.5">Opciones disponibles</p>
+              <p className="text-xs font-semibold text-gray-400 uppercase mb-1.5">Opciones disponibles</p>
               <div className="flex flex-wrap gap-2">
                 {product.variants.map((v) => (
-                  <button key={v.id} onClick={() => setSelectedVariant(v)} className={`rounded-full px-3 py-1.5 text-xs font-medium transition border-2 ${selectedVariant?.id === v.id ? "text-white" : "border-gray-200 text-gray-700 bg-white"}`} style={selectedVariant?.id === v.id ? { backgroundColor: primaryColor, borderColor: primaryColor } : undefined}>
-                    {v.color && v.size ? `${v.color} / ${v.size}` : v.color || v.size || fmt(v.price)}
+                  <button key={v.id} onClick={() => setSelectedVariant(v)} className={`rounded-full px-3 py-1.5 text-xs font-medium transition border-2 ${v.stock <= 0 ? "opacity-40 line-through" : ""} ${selectedVariant?.id === v.id ? "text-white" : "border-gray-200 text-gray-700 bg-white"}`} style={selectedVariant?.id === v.id ? { backgroundColor: primaryColor, borderColor: primaryColor } : undefined}>
+                    {v.color && v.size ? `${v.color} / ${v.size}` : v.color || v.size || fmt(v.price)} {v.stock <= 0 ? "(Agotado)" : ""}
                   </button>
                 ))}
               </div>
@@ -422,16 +444,24 @@ function ProductModal({ product, onClose, onAddToCart, addedToCart, currency, pr
                 <p className="text-xs text-gray-500 mt-1.5">
                   {selectedVariant.color && <span className="mr-2">{selectedVariant.color}</span>}
                   {selectedVariant.size && <span className="mr-2">Talla: {selectedVariant.size}</span>}
-                  <span>Stock: {selectedVariant.stock}</span>
+                  <span className={selectedVariant.stock <= 0 ? "text-red-500 font-bold" : "text-green-600 font-bold"}>
+                    {selectedVariant.stock <= 0 ? "❌ Agotado" : `📦 Stock: ${selectedVariant.stock}`}
+                  </span>
                 </p>
               )}
             </div>
           )}
 
           {/* Add to cart button */}
-          <button onClick={() => onAddToCart(product, selectedVariant)} style={{ backgroundColor: primaryColor }} className="w-full text-white py-3 rounded-2xl font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 text-[15px]">
-            <CartIcon className="w-5 h-5" /> Agregar al Carrito
-          </button>
+          {isOutOfStock || variantOutOfStock ? (
+            <button disabled className="w-full bg-gray-300 text-gray-500 py-3 rounded-2xl font-semibold cursor-not-allowed flex items-center justify-center gap-2 text-base">
+              Agotado
+            </button>
+          ) : (
+            <button onClick={handleAddToCart} style={{ backgroundColor: primaryColor }} className="w-full text-white py-3 rounded-2xl font-semibold hover:opacity-90 transition-all active:scale-95 flex items-center justify-center gap-2 text-base">
+              <CartIcon className="w-5 h-5" /> Agregar al Carrito
+            </button>
+          )}
         </div>
       </div>
     </div>
