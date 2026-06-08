@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const { variantId, quantity } = await req.json();
-    if (!variantId || !quantity) return NextResponse.json({ error: "variantId and quantity required" }, { status: 400 });
+    const body = await req.json();
+    const { variantId, quantity, setStock } = body;
+    if (!variantId) return NextResponse.json({ error: "variantId required" }, { status: 400 });
 
-    // Dynamic import to support both Firebase and PostgreSQL
     const { isFirebaseConfigured, getFirestoreDb } = await import("@/lib/firebase");
 
     if (isFirebaseConfigured()) {
@@ -14,9 +14,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const ref = fs.collection("products").doc(id).collection("variants").doc(variantId);
       const snap = await ref.get();
       if (snap.exists) {
-        const current = snap.data()!.stock || 0;
-        const newStock = Math.max(0, current - quantity);
-        await ref.update({ stock: newStock });
+        if (typeof setStock === "number") {
+          // Set stock directly
+          await ref.update({ stock: Math.max(0, setStock) });
+        } else if (typeof quantity === "number") {
+          // Subtract quantity from stock
+          const current = snap.data()!.stock || 0;
+          const newStock = Math.max(0, current - quantity);
+          await ref.update({ stock: newStock });
+        }
       }
     } else {
       const { db } = await import("@/db");
@@ -24,8 +30,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const { eq, and } = await import("drizzle-orm");
       const [variant] = await db.select().from(productVariants).where(and(eq(productVariants.id, variantId), eq(productVariants.productId, id)));
       if (variant) {
-        const newStock = Math.max(0, variant.stock - quantity);
-        await db.update(productVariants).set({ stock: newStock }).where(eq(productVariants.id, variantId));
+        if (typeof setStock === "number") {
+          await db.update(productVariants).set({ stock: Math.max(0, setStock) }).where(eq(productVariants.id, variantId));
+        } else if (typeof quantity === "number") {
+          const newStock = Math.max(0, variant.stock - quantity);
+          await db.update(productVariants).set({ stock: newStock }).where(eq(productVariants.id, variantId));
+        }
       }
     }
 
