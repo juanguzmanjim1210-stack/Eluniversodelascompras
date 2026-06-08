@@ -654,7 +654,8 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
   const [basePrice, setBasePrice] = useState("");
   const [comparePrice, setComparePrice] = useState("");
   const [active, setActive] = useState(true);
-  const [imageUrls, setImageUrls] = useState<string[]>(Array(10).fill(""));
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [newImageUrl, setNewImageUrl] = useState("");
 
   const [varColor, setVarColor] = useState("");
   const [varSize, setVarSize] = useState("");
@@ -673,9 +674,7 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
     setComparePrice(p.comparePrice || "");
     setActive(p.active);
 
-    const urls = Array(10).fill("");
-    p.images.sort((a, b) => a.sortOrder - b.sortOrder).forEach((img, i) => { if (i < 10) urls[i] = img.url; });
-    setImageUrls(urls);
+    setImageUrls(p.images.sort((a, b) => a.sortOrder - b.sortOrder).map((img) => img.url));
   }, [productId]);
 
   useEffect(() => { fetchProduct(); }, [fetchProduct]);
@@ -697,7 +696,15 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
     fetchProduct();
   };
 
-  const updateImageUrl = (i: number, v: string) => { setImageUrls((prev) => { const next = [...prev]; next[i] = v; return next; }); };
+  const addImage = () => {
+    if (!newImageUrl.trim() || imageUrls.length >= 10) return;
+    setImageUrls((prev) => [...prev, newImageUrl.trim()]);
+    setNewImageUrl("");
+  };
+
+  const removeImage = (i: number) => {
+    setImageUrls((prev) => prev.filter((_, idx) => idx !== i));
+  };
 
   const handleAddVariant = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -774,18 +781,40 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
 
       {/* Images */}
       <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-        <h4 className="font-semibold text-sm text-gray-700">🖼️ Imágenes ({imageUrls.filter(u => u.trim()).length}/10)</h4>
-        <p className="text-xs text-gray-500">Sube a imgbb.com y pega los enlaces</p>
-        <div className="space-y-2 max-h-48 overflow-y-auto">
-          {imageUrls.map((url, i) => (
-            <div key={i} className="flex gap-2 items-center">
-              <span className="text-xs text-gray-400 w-4">{i + 1}</span>
-              {url.trim() && <img src={url} alt="" className="w-8 h-8 rounded object-cover bg-white border flex-shrink-0" />}
-              <input value={url} onChange={(e) => updateImageUrl(i, e.target.value)} placeholder={`Imagen ${i + 1} URL`} className="flex-1 px-2 py-1.5 border rounded text-xs font-mono" />
-            </div>
-          ))}
-        </div>
-        <button onClick={handleSaveImages} className="w-full bg-green-600 text-white py-2 rounded-lg text-sm font-medium">💾 Guardar Imágenes</button>
+        <h4 className="font-semibold text-sm text-gray-700">🖼️ Imágenes ({imageUrls.length}/10)</h4>
+        {/* Add image - single input */}
+        {imageUrls.length < 10 && (
+          <div className="flex gap-2">
+            <input
+              value={newImageUrl}
+              onChange={(e) => setNewImageUrl(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addImage(); } }}
+              placeholder="Pega el enlace de la imagen aquí..."
+              className="flex-1 px-3 py-2 border rounded-lg text-sm font-mono"
+            />
+            <button onClick={addImage} disabled={!newImageUrl.trim()} className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-40">
+              + Agregar
+            </button>
+          </div>
+        )}
+        {/* Image list */}
+        {imageUrls.length > 0 && (
+          <div className="grid grid-cols-5 gap-2">
+            {imageUrls.map((url, i) => (
+              <div key={i} className="relative group">
+                <div className="aspect-square rounded-lg overflow-hidden bg-white border">
+                  <img src={url} alt="" className="w-full h-full object-cover" />
+                </div>
+                <button onClick={() => removeImage(i)} className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow">✕</button>
+                <span className="absolute bottom-0.5 left-0.5 bg-black/50 text-white text-[9px] px-1 rounded">{i + 1}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {imageUrls.length > 0 && (
+          <button onClick={handleSaveImages} className="w-full bg-green-600 text-white py-2 rounded-lg text-sm font-medium">💾 Guardar Imágenes</button>
+        )}
+        <p className="text-[10px] text-gray-400">Acepta JPG, PNG, WebP, GIF — cualquier enlace de imagen</p>
       </div>
 
       {/* Variants */}
