@@ -857,16 +857,62 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
 
       {/* Variants */}
       <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-        <h4 className="font-semibold text-sm text-gray-700">🎨 Variantes</h4>
+        <h4 className="font-semibold text-sm text-gray-700">🎨 Variantes y Stock</h4>
         {product.variants.map((v) => (
-          <div key={v.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 text-xs">
-            <div className="flex gap-1 flex-wrap">
-              {v.color && <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{v.color}</span>}
-              {v.size && <span className="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">{v.size}</span>}
-              <span className="font-medium">${parseFloat(v.price).toFixed(2)}</span>
-              <span className="text-gray-500">Stock: {v.stock}</span>
+          <div key={v.id} className="bg-white rounded-lg px-3 py-2.5 text-xs space-y-1.5">
+            <div className="flex items-center justify-between">
+              <div className="flex gap-1 flex-wrap items-center">
+                {v.color && <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{v.color}</span>}
+                {v.size && <span className="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">{v.size}</span>}
+                <span className="font-medium">${parseFloat(v.price).toFixed(2)}</span>
+              </div>
+              <button onClick={() => handleDeleteVariant(v.id)} className="text-red-500 hover:bg-red-50 px-1.5 py-0.5 rounded">✕</button>
             </div>
-            <button onClick={() => handleDeleteVariant(v.id)} className="text-red-500">✕</button>
+            {/* Stock editable */}
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-medium ${v.stock <= 0 ? "text-red-500" : "text-green-600"}`}>
+                📦 Stock: {v.stock} {v.stock <= 0 ? "(Agotado)" : ""}
+              </span>
+              <div className="flex items-center gap-1 ml-auto">
+                <button
+                  onClick={async () => {
+                    await fetch(`/api/products/${productId}/variants/stock`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ variantId: v.id, quantity: -1 }),
+                    });
+                    fetchProduct();
+                  }}
+                  className="w-7 h-7 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 flex items-center justify-center font-bold text-sm"
+                >−</button>
+                <input
+                  type="number"
+                  min="0"
+                  value={v.stock}
+                  onChange={async (e) => {
+                    const val = parseInt(e.target.value) || 0;
+                    await fetch(`/api/products/${productId}/variants/stock`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ variantId: v.id, setStock: val }),
+                    });
+                    fetchProduct();
+                  }}
+                  className="w-14 text-center border rounded-lg py-1 text-sm font-bold"
+                />
+                <button
+                  onClick={async () => {
+                    await fetch(`/api/products/${productId}/variants/stock`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ variantId: v.id, quantity: -(-1) }),
+                    });
+                    fetchProduct();
+                  }}
+                  className="w-7 h-7 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center font-bold text-sm"
+                >+</button>
+              </div>
+            </div>
           </div>
         ))}
         <form onSubmit={handleAddVariant} className="grid grid-cols-4 gap-2">
