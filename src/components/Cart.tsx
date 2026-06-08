@@ -41,7 +41,7 @@ export default function Cart({
   const [sending, setSending] = useState(false);
 
   const total = items.reduce((sum, item) => {
-    const price = item.variant && parseFloat(item.variant.price) > 0 ? parseFloat(item.variant.price) : parseFloat(item.product.basePrice);
+    const price = item.variant ? parseFloat(item.variant.price) : parseFloat(item.product.basePrice);
     return sum + price * item.quantity;
   }, 0);
 
@@ -75,11 +75,11 @@ export default function Cart({
     let message = `🛒 *NUEVO PEDIDO - ${storeName}*\n`;
     message += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
     message += `👤 *DATOS DEL CLIENTE*\n`;
-    message += `*• Nombre: ${customerData.fullName}*\n`;
-    message += `*• WhatsApp: ${customerData.whatsapp}*\n`;
-    message += `*• Ciudad: ${customerData.city}*\n`;
-    message += `*• Departamento: ${customerData.department}*\n`;
-    message += `*• Dirección: ${customerData.address}*\n\n`;
+    message += `• Nombre: *${customerData.fullName}*\n`;
+    message += `• WhatsApp: *${customerData.whatsapp}*\n`;
+    message += `• Ciudad: *${customerData.city}*\n`;
+    message += `• Departamento: *${customerData.department}*\n`;
+    message += `• Dirección: *${customerData.address}*\n\n`;
     message += `📦 *PRODUCTOS*\n━━━━━━━━━━━━━━━━━━━━━\n`;
 
     items.forEach((item, index) => {
@@ -180,7 +180,7 @@ export default function Cart({
                         {item.variant?.size && ` - ${item.variant.size}`}
                       </span>
                       <span className="font-medium flex-shrink-0">
-                        {fmt((item.variant && parseFloat(item.variant.price) > 0 ? parseFloat(item.variant.price) : parseFloat(item.product.basePrice)) * item.quantity)}
+                        {fmt((item.variant ? parseFloat(item.variant.price) : parseFloat(item.product.basePrice)) * item.quantity)}
                       </span>
                     </div>
                   ))}
@@ -194,7 +194,7 @@ export default function Cart({
           ) : (
             <div className="p-3 sm:p-4 space-y-2">
               {items.map((item, index) => {
-                const price = item.variant && parseFloat(item.variant.price) > 0 ? parseFloat(item.variant.price) : parseFloat(item.product.basePrice);
+                const price = item.variant ? parseFloat(item.variant.price) : parseFloat(item.product.basePrice);
                 return (
                   <div key={index} className="bg-gray-50 rounded-xl p-2.5 flex gap-2.5">
                     <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-white overflow-hidden flex-shrink-0">
