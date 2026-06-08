@@ -476,6 +476,7 @@ function SettingsTab() {
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementActive, setAnnouncementActive] = useState(false);
   const [announcementColor, setAnnouncementColor] = useState("#16a34a");
+  const [announcementSpeed, setAnnouncementSpeed] = useState(40);
 
   useEffect(() => {
     fetch("/api/store-settings").then((r) => r.json()).then((data: StoreSettings) => {
@@ -493,6 +494,7 @@ function SettingsTab() {
       setCurrency(data.currency || "$");
       setFooterText(data.footerText || "");
       setAnnouncementColor(data.announcementColor || "#16a34a");
+      setAnnouncementSpeed(data.announcementSpeed || 40);
       setAnnouncementText(data.announcementText || "");
       setAnnouncementActive(data.announcementActive ?? false);
     });
@@ -503,7 +505,7 @@ function SettingsTab() {
     await fetch("/api/store-settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ storeName, storeDescription, logoUrl, coverUrl, facebook, whatsapp, instagram, tiktok, primaryColor, buttonText, currency, footerText, announcementText, announcementActive, announcementColor }),
+      body: JSON.stringify({ storeName, storeDescription, logoUrl, coverUrl, facebook, whatsapp, instagram, tiktok, primaryColor, buttonText, currency, footerText, announcementText, announcementActive, announcementColor, announcementSpeed }),
     });
     setSaving(false); setSaved(true);
     setTimeout(() => setSaved(false), 3000);
@@ -541,11 +543,18 @@ function SettingsTab() {
         <h4 className="font-semibold text-sm text-yellow-800">📢 Anuncio / Promoción</h4>
         <p className="text-xs text-yellow-600">Banner animado que se desliza arriba del catálogo</p>
         <input value={announcementText} onChange={(e) => setAnnouncementText(e.target.value)} placeholder="Ej: ¡Envío gratis en compras mayores a $100.000!" className="w-full px-3 py-2 border border-yellow-300 rounded-lg text-sm" />
-        <div>
-          <label className="block text-xs font-medium text-yellow-800 mb-1">Color del banner</label>
-          <div className="flex items-center gap-2">
-            <input type="color" value={announcementColor} onChange={(e) => setAnnouncementColor(e.target.value)} className="w-10 h-10 rounded-lg border cursor-pointer" />
-            <input value={announcementColor} onChange={(e) => setAnnouncementColor(e.target.value)} className="flex-1 px-2 py-1.5 border rounded text-xs font-mono" />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-yellow-800 mb-1">Color del banner</label>
+            <div className="flex items-center gap-2">
+              <input type="color" value={announcementColor} onChange={(e) => setAnnouncementColor(e.target.value)} className="w-10 h-10 rounded-lg border cursor-pointer" />
+              <input value={announcementColor} onChange={(e) => setAnnouncementColor(e.target.value)} className="flex-1 px-2 py-1.5 border rounded text-xs font-mono" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-yellow-800 mb-1">Velocidad ({announcementSpeed}s)</label>
+            <input type="range" min="10" max="80" value={announcementSpeed} onChange={(e) => setAnnouncementSpeed(parseInt(e.target.value))} className="w-full mt-2" />
+            <div className="flex justify-between text-[10px] text-yellow-700"><span>Rápido</span><span>Lento</span></div>
           </div>
         </div>
         <label className="flex items-center gap-2 text-sm">
@@ -553,8 +562,17 @@ function SettingsTab() {
           Mostrar anuncio en el catálogo
         </label>
         {announcementActive && announcementText && (
-          <div style={{ backgroundColor: announcementColor }} className="rounded-lg p-2 text-white text-xs font-medium text-center overflow-hidden">
-            <span>Vista previa: {announcementText}</span>
+          <div style={{ backgroundColor: announcementColor }} className="rounded-lg overflow-hidden py-2">
+            <div className="whitespace-nowrap inline-flex" style={{ animation: `marquee-preview ${announcementSpeed}s linear infinite` }}>
+              {[0,1].map((h) => (
+                <span key={h} className="inline-flex">
+                  {[0,1,2].map((i) => (
+                    <span key={i} className="mx-6 text-xs font-bold tracking-wide uppercase text-white" style={{ fontFamily: "'Courier New', monospace" }}>★ {announcementText} ★</span>
+                  ))}
+                </span>
+              ))}
+            </div>
+            <style>{`@keyframes marquee-preview { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}</style>
           </div>
         )}
       </div>
@@ -598,9 +616,9 @@ function SettingsTab() {
       {/* WhatsApp for Orders */}
       <div className="bg-green-50 rounded-xl p-4 space-y-3 border border-green-200">
         <h4 className="font-semibold text-sm text-green-800">📱 WhatsApp para Pedidos</h4>
-        <p className="text-xs text-green-600">Este número recibirá todos los pedidos de tus clientes</p>
-        <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="Ej: 573001234567 (código de país + número)" className="w-full px-3 py-2 border border-green-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500" />
-        <p className="text-xs text-green-600">💡 código de país + número sin espacios (ej: 573001234567)</p>
+        <p className="text-xs text-green-600">Pega aquí el enlace de tu WhatsApp</p>
+        <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="https://wa.me/573001234567" className="w-full px-3 py-2 border border-green-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 font-mono" />
+        <p className="text-xs text-green-600">💡 Abre WhatsApp → tu perfil → copia el enlace y pégalo aquí</p>
       </div>
 
       {/* Social Media */}
