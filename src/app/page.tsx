@@ -50,7 +50,6 @@ export default function CatalogPage() {
 
   const fetchProducts = useCallback(async () => {
     const p = new URLSearchParams();
-    p.set("active", "true");
     p.set("_t", Date.now().toString());
     if (selectedCategory) p.set("categoryId", selectedCategory);
     if (search) p.set("search", search);
@@ -185,10 +184,6 @@ export default function CatalogPage() {
 
         <div className="flex items-center justify-between mb-3 sm:mb-6">
           <p className="text-xs sm:text-sm text-gray-500">{loading ? "Cargando..." : `${products.length} producto(s)`}</p>
-          <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-green-600">
-            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse" />
-            En vivo
-          </div>
         </div>
 
         {/* PRODUCT GRID */}
@@ -207,12 +202,10 @@ export default function CatalogPage() {
             {products.map((product) => {
               const hasDiscount = product.comparePrice && parseFloat(product.comparePrice) > parseFloat(product.basePrice);
               const discountPct = hasDiscount ? Math.round(((parseFloat(product.comparePrice!) - parseFloat(product.basePrice)) / parseFloat(product.comparePrice!)) * 100) : 0;
-              const totalStock = getProductTotalStock(product);
-              const isOutOfStock = totalStock !== null && totalStock <= 0;
-              const hasStockInfo = totalStock !== null;
+              const isOutOfStock = !product.active;
 
               return (
-              <div key={product.id} className={`bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col ${isOutOfStock ? "opacity-70" : ""}`}>
+              <div key={product.id} className={`bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group flex flex-col ${isOutOfStock ? "opacity-60" : ""}`}>
                 <div onClick={() => setSelectedProduct(product)} className="cursor-pointer">
                   <div className="aspect-square bg-gray-100 relative overflow-hidden">
                     {product.images.length > 0 ? (
@@ -222,7 +215,7 @@ export default function CatalogPage() {
                         <svg className="w-10 h-10 sm:w-14 sm:h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                       </div>
                     )}
-                    {hasDiscount && <span className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-md">-{discountPct}%</span>}
+                    {hasDiscount && !isOutOfStock && <span className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-md">-{discountPct}%</span>}
                     {isOutOfStock && <span className="absolute top-1.5 right-1.5 bg-gray-800 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-md">AGOTADO</span>}
                     {!isOutOfStock && product.images.length > 1 && <span className="absolute top-1.5 right-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">+{product.images.length - 1}</span>}
                     {addedToCart === product.id && (
@@ -237,12 +230,12 @@ export default function CatalogPage() {
                 </div>
 
                 <div className="p-2.5 sm:p-4 flex-1 flex flex-col">
-                  <h3 className="font-semibold text-gray-900 text-xs sm:text-sm leading-tight line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
+                  <h3 className={`font-semibold text-xs sm:text-sm leading-tight line-clamp-2 min-h-[2.5rem] ${isOutOfStock ? "text-gray-400" : "text-gray-900"}`}>{product.name}</h3>
                   <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5 flex-wrap">
-                    <span className="text-sm sm:text-lg font-bold" style={{ color: btnColor }}>{formatPrice(product.basePrice)}</span>
-                    {hasDiscount && <span className="text-[10px] sm:text-xs text-gray-400 line-through">{formatPrice(product.comparePrice!)}</span>}
+                    <span className={`text-sm sm:text-lg font-bold ${isOutOfStock ? "text-gray-400" : ""}`} style={isOutOfStock ? {} : { color: btnColor }}>{formatPrice(product.basePrice)}</span>
+                    {hasDiscount && !isOutOfStock && <span className="text-[10px] sm:text-xs text-gray-400 line-through">{formatPrice(product.comparePrice!)}</span>}
                   </div>
-                  {product.variants.length > 0 && (
+                  {product.variants.length > 0 && !isOutOfStock && (
                     <div className="mt-1 flex flex-wrap gap-0.5">
                       {[...new Set(product.variants.map((v) => v.color).filter(Boolean))].slice(0, 2).map((c) => (
                         <span key={c} className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">{c}</span>
@@ -321,29 +314,27 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(product.variants.length > 0 ? product.variants[0] : null);
   const [justAdded, setJustAdded] = useState(false);
+  const [autoSlide, setAutoSlide] = useState(true);
 
-  useEffect(() => { setCurrentImage(0); setSelectedVariant(product.variants.length > 0 ? product.variants[0] : null); }, [product.id, product.variants]);
+  useEffect(() => { setCurrentImage(0); setAutoSlide(true); setSelectedVariant(product.variants.length > 0 ? product.variants[0] : null); }, [product.id, product.variants]);
 
   useEffect(() => {
-    if (product.images.length <= 1) return;
-    const timer = setInterval(() => { setCurrentImage((prev) => (prev + 1) % product.images.length); }, 3000);
+    if (product.images.length <= 1 || !autoSlide) return;
+    const timer = setInterval(() => { setCurrentImage((prev) => (prev + 1) % product.images.length); }, 6000);
     return () => clearInterval(timer);
-  }, [product.images.length]);
+  }, [product.images.length, autoSlide]);
 
   const price = selectedVariant && parseFloat(selectedVariant.price) > 0 ? parseFloat(selectedVariant.price) : parseFloat(product.basePrice);
   const hasDiscount = !selectedVariant && product.comparePrice && parseFloat(product.comparePrice) > parseFloat(product.basePrice);
   const discountPct = hasDiscount ? Math.round(((parseFloat(product.comparePrice!) - parseFloat(product.basePrice)) / parseFloat(product.comparePrice!)) * 100) : 0;
   const categoryName = categories.find((c) => c.id === product.categoryId)?.name || null;
-  const totalStock = product.variants.length > 0 ? product.variants.reduce((s, v) => s + v.stock, 0) : null;
-  const hasStockInfo = totalStock !== null;
-  const isOutOfStock = hasStockInfo && totalStock <= 0;
-  const variantOutOfStock = selectedVariant ? selectedVariant.stock <= 0 : false;
+  const isOutOfStock = !product.active;
 
-  const prevImage = () => setCurrentImage((prev) => (prev - 1 + product.images.length) % product.images.length);
-  const nextImage = () => setCurrentImage((prev) => (prev + 1) % product.images.length);
+  const prevImage = () => { setAutoSlide(false); setCurrentImage((prev) => (prev - 1 + product.images.length) % product.images.length); };
+  const nextImage = () => { setAutoSlide(false); setCurrentImage((prev) => (prev + 1) % product.images.length); };
 
   const handleAddToCart = () => {
-    if (isOutOfStock || variantOutOfStock) return;
+    if (isOutOfStock) return;
     onAddToCart(product, selectedVariant);
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), 1800);
@@ -400,10 +391,7 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
             </div>
           </div>
 
-          {/* Stock info */}
-          {hasStockInfo && !isOutOfStock && totalStock !== null && totalStock > 0 && (
-            <p className="text-lg sm:text-xl text-green-600 font-bold">📦 {totalStock} disponible{totalStock !== 1 ? "s" : ""}</p>
-          )}
+          {/* Agotado */}
           {isOutOfStock && (
             <p className="text-lg sm:text-xl text-red-500 font-bold">❌ Agotado</p>
           )}
@@ -437,7 +425,7 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
           )}
 
           {/* Add to cart button */}
-          {isOutOfStock || variantOutOfStock ? (
+          {isOutOfStock ? (
             <button disabled className="w-full bg-gray-300 text-gray-500 py-3 rounded-2xl font-semibold cursor-not-allowed flex items-center justify-center gap-2 text-base">
               Agotado
             </button>
