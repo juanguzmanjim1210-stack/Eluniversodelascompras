@@ -101,9 +101,6 @@ export default function CatalogPage() {
 
   const getProductTotalStock = (product: Product): number | null => {
     if (product.variants.length > 0) return product.variants.reduce((s, v) => s + v.stock, 0);
-    // Si el producto no tiene variantes, solo mostrar stock si fue configurado (> 0 o explícitamente 0)
-    if (product.stock !== undefined && product.stock !== null && product.stock > 0) return product.stock;
-    // Si stock es 0 o no existe, no restringir — el admin aún no configuró stock
     return null;
   };
 
@@ -347,7 +344,7 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
   const hasDiscount = !selectedVariant && product.comparePrice && parseFloat(product.comparePrice) > parseFloat(product.basePrice);
   const discountPct = hasDiscount ? Math.round(((parseFloat(product.comparePrice!) - parseFloat(product.basePrice)) / parseFloat(product.comparePrice!)) * 100) : 0;
   const categoryName = categories.find((c) => c.id === product.categoryId)?.name || null;
-  const totalStock = product.variants.length > 0 ? product.variants.reduce((s, v) => s + v.stock, 0) : (product.stock && product.stock > 0 ? product.stock : null);
+  const totalStock = product.variants.length > 0 ? product.variants.reduce((s, v) => s + v.stock, 0) : null;
   const hasStockInfo = totalStock !== null;
   const isOutOfStock = hasStockInfo && totalStock <= 0;
   const variantOutOfStock = selectedVariant ? selectedVariant.stock <= 0 : false;
