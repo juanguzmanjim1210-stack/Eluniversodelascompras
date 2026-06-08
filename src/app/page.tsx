@@ -247,12 +247,6 @@ export default function CatalogPage() {
 
                 <div className="p-2.5 sm:p-4 flex-1 flex flex-col">
                   <h3 className="font-semibold text-gray-900 text-sm sm:text-base leading-tight line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
-                  {!isOutOfStock && (
-                    <p className="text-[10px] sm:text-xs text-green-600 font-medium mt-0.5">📦 {totalStock} disponible{totalStock !== 1 ? "s" : ""}</p>
-                  )}
-                  {isOutOfStock && (
-                    <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-0.5">❌ Agotado</p>
-                  )}
                   <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5 flex-wrap">
                     <span className="text-sm sm:text-lg font-bold" style={{ color: btnColor }}>{formatPrice(product.basePrice)}</span>
                     {hasDiscount && <span className="text-[10px] sm:text-xs text-gray-400 line-through">{formatPrice(product.comparePrice!)}</span>}
@@ -415,8 +409,11 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
           </div>
 
           {/* Stock info */}
-          {totalStock !== null && !isOutOfStock && (
-            <p className="text-sm text-green-600 font-semibold">📦 {totalStock} disponible{totalStock !== 1 ? "s" : ""}</p>
+          {!isOutOfStock && (
+            <p className="text-base sm:text-lg text-green-600 font-bold">📦 {totalStock} disponible{totalStock !== 1 ? "s" : ""}</p>
+          )}
+          {isOutOfStock && (
+            <p className="text-base sm:text-lg text-red-500 font-bold">❌ Agotado</p>
           )}
 
           {/* Description */}
