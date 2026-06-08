@@ -11,6 +11,7 @@ const DEFAULT_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 export async function initializeAdminPassword(): Promise<void> {
   const hash = await getAdminHash();
   if (!hash) {
+    // No password exists yet - create one from ADMIN_PASSWORD env var
     const newHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
     await setAdminHash(newHash);
   }
@@ -20,7 +21,19 @@ export async function verifyPassword(password: string): Promise<boolean> {
   await initializeAdminPassword();
   const hash = await getAdminHash();
   if (!hash) return false;
-  return bcrypt.compare(password, hash);
+
+  const matches = await bcrypt.compare(password, hash);
+  if (matches) return true;
+
+  // If the password they typed matches ADMIN_PASSWORD env var,
+  // reset the hash (in case DB had a stale hash from before)
+  if (password === DEFAULT_PASSWORD) {
+    const newHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+    await setAdminHash(newHash);
+    return true;
+  }
+
+  return false;
 }
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
