@@ -657,6 +657,7 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState("");
 
+  const [productStock, setProductStock] = useState(0);
   const [varColor, setVarColor] = useState("");
   const [varSize, setVarSize] = useState("");
   const [varPrice, setVarPrice] = useState("");
@@ -672,6 +673,7 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
     setCategoryId(p.categoryId || "");
     setBasePrice(p.basePrice);
     setComparePrice(p.comparePrice || "");
+    setProductStock(p.stock ?? 0);
     setActive(p.active);
 
     setImageUrls(p.images.sort((a, b) => a.sortOrder - b.sortOrder).map((img) => img.url));
@@ -687,7 +689,7 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
     await fetch(`/api/products/${productId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, description, categoryId: categoryId || null, basePrice, comparePrice: comparePrice || null, active }),
+      body: JSON.stringify({ name, description, categoryId: categoryId || null, basePrice, comparePrice: comparePrice || null, stock: productStock, active }),
     });
     setSaving(false);
     setInfoSaved(true);
@@ -804,6 +806,23 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
           </div>
         )}
         <p className="text-xs text-gray-400">Si pones un precio antes mayor al precio de venta, se mostrará el descuento automáticamente</p>
+      </div>
+
+      {/* Stock del producto (para productos sin variantes) */}
+      <div className="bg-orange-50 rounded-xl p-4 space-y-3 border border-orange-200">
+        <h4 className="font-semibold text-sm text-orange-800">📦 Stock del Producto</h4>
+        <p className="text-xs text-orange-600">Cantidad disponible. Se descuenta automáticamente cuando un cliente hace un pedido.</p>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setProductStock(Math.max(0, productStock - 1))} className="w-9 h-9 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 flex items-center justify-center font-bold text-lg">−</button>
+          <input type="number" min="0" value={productStock} onChange={(e) => setProductStock(parseInt(e.target.value) || 0)} className="w-20 text-center border rounded-lg py-2 text-lg font-bold" />
+          <button onClick={() => setProductStock(productStock + 1)} className="w-9 h-9 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center font-bold text-lg">+</button>
+          <span className={`text-sm font-bold ml-2 ${productStock <= 0 ? "text-red-500" : "text-green-600"}`}>
+            {productStock <= 0 ? "❌ Agotado" : `✅ ${productStock} disponible${productStock !== 1 ? "s" : ""}`}
+          </span>
+        </div>
+        {product && product.variants.length > 0 && (
+          <p className="text-[10px] text-orange-500">⚠️ Este producto tiene variantes — el stock de cada variante se edita abajo</p>
+        )}
       </div>
 
       {/* Save Info */}
