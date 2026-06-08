@@ -53,21 +53,15 @@ export default function Cart({
 
     // Descontar stock de variantes
     for (const item of items) {
-      try {
-        if (item.variant) {
+      if (item.variant) {
+        try {
           await fetch(`/api/products/${item.product.id}/variants/stock`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ variantId: item.variant.id, quantity: item.quantity }),
           });
-        } else {
-          await fetch(`/api/products/${item.product.id}/variants/stock`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ quantity: item.quantity }),
-          });
-        }
-      } catch { /* continue */ }
+        } catch { /* continue */ }
+      }
     }
 
     let message = `🛒 *NUEVO PEDIDO - ${storeName}*\n`;
