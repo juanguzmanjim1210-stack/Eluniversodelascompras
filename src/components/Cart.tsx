@@ -51,17 +51,25 @@ export default function Cart({
     if (!storeWhatsapp) { alert("La tienda no tiene WhatsApp configurado"); return; }
     setSending(true);
 
-    // Descontar stock de variantes
+    // Descontar stock
     for (const item of items) {
-      if (item.variant) {
-        try {
+      try {
+        if (item.variant) {
+          // Descontar stock de la variante
           await fetch(`/api/products/${item.product.id}/variants/stock`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ variantId: item.variant.id, quantity: item.quantity }),
           });
-        } catch { /* continue */ }
-      }
+        } else {
+          // Descontar stock del producto directamente
+          await fetch(`/api/products/${item.product.id}/variants/stock`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ quantity: item.quantity }),
+          });
+        }
+      } catch { /* continue */ }
     }
 
     let message = `🛒 *NUEVO PEDIDO - ${storeName}*\n`;
