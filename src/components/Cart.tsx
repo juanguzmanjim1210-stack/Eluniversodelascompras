@@ -75,24 +75,20 @@ export default function Cart({
     let message = `🛒 *NUEVO PEDIDO - ${storeName}*\n`;
     message += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
     message += `👤 *DATOS DEL CLIENTE*\n`;
-    message += `• Nombre: ${customerData.fullName}\n`;
-    message += `• WhatsApp: ${customerData.whatsapp}\n`;
-    message += `• Ciudad: ${customerData.city}\n`;
-    message += `• Departamento: ${customerData.department}\n`;
-    message += `• Dirección: ${customerData.address}\n\n`;
+    message += `• Nombre: *${customerData.fullName}*\n`;
+    message += `• WhatsApp: *${customerData.whatsapp}*\n`;
+    message += `• Ciudad: *${customerData.city}*\n`;
+    message += `• Departamento: *${customerData.department}*\n`;
+    message += `• Dirección: *${customerData.address}*\n\n`;
     message += `📦 *PRODUCTOS*\n━━━━━━━━━━━━━━━━━━━━━\n`;
 
     items.forEach((item, index) => {
-      const price = item.variant ? parseFloat(item.variant.price) : parseFloat(item.product.basePrice);
-      const subtotal = price * item.quantity;
       message += `\n${index + 1}. *${item.product.name}*\n`;
       if (item.variant) {
         if (item.variant.color) message += `   Color: ${item.variant.color}\n`;
         if (item.variant.size) message += `   Talla: ${item.variant.size}\n`;
       }
       message += `   Cantidad: ${item.quantity}\n`;
-      message += `   Precio: ${fmt(price)}\n`;
-      message += `   Subtotal: ${fmt(subtotal)}\n`;
     });
 
     message += `\n━━━━━━━━━━━━━━━━━━━━━\n`;
