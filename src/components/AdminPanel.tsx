@@ -385,12 +385,12 @@ function ProductsTab({ onEdit }: { onEdit: (id: string) => void }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm truncate">{p.name}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${p.active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{p.active ? "Activo" : "Inactivo"}</span>
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${p.active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{p.active ? "Disponible" : "Agotado"}</span>
                 </div>
                 <p className="text-xs text-gray-500">${parseFloat(p.basePrice).toFixed(2)}</p>
               </div>
               <div className="flex gap-1 flex-shrink-0">
-                <button onClick={() => toggleActive(p)} className="p-1.5 text-xs hover:bg-gray-100 rounded" title={p.active ? "Desactivar" : "Activar"}>{p.active ? "🔴" : "🟢"}</button>
+                <button onClick={() => toggleActive(p)} className="p-1.5 text-xs hover:bg-gray-100 rounded" title={p.active ? "Marcar agotado" : "Marcar disponible"}>{p.active ? "❌" : "✅"}</button>
                 <button onClick={() => onEdit(p.id)} className="p-1.5 text-xs hover:bg-blue-50 text-blue-600 rounded">✏️</button>
                 <button onClick={() => handleDelete(p.id)} className="p-1.5 text-xs hover:bg-red-50 text-red-600 rounded">🗑️</button>
               </div>
@@ -775,9 +775,9 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
           {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción del producto" rows={3} className="w-full px-3 py-2 border rounded-lg text-sm resize-none" />
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="rounded" />
-          Producto activo (visible en catálogo)
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <input type="checkbox" checked={!active} onChange={(e) => setActive(!e.target.checked)} className="rounded accent-red-500" />
+          <span className={active ? "text-gray-600" : "text-red-600 font-bold"}>❌ Marcar como AGOTADO</span>
         </label>
       </div>
 
