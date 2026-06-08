@@ -233,7 +233,7 @@ export default function CatalogPage() {
                     )}
                     {hasDiscount && !isOutOfStock && <span className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-md">-{discountPct}%</span>}
                     {isOutOfStock && <span className="absolute top-1.5 right-1.5 bg-gray-800 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-md">AGOTADO</span>}
-                    {!isOutOfStock && product.images.length > 1 && <span className="absolute top-1.5 right-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-full">+{product.images.length - 1}</span>}
+
                     {addedToCart === product.id && (
                       <div className="absolute inset-0 bg-green-500/80 flex items-center justify-center animate-cart-added">
                         <div className="text-center text-white animate-bounce">
