@@ -138,11 +138,10 @@ export default function CatalogPage() {
               <img src={store.coverUrl} alt="Portada" className="w-full h-full object-cover" loading="eager" />
               <div className="absolute inset-0 bg-black/30" />
               <div className="absolute top-3 right-3 flex gap-2">
-                <button onClick={() => setCartOpen(true)} className="relative w-9 h-9 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition" title="Carrito">
-                  <CartIcon className="w-5 h-5" />
+                <button onClick={() => setCartOpen(true)} className="relative w-11 h-11 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition" title="Carrito">
+                  <CartIcon className="w-6 h-6" />
                   {cartCount > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{cartCount}</span>}
                 </button>
-                <button onClick={() => setAdminOpen(true)} className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition text-sm" title="Admin">⚙️</button>
               </div>
             </div>
           )}
@@ -171,11 +170,10 @@ export default function CatalogPage() {
               )}
               {!store.coverUrl && (
                 <div className="absolute top-4 right-4 flex gap-2">
-                  <button onClick={() => setCartOpen(true)} className="relative w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition text-gray-700" title="Carrito">
-                    <CartIcon className="w-5 h-5" />
+                  <button onClick={() => setCartOpen(true)} className="relative w-11 h-11 sm:w-12 sm:h-12 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition text-gray-700" title="Carrito">
+                    <CartIcon className="w-6 h-6" />
                     {cartCount > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{cartCount}</span>}
                   </button>
-                  <button onClick={() => setAdminOpen(true)} className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition text-sm" title="Admin">⚙️</button>
                 </div>
               )}
             </div>
@@ -186,7 +184,11 @@ export default function CatalogPage() {
       {/* ====== MAIN ====== */}
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-3 sm:py-6">
         <div className="flex gap-2 sm:gap-4 mb-4 sm:mb-8">
-          <input type="text" placeholder="🔍 Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="flex-1 min-w-0 px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 bg-white text-sm sm:text-base" />
+          <input type="text" placeholder="🔍 Buscar..." value={search} onChange={(e) => {
+            const val = e.target.value;
+            if (val.toLowerCase() === "admin") { setAdminOpen(true); setSearch(""); return; }
+            setSearch(val);
+          }} className="flex-1 min-w-0 px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 bg-white text-sm sm:text-base" />
           <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="px-2 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 bg-white text-sm sm:text-base max-w-[140px] sm:max-w-none">
             <option value="">Todas</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
