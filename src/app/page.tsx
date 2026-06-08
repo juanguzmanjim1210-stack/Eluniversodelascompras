@@ -332,80 +332,80 @@ function ProductModal({ product, onClose, onAddToCart, addedToCart, currency, pr
   const discountPct = hasDiscount ? Math.round(((parseFloat(product.comparePrice!) - parseFloat(product.basePrice)) / parseFloat(product.comparePrice!)) * 100) : 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white w-full sm:max-w-4xl sm:rounded-2xl shadow-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto rounded-t-2xl">
+      <div className="relative bg-white w-full sm:max-w-lg sm:rounded-2xl shadow-2xl max-h-[85vh] overflow-y-auto rounded-t-2xl">
+        {/* Mobile drag handle */}
         <div className="sm:hidden flex justify-center pt-2 pb-1"><div className="w-10 h-1 bg-gray-300 rounded-full" /></div>
-        <button onClick={onClose} className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-100 transition text-sm">✕</button>
+        <button onClick={onClose} className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/90 rounded-full shadow flex items-center justify-center hover:bg-gray-100 transition text-sm">✕</button>
 
-        <div className="grid sm:grid-cols-2 gap-0">
-          <div className="bg-gray-100 p-3 sm:p-6 relative">
-            <div className="aspect-square rounded-lg sm:rounded-xl overflow-hidden bg-white mb-2 sm:mb-4 relative">
-              {product.images.length > 0 ? (
-                <img src={product.images[currentImage]?.url} alt={product.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300"><span className="text-5xl sm:text-6xl">📷</span></div>
-              )}
-              {hasDiscount && <span className="absolute top-2 left-2 bg-red-500 text-white text-xs sm:text-sm font-bold px-2 sm:px-3 py-1 rounded-lg shadow-md">-{discountPct}%</span>}
+        {/* Image */}
+        <div className="relative">
+          <div className="aspect-[4/3] bg-gray-100 overflow-hidden sm:rounded-t-2xl">
+            {product.images.length > 0 ? (
+              <img src={product.images[currentImage]?.url} alt={product.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-300"><span className="text-5xl">📷</span></div>
+            )}
+          </div>
+          {hasDiscount && <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">-{discountPct}%</span>}
+          {addedToCart === product.id && (
+            <div className="absolute inset-0 bg-green-500/90 flex items-center justify-center">
+              <div className="text-center text-white">
+                <span className="text-4xl block mb-1">✓</span>
+                <span className="font-bold text-base">¡Agregado!</span>
+              </div>
             </div>
-            {product.images.length > 1 && (
-              <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-1 no-scrollbar">
-                {product.images.map((img, i) => (
-                  <button key={img.id} onClick={() => setCurrentImage(i)} className={`w-12 h-12 sm:w-16 sm:h-16 rounded-md sm:rounded-lg overflow-hidden flex-shrink-0 border-2 transition ${i === currentImage ? "border-blue-500" : "border-transparent"}`}>
-                    <img src={img.url} alt="" className="w-full h-full object-cover" />
+          )}
+        </div>
+
+        {/* Thumbnails */}
+        {product.images.length > 1 && (
+          <div className="flex gap-1.5 px-3 py-2 overflow-x-auto no-scrollbar bg-gray-50">
+            {product.images.map((img, i) => (
+              <button key={img.id} onClick={() => setCurrentImage(i)} className={`w-11 h-11 rounded-md overflow-hidden flex-shrink-0 border-2 transition ${i === currentImage ? "border-blue-500" : "border-transparent"}`}>
+                <img src={img.url} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Info */}
+        <div className="p-4">
+          <h2 className="text-base sm:text-lg font-bold text-gray-900">{product.name}</h2>
+          <div className="flex items-center gap-2 flex-wrap mt-1.5">
+            <span className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>{fmt(price.toString())}</span>
+            {hasDiscount && <span className="text-sm text-gray-400 line-through">{fmt(product.comparePrice!)}</span>}
+            {hasDiscount && <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">-{discountPct}%</span>}
+          </div>
+
+          {product.description && (
+            <p className="mt-3 text-sm text-gray-600 leading-relaxed">{product.description}</p>
+          )}
+
+          {product.variants.length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase mb-1.5">Selecciona una opción</p>
+              <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                {product.variants.map((v) => (
+                  <button key={v.id} onClick={() => setSelectedVariant(v)} className={`w-full text-left rounded-lg p-2.5 flex items-center justify-between transition border-2 ${selectedVariant?.id === v.id ? "bg-green-50" : "border-gray-200"}`} style={selectedVariant?.id === v.id ? { borderColor: primaryColor } : undefined}>
+                    <div className="flex flex-wrap gap-1">
+                      {v.color && <span className="text-[11px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">{v.color}</span>}
+                      {v.size && <span className="text-[11px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-medium">{v.size}</span>}
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-sm text-gray-900">{fmt(v.price)}</p>
+                      <p className="text-[10px] text-gray-500">Stock: {v.stock}</p>
+                    </div>
                   </button>
                 ))}
               </div>
-            )}
-            {addedToCart === product.id && (
-              <div className="absolute inset-0 bg-green-500/90 flex items-center justify-center rounded-t-2xl sm:rounded-none sm:rounded-l-2xl">
-                <div className="text-center text-white">
-                  <span className="text-4xl sm:text-5xl block mb-2">✓</span>
-                  <span className="font-bold text-lg sm:text-xl">¡Agregado!</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="p-4 sm:p-6">
-            <h2 className="text-lg sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">{product.name}</h2>
-            <div className="flex items-center gap-2 flex-wrap mb-3 sm:mb-4">
-              <span className="text-2xl sm:text-3xl font-bold" style={{ color: primaryColor }}>{fmt(price.toString())}</span>
-              {hasDiscount && <span className="text-base sm:text-lg text-gray-400 line-through">{fmt(product.comparePrice!)}</span>}
-              {hasDiscount && <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-md">-{discountPct}%</span>}
             </div>
+          )}
 
-            {product.description && (
-              <div className="mb-4 sm:mb-6">
-                <h4 className="text-xs sm:text-sm font-semibold text-gray-500 uppercase mb-1">Descripción</h4>
-                <p className="text-sm text-gray-700 leading-relaxed">{product.description}</p>
-              </div>
-            )}
-
-            {product.variants.length > 0 && (
-              <div className="mb-4 sm:mb-6">
-                <h4 className="text-xs sm:text-sm font-semibold text-gray-500 uppercase mb-2">Selecciona una opción</h4>
-                <div className="space-y-1.5 max-h-36 sm:max-h-40 overflow-y-auto">
-                  {product.variants.map((v) => (
-                    <button key={v.id} onClick={() => setSelectedVariant(v)} className={`w-full text-left rounded-lg sm:rounded-xl p-2.5 sm:p-3 flex items-center justify-between transition border-2 ${selectedVariant?.id === v.id ? "bg-green-50" : "border-gray-200"}`} style={selectedVariant?.id === v.id ? { borderColor: primaryColor } : undefined}>
-                      <div className="flex flex-wrap gap-1">
-                        {v.color && <span className="text-[11px] sm:text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">{v.color}</span>}
-                        {v.size && <span className="text-[11px] sm:text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-medium">{v.size}</span>}
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-sm sm:text-base text-gray-900">{fmt(v.price)}</p>
-                        <p className="text-[10px] sm:text-xs text-gray-500">Stock: {v.stock}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <button onClick={() => onAddToCart(product, selectedVariant)} style={{ backgroundColor: primaryColor }} className="w-full text-white py-3 rounded-xl font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 text-base">
-              <CartIcon className="w-5 h-5" /> Agregar al Carrito
-            </button>
-          </div>
+          <button onClick={() => onAddToCart(product, selectedVariant)} style={{ backgroundColor: primaryColor }} className="w-full text-white py-2.5 rounded-xl font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 text-sm mt-4">
+            <CartIcon className="w-4 h-4" /> Agregar al Carrito
+          </button>
         </div>
       </div>
     </div>
