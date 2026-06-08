@@ -141,10 +141,10 @@ export default function CatalogPage() {
           )}
           <div className={`bg-white border-b ${store.coverUrl ? "-mt-16 sm:-mt-20 relative z-10" : ""}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 flex flex-col items-center text-center">
-              {/* Logo — large and centered */}
+              {/* Logo — large and centered, transparent-friendly */}
               {store.logoUrl ? (
-                <div className={`w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-2xl sm:rounded-3xl border-4 border-white shadow-xl overflow-hidden bg-white ${store.coverUrl ? "" : ""}`}>
-                  <img src={store.logoUrl} alt="Logo" className="w-full h-full object-contain" loading="eager" />
+                <div className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 overflow-hidden">
+                  <img src={store.logoUrl} alt="Logo" className="w-full h-full object-contain drop-shadow-md" loading="eager" />
                 </div>
               ) : (
                 <div className="w-24 h-24 sm:w-32 sm:h-32 bg-blue-600 rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-xl">
@@ -288,7 +288,7 @@ export default function CatalogPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                {store.logoUrl && <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden bg-white"><img src={store.logoUrl} alt="Logo" className="w-full h-full object-contain" /></div>}
+                {store.logoUrl && <div className="w-10 h-10 sm:w-12 sm:h-12 overflow-hidden"><img src={store.logoUrl} alt="Logo" className="w-full h-full object-contain" /></div>}
                 <div>
                   <h3 className="font-bold text-sm sm:text-lg">{store.storeName}</h3>
                   {store.storeDescription && <p className="text-gray-400 text-xs sm:text-sm">{store.storeDescription}</p>}
