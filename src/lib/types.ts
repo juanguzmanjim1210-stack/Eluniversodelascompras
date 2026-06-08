@@ -12,6 +12,9 @@ export interface StoreSettings {
   buttonText: string;
   currency: string;
   footerText: string | null;
+  footerLogoUrl: string | null;
+  footerName: string | null;
+  footerColor: string;
   announcementText: string | null;
   announcementActive: boolean;
   announcementColor: string;
