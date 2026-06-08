@@ -327,115 +327,110 @@ function ProductModal({ product, onClose, onAddToCart, addedToCart, currency, pr
 
   useEffect(() => { setCurrentImage(0); setSelectedVariant(product.variants.length > 0 ? product.variants[0] : null); }, [product.id, product.variants]);
 
-  // Auto-play slider
+  // Auto-slide images every 3 seconds
   useEffect(() => {
     if (product.images.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentImage((prev) => (prev === product.images.length - 1 ? 0 : prev + 1));
+    const timer = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % product.images.length);
     }, 3000);
-    return () => clearInterval(interval);
+    return () => clearInterval(timer);
   }, [product.images.length]);
 
   const price = selectedVariant ? parseFloat(selectedVariant.price) : parseFloat(product.basePrice);
   const hasDiscount = !selectedVariant && product.comparePrice && parseFloat(product.comparePrice) > parseFloat(product.basePrice);
   const discountPct = hasDiscount ? Math.round(((parseFloat(product.comparePrice!) - parseFloat(product.basePrice)) / parseFloat(product.comparePrice!)) * 100) : 0;
 
+  const prevImage = () => setCurrentImage((prev) => (prev - 1 + product.images.length) % product.images.length);
+  const nextImage = () => setCurrentImage((prev) => (prev + 1) % product.images.length);
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white w-full sm:max-w-lg sm:rounded-2xl shadow-2xl max-h-[85vh] overflow-y-auto rounded-t-2xl">
-        {/* Mobile drag handle */}
-        <div className="sm:hidden flex justify-center pt-2 pb-1"><div className="w-10 h-1 bg-gray-300 rounded-full" /></div>
-        <button onClick={onClose} className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/90 rounded-full shadow flex items-center justify-center hover:bg-gray-100 transition text-sm">✕</button>
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="relative bg-white w-full sm:max-w-md sm:rounded-2xl shadow-2xl max-h-[92vh] overflow-y-auto rounded-t-3xl">
+        {/* Drag handle */}
+        <div className="sm:hidden flex justify-center pt-2 pb-1 sticky top-0 bg-white rounded-t-3xl z-10"><div className="w-10 h-1 bg-gray-300 rounded-full" /></div>
+        <button onClick={onClose} className="absolute top-3 right-3 z-20 w-8 h-8 bg-black/40 text-white rounded-full flex items-center justify-center hover:bg-black/60 transition text-xs font-bold">✕</button>
 
-        {/* Image with slider */}
-        <div className="relative group">
-          <div className="aspect-[4/3] bg-gray-100 overflow-hidden sm:rounded-t-2xl relative">
+        {/* Image carousel */}
+        <div className="relative bg-black">
+          <div className="aspect-square overflow-hidden">
             {product.images.length > 0 ? (
-              <img src={product.images[currentImage]?.url} alt={product.name} className="w-full h-full object-cover transition-opacity duration-300" />
+              <img src={product.images[currentImage]?.url} alt={product.name} className="w-full h-full object-contain bg-gray-50" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-300"><span className="text-5xl">📷</span></div>
-            )}
-            
-            {/* Arrows for sliding */}
-            {product.images.length > 1 && (
-              <>
-                <button 
-                  onClick={() => setCurrentImage((prev) => (prev === 0 ? product.images.length - 1 : prev - 1))}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-800 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                </button>
-                <button 
-                  onClick={() => setCurrentImage((prev) => (prev === product.images.length - 1 ? 0 : prev + 1))}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-800 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                </button>
-              </>
+              <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300"><span className="text-5xl">📷</span></div>
             )}
           </div>
-          {hasDiscount && <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">-{discountPct}%</span>}
+          {/* Arrows */}
+          {product.images.length > 1 && (
+            <>
+              <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 text-white rounded-full flex items-center justify-center hover:bg-black/60 transition text-lg">‹</button>
+              <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 text-white rounded-full flex items-center justify-center hover:bg-black/60 transition text-lg">›</button>
+            </>
+          )}
+          {/* Dots */}
+          {product.images.length > 1 && (
+            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
+              {product.images.map((_, i) => (
+                <button key={i} onClick={() => setCurrentImage(i)} className={`rounded-full transition-all ${i === currentImage ? "w-6 h-2 bg-white" : "w-2 h-2 bg-white/50"}`} />
+              ))}
+            </div>
+          )}
+          {/* Discount badge */}
+          {hasDiscount && <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-lg shadow-lg">-{discountPct}%</span>}
+          {/* Counter */}
+          {product.images.length > 1 && <span className="absolute top-3 right-12 bg-black/40 text-white text-[10px] px-2 py-0.5 rounded-full">{currentImage + 1}/{product.images.length}</span>}
+          {/* Added overlay */}
           {addedToCart === product.id && (
             <div className="absolute inset-0 bg-green-500/90 flex items-center justify-center">
               <div className="text-center text-white">
-                <span className="text-4xl block mb-1">✓</span>
-                <span className="font-bold text-base">¡Agregado!</span>
+                <span className="text-5xl block mb-2">✓</span>
+                <span className="font-bold text-lg">¡Agregado!</span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Thumbnails */}
-        {product.images.length > 1 && (
-          <div className="flex gap-1.5 px-3 py-2 overflow-x-auto no-scrollbar bg-gray-50 snap-x">
-            {product.images.map((img, i) => (
-              <button 
-                key={img.id} 
-                onClick={() => setCurrentImage(i)} 
-                className={`w-11 h-11 rounded-md overflow-hidden flex-shrink-0 border-2 transition-all snap-start ${i === currentImage ? "border-blue-500 opacity-100" : "border-transparent opacity-60"}`}
-              >
-                <img src={img.url} alt="" className="w-full h-full object-cover" />
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Info */}
-        <div className="p-4">
-          <h2 className="text-base sm:text-lg font-bold text-gray-900">{product.name}</h2>
-          <div className="flex items-center gap-2 flex-wrap mt-1.5">
-            <span className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>{fmt(price.toString())}</span>
-            {hasDiscount && <span className="text-sm text-gray-400 line-through">{fmt(product.comparePrice!)}</span>}
-            {hasDiscount && <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">-{discountPct}%</span>}
+        {/* Product info */}
+        <div className="p-4 space-y-3">
+          {/* Name & Price */}
+          <div>
+            <h2 className="text-base font-bold text-gray-900 leading-snug">{product.name}</h2>
+            <div className="flex items-center gap-2 flex-wrap mt-1">
+              <span className="text-2xl font-bold" style={{ color: primaryColor }}>{fmt(price.toString())}</span>
+              {hasDiscount && <span className="text-sm text-gray-400 line-through">{fmt(product.comparePrice!)}</span>}
+              {hasDiscount && <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">-{discountPct}%</span>}
+            </div>
           </div>
 
+          {/* Description */}
           {product.description && (
-            <p className="mt-3 text-sm text-gray-600 leading-relaxed">{product.description}</p>
+            <p className="text-[13px] text-gray-600 leading-relaxed">{product.description}</p>
           )}
 
+          {/* Variants */}
           {product.variants.length > 0 && (
-            <div className="mt-3">
-              <p className="text-xs font-semibold text-gray-500 uppercase mb-1.5">Selecciona una opción</p>
-              <div className="space-y-1.5 max-h-32 overflow-y-auto">
+            <div>
+              <p className="text-[11px] font-semibold text-gray-400 uppercase mb-1.5">Opciones disponibles</p>
+              <div className="flex flex-wrap gap-2">
                 {product.variants.map((v) => (
-                  <button key={v.id} onClick={() => setSelectedVariant(v)} className={`w-full text-left rounded-lg p-2.5 flex items-center justify-between transition border-2 ${selectedVariant?.id === v.id ? "bg-green-50" : "border-gray-200"}`} style={selectedVariant?.id === v.id ? { borderColor: primaryColor } : undefined}>
-                    <div className="flex flex-wrap gap-1">
-                      {v.color && <span className="text-[11px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">{v.color}</span>}
-                      {v.size && <span className="text-[11px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-medium">{v.size}</span>}
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-sm text-gray-900">{fmt(v.price)}</p>
-                      <p className="text-[10px] text-gray-500">Stock: {v.stock}</p>
-                    </div>
+                  <button key={v.id} onClick={() => setSelectedVariant(v)} className={`rounded-full px-3 py-1.5 text-xs font-medium transition border-2 ${selectedVariant?.id === v.id ? "text-white" : "border-gray-200 text-gray-700 bg-white"}`} style={selectedVariant?.id === v.id ? { backgroundColor: primaryColor, borderColor: primaryColor } : undefined}>
+                    {v.color && v.size ? `${v.color} / ${v.size}` : v.color || v.size || fmt(v.price)}
                   </button>
                 ))}
               </div>
+              {selectedVariant && (
+                <p className="text-xs text-gray-500 mt-1.5">
+                  {selectedVariant.color && <span className="mr-2">{selectedVariant.color}</span>}
+                  {selectedVariant.size && <span className="mr-2">Talla: {selectedVariant.size}</span>}
+                  <span>Stock: {selectedVariant.stock}</span>
+                </p>
+              )}
             </div>
           )}
 
-          <button onClick={() => onAddToCart(product, selectedVariant)} style={{ backgroundColor: primaryColor }} className="w-full text-white py-2.5 rounded-xl font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 text-sm mt-4">
-            <CartIcon className="w-4 h-4" /> Agregar al Carrito
+          {/* Add to cart button */}
+          <button onClick={() => onAddToCart(product, selectedVariant)} style={{ backgroundColor: primaryColor }} className="w-full text-white py-3 rounded-2xl font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 text-[15px]">
+            <CartIcon className="w-5 h-5" /> Agregar al Carrito
           </button>
         </div>
       </div>
