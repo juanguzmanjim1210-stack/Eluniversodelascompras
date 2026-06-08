@@ -76,9 +76,9 @@ export default function Cart({
     message += `💰 *TOTAL: ${fmt(total)}*\n\n`;
     message += `📅 Fecha: ${new Date().toLocaleString("es-MX")}\n`;
 
-    let whatsappNumber = storeWhatsapp.replace(/\D/g, "");
-    if (!whatsappNumber.startsWith("52") && whatsappNumber.length === 10) whatsappNumber = "52" + whatsappNumber;
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, "_blank");
+    // Extract number from URL or use as-is
+    const waUrl = storeWhatsapp.startsWith("http") ? storeWhatsapp.split("?")[0] : `https://wa.me/${storeWhatsapp.replace(/\D/g, "")}`;
+    window.open(`${waUrl}?text=${encodeURIComponent(message)}`, "_blank");
 
     setSending(false);
     onClearCart();
