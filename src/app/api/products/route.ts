@@ -7,12 +7,12 @@ export async function GET(req: NextRequest) {
     const products = await getProducts({
       categoryId: p.get("categoryId") || undefined,
       search: p.get("search") || undefined,
-      active: p.get("active") === "true",
+      active: p.get("active") === "true" ? true : undefined,
     });
     return NextResponse.json(products);
   } catch (e) {
     console.error("GET products error:", e);
-    return NextResponse.json([]);
+    return NextResponse.json({ error: "Error" }, { status: 500 });
   }
 }
 
