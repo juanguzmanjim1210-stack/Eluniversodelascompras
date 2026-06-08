@@ -109,7 +109,7 @@ export default function CatalogPage() {
       {/* Announcement banner — marquee */}
       {store?.announcementActive && store.announcementText && (
         <div style={{ backgroundColor: store.announcementColor || btnColor }} className="text-white overflow-hidden py-2.5 sm:py-3">
-          <div className="marquee-track whitespace-nowrap inline-flex">
+          <div className="marquee-track whitespace-nowrap inline-flex" style={{ animationDuration: `${store.announcementSpeed || 40}s` }}>
             {[0,1].map((half) => (
               <span key={half} className="inline-flex">
                 {[0,1,2,3,4,5].map((i) => (
@@ -122,80 +122,60 @@ export default function CatalogPage() {
           </div>
         </div>
       )}
-      {/* ====== HEADER ====== */}
+      {/* ====== HEADER — centered layout ====== */}
       {store && (
         <>
-          {store.coverUrl ? (
-            <div className="relative w-full h-52 sm:h-64 md:h-80 lg:h-96 overflow-hidden">
+          {store.coverUrl && (
+            <div className="relative w-full h-40 sm:h-52 md:h-64 overflow-hidden">
               <img src={store.coverUrl} alt="Portada" className="w-full h-full object-cover" loading="eager" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 lg:p-8">
-                <div className="max-w-7xl mx-auto flex items-end gap-3 sm:gap-5">
-                  {store.logoUrl && (
-                    <div className="w-14 h-14 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-xl sm:rounded-2xl border-[3px] border-white shadow-xl overflow-hidden bg-white flex-shrink-0">
-                      <img src={store.logoUrl} alt="Logo" className="w-full h-full object-contain" loading="eager" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0 pb-0.5">
-                    <h1 className="text-[15px] sm:text-xl md:text-2xl lg:text-3xl font-bold text-white drop-shadow-lg leading-tight">{store.storeName}</h1>
-                    {store.storeDescription && <p className="text-white/70 mt-0.5 text-[11px] sm:text-xs md:text-sm line-clamp-2">{store.storeDescription}</p>}
-                    {/* Social icons inside header */}
-                    {hasSocial && (
-                      <div className="flex items-center gap-1.5 sm:gap-2 mt-2 overflow-x-auto no-scrollbar">
-                        {store.facebook && <a href={store.facebook} target="_blank" rel="noopener noreferrer" className="w-7 h-7 sm:w-8 sm:h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/40 transition flex-shrink-0" title="Facebook"><FacebookIcon /></a>}
-                        {store.whatsapp && <a href={`https://wa.me/${store.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="w-7 h-7 sm:w-8 sm:h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/40 transition flex-shrink-0" title="WhatsApp"><WhatsAppIcon /></a>}
-                        {store.instagram && <a href={store.instagram} target="_blank" rel="noopener noreferrer" className="w-7 h-7 sm:w-8 sm:h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/40 transition flex-shrink-0" title="Instagram"><InstagramIcon /></a>}
-                        {store.tiktok && <a href={store.tiktok} target="_blank" rel="noopener noreferrer" className="w-7 h-7 sm:w-8 sm:h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/40 transition flex-shrink-0" title="TikTok"><TikTokIcon /></a>}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <div className="absolute inset-0 bg-black/30" />
+              {/* Top buttons over cover */}
               <div className="absolute top-3 right-3 flex gap-2">
                 <button onClick={() => setCartOpen(true)} className="relative w-9 h-9 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition" title="Carrito">
                   <CartIcon className="w-5 h-5" />
                   {cartCount > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{cartCount}</span>}
                 </button>
-                <button onClick={() => setAdminOpen(true)} className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition text-sm sm:text-base" title="Admin">⚙️</button>
+                <button onClick={() => setAdminOpen(true)} className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition text-sm" title="Admin">⚙️</button>
               </div>
             </div>
-          ) : (
-            <div className="bg-white border-b">
-              <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex items-center justify-between">
-                <div className="flex items-center gap-3 sm:gap-5 min-w-0">
-                  {store.logoUrl ? (
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl border-2 border-gray-200 overflow-hidden bg-white flex-shrink-0">
-                      <img src={store.logoUrl} alt="Logo" className="w-full h-full object-contain" loading="eager" />
-                    </div>
-                  ) : (
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-xl sm:text-2xl font-bold">{store.storeName.charAt(0).toUpperCase()}</span>
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <h1 className="text-[15px] sm:text-xl md:text-2xl font-bold text-gray-900 leading-tight">{store.storeName}</h1>
-                    {store.storeDescription && <p className="text-gray-500 mt-0.5 text-[11px] sm:text-xs truncate">{store.storeDescription}</p>}
-                    {/* Social icons inside header */}
-                    {hasSocial && (
-                      <div className="flex items-center gap-1.5 mt-1.5">
-                        {store.facebook && <a href={store.facebook} target="_blank" rel="noopener noreferrer" className="w-7 h-7 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-100 transition flex-shrink-0" title="Facebook"><FacebookIcon /></a>}
-                        {store.whatsapp && <a href={`https://wa.me/${store.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="w-7 h-7 bg-green-50 text-green-600 rounded-full flex items-center justify-center hover:bg-green-100 transition flex-shrink-0" title="WhatsApp"><WhatsAppIcon /></a>}
-                        {store.instagram && <a href={store.instagram} target="_blank" rel="noopener noreferrer" className="w-7 h-7 bg-pink-50 text-pink-600 rounded-full flex items-center justify-center hover:bg-pink-100 transition flex-shrink-0" title="Instagram"><InstagramIcon /></a>}
-                        {store.tiktok && <a href={store.tiktok} target="_blank" rel="noopener noreferrer" className="w-7 h-7 bg-gray-100 text-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 transition flex-shrink-0" title="TikTok"><TikTokIcon /></a>}
-                      </div>
-                    )}
-                  </div>
+          )}
+          <div className={`bg-white border-b ${store.coverUrl ? "-mt-16 sm:-mt-20 relative z-10" : ""}`}>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 flex flex-col items-center text-center">
+              {/* Logo — large and centered */}
+              {store.logoUrl ? (
+                <div className={`w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-2xl sm:rounded-3xl border-4 border-white shadow-xl overflow-hidden bg-white ${store.coverUrl ? "" : ""}`}>
+                  <img src={store.logoUrl} alt="Logo" className="w-full h-full object-contain" loading="eager" />
                 </div>
-                <div className="flex gap-2 flex-shrink-0">
+              ) : (
+                <div className="w-24 h-24 sm:w-32 sm:h-32 bg-blue-600 rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-xl">
+                  <span className="text-white text-4xl sm:text-5xl font-bold">{store.storeName.charAt(0).toUpperCase()}</span>
+                </div>
+              )}
+              {/* Store name */}
+              <h1 className="mt-3 sm:mt-4 text-lg sm:text-2xl md:text-3xl font-bold text-gray-900 leading-tight">{store.storeName}</h1>
+              {/* Description */}
+              {store.storeDescription && <p className="mt-1 sm:mt-2 text-gray-500 text-xs sm:text-sm md:text-base max-w-lg">{store.storeDescription}</p>}
+              {/* Social icons — centered */}
+              {hasSocial && (
+                <div className="flex items-center justify-center gap-2 sm:gap-3 mt-3 sm:mt-4">
+                  {store.facebook && <a href={store.facebook} target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-100 transition" title="Facebook"><FacebookIcon /></a>}
+                  {store.whatsapp && <a href={store.whatsapp} target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 bg-green-50 text-green-600 rounded-full flex items-center justify-center hover:bg-green-100 transition" title="WhatsApp"><WhatsAppIcon /></a>}
+                  {store.instagram && <a href={store.instagram} target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 bg-pink-50 text-pink-600 rounded-full flex items-center justify-center hover:bg-pink-100 transition" title="Instagram"><InstagramIcon /></a>}
+                  {store.tiktok && <a href={store.tiktok} target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 text-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 transition" title="TikTok"><TikTokIcon /></a>}
+                </div>
+              )}
+              {/* Cart and admin buttons when no cover */}
+              {!store.coverUrl && (
+                <div className="absolute top-4 right-4 flex gap-2">
                   <button onClick={() => setCartOpen(true)} className="relative w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition text-gray-700" title="Carrito">
                     <CartIcon className="w-5 h-5" />
                     {cartCount > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{cartCount}</span>}
                   </button>
-                  <button onClick={() => setAdminOpen(true)} className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition text-sm sm:text-base" title="Admin">⚙️</button>
+                  <button onClick={() => setAdminOpen(true)} className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition text-sm" title="Admin">⚙️</button>
                 </div>
-              </div>
+              )}
             </div>
-          )}
+          </div>
         </>
       )}
 
@@ -317,7 +297,7 @@ export default function CatalogPage() {
               {hasSocial && (
                 <div className="flex items-center gap-2 sm:gap-3">
                   {store.facebook && <a href={store.facebook} target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition"><FacebookIcon /></a>}
-                  {store.whatsapp && <a href={`https://wa.me/${store.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-green-600 transition"><WhatsAppIcon /></a>}
+                  {store.whatsapp && <a href={store.whatsapp} target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-green-600 transition"><WhatsAppIcon /></a>}
                   {store.instagram && <a href={store.instagram} target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-pink-600 transition"><InstagramIcon /></a>}
                   {store.tiktok && <a href={store.tiktok} target="_blank" rel="noopener noreferrer" className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-600 transition"><TikTokIcon /></a>}
                 </div>
