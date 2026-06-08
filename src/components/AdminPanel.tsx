@@ -473,6 +473,9 @@ function SettingsTab() {
   const [buttonText, setButtonText] = useState("Comprar");
   const [currency, setCurrency] = useState("$");
   const [footerText, setFooterText] = useState("");
+  const [footerLogoUrl, setFooterLogoUrl] = useState("");
+  const [footerName, setFooterName] = useState("");
+  const [footerColor, setFooterColor] = useState("#111827");
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementActive, setAnnouncementActive] = useState(false);
   const [announcementColor, setAnnouncementColor] = useState("#16a34a");
@@ -493,6 +496,9 @@ function SettingsTab() {
       setButtonText(data.buttonText || "Comprar");
       setCurrency(data.currency || "$");
       setFooterText(data.footerText || "");
+      setFooterLogoUrl(data.footerLogoUrl || "");
+      setFooterName(data.footerName || "");
+      setFooterColor(data.footerColor || "#111827");
       setAnnouncementColor(data.announcementColor || "#16a34a");
       setAnnouncementSpeed(data.announcementSpeed || 40);
       setAnnouncementText(data.announcementText || "");
@@ -505,7 +511,7 @@ function SettingsTab() {
     await fetch("/api/store-settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ storeName, storeDescription, logoUrl, coverUrl, facebook, whatsapp, instagram, tiktok, primaryColor, buttonText, currency, footerText, announcementText, announcementActive, announcementColor, announcementSpeed }),
+      body: JSON.stringify({ storeName, storeDescription, logoUrl, coverUrl, facebook, whatsapp, instagram, tiktok, primaryColor, buttonText, currency, footerText, footerLogoUrl, footerName, footerColor, announcementText, announcementActive, announcementColor, announcementSpeed }),
     });
     setSaving(false); setSaved(true);
     setTimeout(() => setSaved(false), 3000);
@@ -631,8 +637,42 @@ function SettingsTab() {
 
       {/* Footer */}
       <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-        <h4 className="font-semibold text-sm text-gray-700">🦶 Texto del Pie de Página</h4>
-        <textarea value={footerText} onChange={(e) => setFooterText(e.target.value)} placeholder="Ej: Envíos a todo el país · Pagos contra entrega" rows={2} className="w-full px-3 py-2 border rounded-lg text-sm resize-none" />
+        <h4 className="font-semibold text-sm text-gray-700">🦶 Pie de Página</h4>
+        <p className="text-xs text-gray-500">Personaliza el pie de página de tu catálogo</p>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Logo del pie de página (opcional)</label>
+          <div className="flex gap-2 items-center">
+            {footerLogoUrl && <img src={footerLogoUrl} alt="" className="w-10 h-10 rounded object-contain bg-white border" />}
+            <input value={footerLogoUrl} onChange={(e) => setFooterLogoUrl(e.target.value)} placeholder="URL del logo o dejar vacío para usar el principal" className="flex-1 px-3 py-2 border rounded-lg text-sm font-mono" />
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Nombre en el pie de página (opcional)</label>
+          <input value={footerName} onChange={(e) => setFooterName(e.target.value)} placeholder="Dejar vacío para usar el nombre de la tienda" className="w-full px-3 py-2 border rounded-lg text-sm" />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Color de fondo</label>
+          <div className="flex items-center gap-2">
+            <input type="color" value={footerColor} onChange={(e) => setFooterColor(e.target.value)} className="w-10 h-10 rounded-lg border cursor-pointer" />
+            <input value={footerColor} onChange={(e) => setFooterColor(e.target.value)} className="flex-1 px-2 py-1.5 border rounded text-xs font-mono" />
+          </div>
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {["#111827","#1e293b","#0f172a","#18181b","#1a1a2e","#16213e","#0d1b2a","#2d1b69","#1b4332","#7f1d1d","#78350f","#365314"].map((c) => (
+              <button key={c} onClick={() => setFooterColor(c)} className={`w-7 h-7 rounded-lg border-2 transition ${footerColor === c ? "border-blue-500 scale-110" : "border-transparent"}`} style={{ backgroundColor: c }} />
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Texto adicional (opcional)</label>
+          <textarea value={footerText} onChange={(e) => setFooterText(e.target.value)} placeholder="Ej: Envíos a todo el país · Pagos contra entrega" rows={2} className="w-full px-3 py-2 border rounded-lg text-sm resize-none" />
+        </div>
+        {/* Vista previa */}
+        <div style={{ backgroundColor: footerColor }} className="rounded-lg p-4 text-white text-center space-y-2">
+          <p className="text-[10px] text-white/50 uppercase">Vista previa</p>
+          {(footerLogoUrl || logoUrl) && <img src={footerLogoUrl || logoUrl} alt="" className="w-10 h-10 mx-auto object-contain" />}
+          <p className="font-bold text-sm">{footerName || storeName}</p>
+          {footerText && <p className="text-white/60 text-xs">{footerText}</p>}
+        </div>
       </div>
 
       <button onClick={handleSave} disabled={saving} className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition disabled:opacity-50">
