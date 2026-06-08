@@ -18,8 +18,7 @@ export async function POST(req: NextRequest) {
     const response = NextResponse.json({ success: true });
     setSessionCookie(response, token);
     return response;
-  } catch (e) {
-    console.error("LOGIN ERROR:", e);
-    return NextResponse.json({ error: "Error al iniciar sesión", detail: String(e) }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Error al iniciar sesión" }, { status: 500 });
   }
 }
