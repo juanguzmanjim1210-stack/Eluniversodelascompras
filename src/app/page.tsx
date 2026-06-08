@@ -99,9 +99,9 @@ export default function CatalogPage() {
     return c ? c.name : null;
   };
 
-  const getProductTotalStock = (product: Product) => {
+  const getProductTotalStock = (product: Product): number => {
     if (product.variants.length > 0) return product.variants.reduce((s, v) => s + v.stock, 0);
-    return null;
+    return product.stock ?? 0;
   };
 
   const hasSocial = useMemo(() => store && (store.facebook || store.whatsapp || store.instagram || store.tiktok), [store]);
@@ -246,9 +246,12 @@ export default function CatalogPage() {
                 </div>
 
                 <div className="p-2.5 sm:p-4 flex-1 flex flex-col">
-                  <h3 className="font-semibold text-gray-900 text-xs sm:text-sm leading-tight line-clamp-2">{product.name}</h3>
-                  {totalStock !== null && !isOutOfStock && (
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base leading-tight line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
+                  {!isOutOfStock && (
                     <p className="text-[10px] sm:text-xs text-green-600 font-medium mt-0.5">📦 {totalStock} disponible{totalStock !== 1 ? "s" : ""}</p>
+                  )}
+                  {isOutOfStock && (
+                    <p className="text-[10px] sm:text-xs text-red-500 font-bold mt-0.5">❌ Agotado</p>
                   )}
                   <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5 flex-wrap">
                     <span className="text-sm sm:text-lg font-bold" style={{ color: btnColor }}>{formatPrice(product.basePrice)}</span>
@@ -263,14 +266,14 @@ export default function CatalogPage() {
                     </div>
                   )}
                   {isOutOfStock ? (
-                    <button disabled className="mt-2 sm:mt-3 w-full bg-gray-300 text-gray-500 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-medium cursor-not-allowed flex items-center justify-center gap-1 text-xs sm:text-sm">
+                    <button disabled className="mt-auto pt-2 sm:pt-3 w-full bg-gray-300 text-gray-500 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-medium cursor-not-allowed flex items-center justify-center gap-1 text-xs sm:text-sm">
                       Agotado
                     </button>
                   ) : (
                     <button
                       onClick={(e) => { e.stopPropagation(); product.variants.length > 0 ? setSelectedProduct(product) : addToCart(product, null); }}
                       style={{ backgroundColor: btnColor }}
-                      className="mt-2 sm:mt-3 w-full text-white py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-medium hover:opacity-90 transition flex items-center justify-center gap-1 text-xs sm:text-sm"
+                      className="mt-auto pt-2 sm:pt-3 w-full text-white py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-medium hover:opacity-90 transition flex items-center justify-center gap-1 text-xs sm:text-sm"
                     >
                       <CartIcon className="w-4 h-4" /> {btnText}
                     </button>
@@ -346,8 +349,8 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
   const hasDiscount = !selectedVariant && product.comparePrice && parseFloat(product.comparePrice) > parseFloat(product.basePrice);
   const discountPct = hasDiscount ? Math.round(((parseFloat(product.comparePrice!) - parseFloat(product.basePrice)) / parseFloat(product.comparePrice!)) * 100) : 0;
   const categoryName = categories.find((c) => c.id === product.categoryId)?.name || null;
-  const totalStock = product.variants.length > 0 ? product.variants.reduce((s, v) => s + v.stock, 0) : null;
-  const isOutOfStock = totalStock !== null && totalStock <= 0;
+  const totalStock = product.variants.length > 0 ? product.variants.reduce((s, v) => s + v.stock, 0) : (product.stock ?? 0);
+  const isOutOfStock = totalStock <= 0;
   const variantOutOfStock = selectedVariant ? selectedVariant.stock <= 0 : false;
 
   const prevImage = () => setCurrentImage((prev) => (prev - 1 + product.images.length) % product.images.length);
