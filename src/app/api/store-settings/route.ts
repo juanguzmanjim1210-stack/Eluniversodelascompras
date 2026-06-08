@@ -11,7 +11,7 @@ export async function GET() {
       id: 1, storeName: "Mi Tienda", storeDescription: null, logoUrl: null,
       coverUrl: null, facebook: null, whatsapp: null, instagram: null, tiktok: null,
       primaryColor: "#16a34a", buttonText: "Comprar", currency: "$",
-      footerText: null, announcementText: null, announcementActive: false, announcementColor: "#16a34a",
+      footerText: null, announcementText: null, announcementActive: false, announcementColor: "#16a34a", announcementSpeed: 40,
     });
   }
 }
