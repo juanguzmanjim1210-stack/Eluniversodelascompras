@@ -1,8 +1,20 @@
 /* 
   Data layer abstraction.
   Uses PostgreSQL (Drizzle) locally, Firebase Firestore in production.
+  Includes in-memory cache to survive Firebase quota errors.
 */
 import { isFirebaseConfigured, getFirestoreDb } from "./firebase";
+
+// ---- In-memory cache to survive Firebase quota exhaustion ----
+const cache: Record<string, { data: unknown; ts: number }> = {};
+function cacheSet(key: string, data: unknown) { cache[key] = { data, ts: Date.now() }; }
+function cacheGet(key: string): unknown | null {
+  const entry = cache[key];
+  if (!entry) return null;
+  // Cache valid for 10 minutes
+  if (Date.now() - entry.ts > 10 * 60 * 1000) return null;
+  return entry.data;
+}
 
 // ---- Detect mode ----
 function useFirebase(): boolean {
@@ -34,12 +46,21 @@ export async function getStoreSettings() {
   };
 
   if (useFirebase()) {
-    const snap = await fs().collection("settings").doc("store").get();
-    if (!snap.exists) {
-      await fs().collection("settings").doc("store").set(DEFAULTS);
-      return DEFAULTS;
+    try {
+      const snap = await fs().collection("settings").doc("store").get();
+      if (!snap.exists) {
+        await fs().collection("settings").doc("store").set(DEFAULTS);
+        cacheSet("store-settings", DEFAULTS);
+        return DEFAULTS;
+      }
+      const result = { id: 1, ...snap.data() };
+      cacheSet("store-settings", result);
+      return result;
+    } catch {
+      const cached = cacheGet("store-settings");
+      if (cached) return cached;
+      throw new Error("Firebase unavailable and no cache");
     }
-    return { id: 1, ...snap.data() };
   }
 
   const { db, schema, drizzle } = await pg();
@@ -90,8 +111,16 @@ export async function updateStoreSettings(data: Record<string, unknown>) {
 
 export async function getCategories() {
   if (useFirebase()) {
-    const snap = await fs().collection("categories").orderBy("name").get();
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    try {
+      const snap = await fs().collection("categories").orderBy("name").get();
+      const result = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      cacheSet("categories", result);
+      return result;
+    } catch {
+      const cached = cacheGet("categories");
+      if (cached) return cached;
+      throw new Error("Firebase unavailable and no cache");
+    }
   }
   const { db, schema } = await pg();
   return db.select().from(schema.categories).orderBy(schema.categories.name);
@@ -143,6 +172,7 @@ async function enrichProduct(id: string, data: Record<string, unknown>) {
 
 export async function getProducts(filters: { categoryId?: string; search?: string; active?: boolean }) {
   if (useFirebase()) {
+    try {
     // Get all products - filter in code to avoid needing composite indexes
     const snap = await fs().collection("products").get();
     const results = [];
@@ -163,7 +193,15 @@ export async function getProducts(filters: { categoryId?: string; search?: strin
       const bDate = (b as Record<string, unknown>).createdAt as string || "";
       return bDate.localeCompare(aDate);
     });
+    const cacheKey = `products-${filters.categoryId || ""}-${filters.search || ""}-${filters.active || ""}`;
+    cacheSet(cacheKey, results);
     return results;
+    } catch {
+      const cacheKey = `products-${filters.categoryId || ""}-${filters.search || ""}-${filters.active || ""}`;
+      const cached = cacheGet(cacheKey);
+      if (cached) return cached;
+      throw new Error("Firebase unavailable and no cache");
+    }
   }
 
   const { db, schema, drizzle } = await pg();
