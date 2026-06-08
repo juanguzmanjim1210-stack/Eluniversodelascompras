@@ -13,6 +13,7 @@ interface CartProps {
   storeName: string;
   currency: string;
   primaryColor: string;
+  onOrderSent?: () => void;
 }
 
 export default function Cart({
@@ -26,6 +27,7 @@ export default function Cart({
   storeName,
   currency,
   primaryColor,
+  onOrderSent,
 }: CartProps) {
   const fmt = (v: number) => `${currency}${v.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
   const [showCheckout, setShowCheckout] = useState(false);
@@ -45,9 +47,22 @@ export default function Cart({
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handleSendOrder = () => {
+  const handleSendOrder = async () => {
     if (!storeWhatsapp) { alert("La tienda no tiene WhatsApp configurado"); return; }
     setSending(true);
+
+    // Descontar stock de variantes
+    for (const item of items) {
+      if (item.variant) {
+        try {
+          await fetch(`/api/products/${item.product.id}/variants/stock`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ variantId: item.variant.id, quantity: item.quantity }),
+          });
+        } catch { /* continue */ }
+      }
+    }
 
     let message = `🛒 *NUEVO PEDIDO - ${storeName}*\n`;
     message += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
@@ -76,7 +91,6 @@ export default function Cart({
     message += `💰 *TOTAL: ${fmt(total)}*\n\n`;
     message += `📅 Fecha: ${new Date().toLocaleString("es-MX")}\n`;
 
-    // Extract number from URL or use as-is
     const waUrl = storeWhatsapp.startsWith("http") ? storeWhatsapp.split("?")[0] : `https://wa.me/${storeWhatsapp.replace(/\D/g, "")}`;
     window.open(`${waUrl}?text=${encodeURIComponent(message)}`, "_blank");
 
@@ -85,6 +99,7 @@ export default function Cart({
     setShowCheckout(false);
     setCustomerData({ fullName: "", whatsapp: "", city: "", department: "", address: "" });
     onClose();
+    if (onOrderSent) onOrderSent();
   };
 
   const isFormValid = customerData.fullName.trim() !== "" && customerData.whatsapp.trim() !== "" && customerData.city.trim() !== "" && customerData.department.trim() !== "" && customerData.address.trim() !== "";
@@ -117,7 +132,6 @@ export default function Cart({
               <p className="text-xs mt-1">Agrega productos para hacer tu pedido</p>
             </div>
           ) : showCheckout ? (
-            /* Checkout */
             <div className="p-3 sm:p-4 space-y-3">
               <button onClick={() => setShowCheckout(false)} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1">← Volver al carrito</button>
 
@@ -151,7 +165,6 @@ export default function Cart({
                 </div>
               </div>
 
-              {/* Summary */}
               <div className="bg-gray-50 rounded-xl p-3">
                 <h4 className="font-semibold text-xs text-gray-700 mb-1.5">Resumen</h4>
                 <div className="space-y-1 text-xs">
@@ -175,7 +188,6 @@ export default function Cart({
               </div>
             </div>
           ) : (
-            /* Items list */
             <div className="p-3 sm:p-4 space-y-2">
               {items.map((item, index) => {
                 const price = item.variant ? parseFloat(item.variant.price) : parseFloat(item.product.basePrice);
