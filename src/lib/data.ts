@@ -195,6 +195,7 @@ export async function createProduct(body: Record<string, unknown>) {
     categoryId: (body.categoryId as string) || null,
     basePrice: (body.basePrice as string) || "0",
     comparePrice: (body.comparePrice as string) || null,
+    stock: (body.stock as number) ?? 0,
     active: (body.active as boolean) ?? true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -210,6 +211,7 @@ export async function createProduct(body: Record<string, unknown>) {
     categoryId: data.categoryId,
     basePrice: data.basePrice,
     comparePrice: data.comparePrice,
+    stock: data.stock,
     active: data.active,
   }).returning();
   return row;
@@ -222,6 +224,7 @@ export async function updateProduct(id: string, body: Record<string, unknown>) {
     categoryId: (body.categoryId as string) || null,
     basePrice: body.basePrice as string,
     comparePrice: (body.comparePrice as string) || null,
+    stock: (body.stock as number) ?? 0,
     active: body.active as boolean,
     updatedAt: new Date().toISOString(),
   };
