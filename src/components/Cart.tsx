@@ -231,7 +231,14 @@ export default function Cart({
                 Continuar con el Pedido →
               </button>
             )}
-            {!showCheckout && <button onClick={onClearCart} className="w-full text-red-500 text-xs hover:bg-red-50 py-1.5 rounded-lg transition">Vaciar carrito</button>}
+            {!showCheckout && (
+              <div className="flex gap-2">
+                <button onClick={onClose} className="flex-1 text-gray-600 text-sm hover:bg-gray-100 py-2 rounded-lg transition font-medium border border-gray-200">
+                  ← Seguir comprando
+                </button>
+                <button onClick={onClearCart} className="text-red-500 text-xs hover:bg-red-50 px-3 py-2 rounded-lg transition">Vaciar</button>
+              </div>
+            )}
           </div>
         )}
       </div>
