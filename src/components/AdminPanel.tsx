@@ -653,7 +653,6 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
   const [categoryId, setCategoryId] = useState("");
   const [basePrice, setBasePrice] = useState("");
   const [comparePrice, setComparePrice] = useState("");
-  const [productStock, setProductStock] = useState(0);
   const [active, setActive] = useState(true);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState("");
@@ -674,7 +673,6 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
     setCategoryId(p.categoryId || "");
     setBasePrice(p.basePrice);
     setComparePrice(p.comparePrice || "");
-    setProductStock(p.stock ?? 0);
     setActive(p.active);
 
     setImageUrls(p.images.sort((a, b) => a.sortOrder - b.sortOrder).map((img) => img.url));
@@ -690,7 +688,7 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
     await fetch(`/api/products/${productId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, description, categoryId: categoryId || null, basePrice, comparePrice: comparePrice || null, stock: productStock, active }),
+      body: JSON.stringify({ name, description, categoryId: categoryId || null, basePrice, comparePrice: comparePrice || null, active }),
     });
     setSaving(false);
     setInfoSaved(true);
@@ -809,18 +807,7 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
         <p className="text-xs text-gray-400">Si pones un precio antes mayor al precio de venta, se mostrará el descuento automáticamente</p>
       </div>
 
-      {/* Stock del producto */}
-      <div className="bg-orange-50 rounded-xl p-3 space-y-2 border border-orange-200">
-        <h4 className="font-semibold text-xs text-orange-800">📦 Stock disponible</h4>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setProductStock(Math.max(0, productStock - 1))} className="w-7 h-7 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 flex items-center justify-center font-bold text-sm">−</button>
-          <input type="number" min="0" value={productStock} onChange={(e) => setProductStock(parseInt(e.target.value) || 0)} className="w-16 text-center border rounded-lg py-1.5 text-sm font-bold" />
-          <button onClick={() => setProductStock(productStock + 1)} className="w-7 h-7 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center font-bold text-sm">+</button>
-          <span className={`text-xs font-bold ml-1 ${productStock <= 0 ? "text-red-500" : "text-green-600"}`}>
-            {productStock <= 0 ? "Agotado" : `${productStock} disp.`}
-          </span>
-        </div>
-      </div>
+      {/* Stock se maneja por variantes */}
 
       {/* Save Info */}
       <button onClick={handleSaveInfo} disabled={saving} className={`w-full text-white py-2.5 rounded-lg text-sm font-medium transition-all ${infoSaved ? "bg-green-500 animate-save-success" : "bg-blue-600 hover:bg-blue-700"}`}>
