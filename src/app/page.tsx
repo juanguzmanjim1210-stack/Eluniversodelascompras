@@ -343,7 +343,7 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
   }, [product.images.length, autoSlide]);
 
   const price = selectedVariant && parseFloat(selectedVariant.price) > 0 ? parseFloat(selectedVariant.price) : parseFloat(product.basePrice);
-  const hasDiscount = !selectedVariant && product.comparePrice && parseFloat(product.comparePrice) > parseFloat(product.basePrice);
+  const hasDiscount = product.comparePrice && parseFloat(product.comparePrice) > parseFloat(product.basePrice);
   const discountPct = hasDiscount ? Math.round(((parseFloat(product.comparePrice!) - parseFloat(product.basePrice)) / parseFloat(product.comparePrice!)) * 100) : 0;
   const categoryName = categories.find((c) => c.id === product.categoryId)?.name || null;
   const isOutOfStock = !product.active;
@@ -403,8 +403,8 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 leading-snug">{product.name}</h2>
             <div className="flex items-center gap-2 flex-wrap mt-1.5">
               <span className="text-2xl sm:text-3xl font-bold" style={{ color: primaryColor }}>{fmt(price.toString())}</span>
-              {hasDiscount && <span className="text-sm text-gray-400">{fmt(product.comparePrice!)}</span>}
-              {hasDiscount && <span className="text-xs text-gray-500 font-semibold">-{discountPct}%</span>}
+              {hasDiscount && <span className="text-base sm:text-lg text-gray-400">{fmt(product.comparePrice!)}</span>}
+              {hasDiscount && <span className="text-sm sm:text-base text-red-500 font-extrabold">-{discountPct}%</span>}
             </div>
           </div>
 
@@ -424,20 +424,11 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
               <p className="text-xs font-semibold text-gray-400 uppercase mb-1.5">Opciones disponibles</p>
               <div className="flex flex-wrap gap-2">
                 {product.variants.map((v) => (
-                  <button key={v.id} onClick={() => setSelectedVariant(v)} className={`rounded-full px-3 py-1.5 text-xs font-medium transition border-2 ${v.stock <= 0 ? "opacity-40 line-through" : ""} ${selectedVariant?.id === v.id ? "text-white" : "border-gray-200 text-gray-700 bg-white"}`} style={selectedVariant?.id === v.id ? { backgroundColor: primaryColor, borderColor: primaryColor } : undefined}>
-                    {v.color && v.size ? `${v.color} / ${v.size}` : v.color || v.size || fmt(v.price)} {v.stock <= 0 ? "(Agotado)" : ""}
+                  <button key={v.id} onClick={() => setSelectedVariant(v)} className={`rounded-full px-3 py-1.5 text-xs font-medium transition border-2 ${v.stock <= 0 ? "opacity-40" : ""} ${selectedVariant?.id === v.id ? "text-white" : "border-gray-200 text-gray-700 bg-white"}`} style={selectedVariant?.id === v.id ? { backgroundColor: primaryColor, borderColor: primaryColor } : undefined}>
+                    {v.color && v.size ? `${v.color} / ${v.size}` : v.color || v.size || fmt(v.price)} ({v.stock <= 0 ? "Agotado" : v.stock})
                   </button>
                 ))}
               </div>
-              {selectedVariant && (
-                <p className="text-xs text-gray-500 mt-1.5">
-                  {selectedVariant.color && <span className="mr-2">{selectedVariant.color}</span>}
-                  {selectedVariant.size && <span className="mr-2">Talla: {selectedVariant.size}</span>}
-                  <span className={selectedVariant.stock <= 0 ? "text-red-500 font-bold" : "text-green-600 font-bold"}>
-                    {selectedVariant.stock <= 0 ? "❌ Agotado" : `📦 Stock: ${selectedVariant.stock}`}
-                  </span>
-                </p>
-              )}
             </div>
           )}
 
