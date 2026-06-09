@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import type { Product, Category, StoreSettings, CartItem, ProductVariant } from "@/lib/types";
 import AdminPanel from "@/components/AdminPanel";
 import Cart from "@/components/Cart";
@@ -333,6 +333,7 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(product.variants.length > 0 ? product.variants[0] : null);
   const [justAdded, setJustAdded] = useState(false);
   const [autoSlide, setAutoSlide] = useState(true);
+  const touchStartX = useRef<number | null>(null);
 
   useEffect(() => { setCurrentImage(0); setAutoSlide(true); setSelectedVariant(product.variants.length > 0 ? product.variants[0] : null); }, [product.id, product.variants]);
 
@@ -348,8 +349,22 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
   const categoryName = categories.find((c) => c.id === product.categoryId)?.name || null;
   const isOutOfStock = !product.active;
 
-  const prevImage = () => { setAutoSlide(false); setCurrentImage((prev) => (prev - 1 + product.images.length) % product.images.length); };
-  const nextImage = () => { setAutoSlide(false); setCurrentImage((prev) => (prev + 1) % product.images.length); };
+  const goPrevImage = () => { setAutoSlide(false); setCurrentImage((prev) => (prev - 1 + product.images.length) % product.images.length); };
+  const goNextImage = () => { setAutoSlide(false); setCurrentImage((prev) => (prev + 1) % product.images.length); };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchStartX.current = e.changedTouches[0]?.clientX ?? null;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStartX.current === null) return;
+    const endX = e.changedTouches[0]?.clientX ?? touchStartX.current;
+    const deltaX = endX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(deltaX) < 40) return;
+    if (deltaX > 0) goPrevImage();
+    else goNextImage();
+  };
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
@@ -367,29 +382,23 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
 
         {/* Image carousel */}
         <div className="relative bg-black">
-          <div className="aspect-square overflow-hidden">
+          <div className="aspect-square overflow-hidden touch-pan-y" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
             {product.images.length > 0 ? (
-              <img src={product.images[currentImage]?.url} alt={product.name} className="w-full h-full object-contain bg-gray-50" />
+              <img src={product.images[currentImage]?.url} alt={product.name} className="w-full h-full object-contain bg-gray-50 select-none" draggable={false} />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300"><span className="text-5xl">📷</span></div>
             )}
           </div>
           {product.images.length > 1 && (
-            <>
-              <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 text-white rounded-full flex items-center justify-center hover:bg-black/60 transition text-lg">‹</button>
-              <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 text-white rounded-full flex items-center justify-center hover:bg-black/60 transition text-lg">›</button>
-            </>
-          )}
-          {product.images.length > 1 && (
             <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
               {product.images.map((_, i) => (
-                <button key={i} onClick={() => setCurrentImage(i)} className={`rounded-full transition-all ${i === currentImage ? "w-6 h-2 bg-white" : "w-2 h-2 bg-white/50"}`} />
+                <button key={i} onClick={() => { setAutoSlide(false); setCurrentImage(i); }} className={`rounded-full transition-all ${i === currentImage ? "w-6 h-2 bg-white" : "w-2 h-2 bg-white/50"}`} />
               ))}
             </div>
           )}
           {isOutOfStock && <span className="absolute top-3 left-3 bg-gray-800 text-white text-sm font-bold px-3 py-1.5 rounded-lg shadow-lg">AGOTADO</span>}
-          {product.images.length > 1 && <span className="absolute top-3 right-12 bg-black/40 text-white text-[10px] px-2 py-0.5 rounded-full">{currentImage + 1}/{product.images.length}</span>}
-          {/* no overlay here — moved to full modal */}
+          {product.images.length > 1 && <span className="absolute top-3 right-3 bg-black/40 text-white text-[10px] px-2 py-0.5 rounded-full">{currentImage + 1}/{product.images.length}</span>}
+          {/* desliza a izquierda/derecha para cambiar fotos */}
         </div>
 
         {/* Product info */}
@@ -404,7 +413,7 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
             <div className="flex items-center gap-2 flex-wrap mt-1.5">
               <span className="text-2xl sm:text-3xl font-bold" style={{ color: primaryColor }}>{fmt(price.toString())}</span>
               {hasDiscount && <span className="text-base sm:text-lg text-gray-400">{fmt(product.comparePrice!)}</span>}
-              {hasDiscount && <span className="text-sm sm:text-base text-red-500 font-extrabold">-{discountPct}%</span>}
+              {hasDiscount && <span className="bg-red-500 text-white text-sm sm:text-base font-extrabold px-2 py-0.5 rounded-md">-{discountPct}%</span>}
             </div>
           </div>
 
@@ -414,8 +423,8 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
           )}
 
           {/* Description */}
-          {product.description && (
-            <p className="text-base sm:text-lg text-gray-700 leading-relaxed whitespace-pre-line break-words">{product.description}</p>
+          {product.description?.trim() && (
+            <p className="text-base sm:text-lg text-gray-700 leading-relaxed whitespace-pre-line break-words">{product.description.trim()}</p>
           )}
 
           {/* Variants */}
