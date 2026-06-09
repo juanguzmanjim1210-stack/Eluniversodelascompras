@@ -232,6 +232,7 @@ export default function CatalogPage() {
                       </div>
                     )}
                     {hasDiscount && !isOutOfStock && <span className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-md">-{discountPct}%</span>}
+                    {product.badge && !isOutOfStock && !hasDiscount && <span className="absolute top-1.5 left-1.5 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-md" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>{product.badge}</span>}
                     {isOutOfStock && <span className="absolute top-1.5 right-1.5 bg-gray-800 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-md">AGOTADO</span>}
 
                     {addedToCart === product.id && (
