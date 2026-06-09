@@ -347,6 +347,18 @@ function ProductsTab({ onEdit }: { onEdit: (id: string) => void }) {
     fetchData();
   };
 
+  const moveProduct = async (index: number, direction: "up" | "down") => {
+    const swapIdx = direction === "up" ? index - 1 : index + 1;
+    if (swapIdx < 0 || swapIdx >= products.length) return;
+    const a = products[index];
+    const b = products[swapIdx];
+    await Promise.all([
+      fetch(`/api/products/${a.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...a, sortOrder: swapIdx }) }),
+      fetch(`/api/products/${b.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...b, sortOrder: index }) }),
+    ]);
+    fetchData();
+  };
+
   if (loading) return <div className="p-6 text-center text-gray-400">Cargando...</div>;
 
   return (
@@ -368,7 +380,6 @@ function ProductsTab({ onEdit }: { onEdit: (id: string) => void }) {
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
-          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción" className="w-full px-3 py-2 border rounded-lg text-sm" />
           <button type="submit" className="w-full bg-green-600 text-white py-2 rounded-lg text-sm font-medium">Crear Producto</button>
         </form>
       )}
@@ -377,15 +388,21 @@ function ProductsTab({ onEdit }: { onEdit: (id: string) => void }) {
         {products.length === 0 ? (
           <p className="text-center text-gray-400 py-8">No hay productos</p>
         ) : (
-          products.map((p) => (
-            <div key={p.id} className="bg-white border rounded-xl p-3 flex items-center gap-3">
+          products.map((p, idx) => (
+            <div key={p.id} className="bg-white border rounded-xl p-3 flex items-center gap-2">
+              {/* Flechas de orden */}
+              <div className="flex flex-col gap-0.5 flex-shrink-0">
+                <button onClick={() => moveProduct(idx, "up")} disabled={idx === 0} className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-[10px] disabled:opacity-30">▲</button>
+                <button onClick={() => moveProduct(idx, "down")} disabled={idx === products.length - 1} className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-[10px] disabled:opacity-30">▼</button>
+              </div>
               <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
                 {p.images[0] ? <img src={p.images[0].url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-300">📷</div>}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="font-medium text-sm truncate">{p.name}</span>
                   <span className={`text-xs px-1.5 py-0.5 rounded ${p.active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{p.active ? "Disponible" : "Agotado"}</span>
+                  {p.badge && <span className="text-[10px] px-1.5 py-0.5 rounded text-white font-bold" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>{p.badge}</span>}
                 </div>
                 <p className="text-xs text-gray-500">${parseFloat(p.basePrice).toFixed(2)}</p>
               </div>
@@ -694,6 +711,7 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
   const [categoryId, setCategoryId] = useState("");
   const [basePrice, setBasePrice] = useState("");
   const [comparePrice, setComparePrice] = useState("");
+  const [badge, setBadge] = useState("");
   const [active, setActive] = useState(true);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState("");
@@ -714,6 +732,7 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
     setCategoryId(p.categoryId || "");
     setBasePrice(p.basePrice);
     setComparePrice(p.comparePrice || "");
+    setBadge(p.badge || "");
     setActive(p.active);
 
     setImageUrls(p.images.sort((a, b) => a.sortOrder - b.sortOrder).map((img) => img.url));
@@ -729,7 +748,7 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
     await fetch(`/api/products/${productId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, description, categoryId: categoryId || null, basePrice, comparePrice: comparePrice || null, active }),
+      body: JSON.stringify({ name, description, categoryId: categoryId || null, basePrice, comparePrice: comparePrice || null, badge: badge || null, active }),
     });
     setSaving(false);
     setInfoSaved(true);
@@ -830,6 +849,19 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
           <input type="checkbox" checked={!active} onChange={(e) => setActive(!e.target.checked)} className="rounded accent-red-500" />
           <span className={active ? "text-gray-600" : "text-red-600 font-bold"}>❌ Marcar como AGOTADO</span>
         </label>
+        {/* Badge */}
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">🏷️ Etiqueta (opcional)</label>
+          <div className="flex gap-2">
+            <input value={badge} onChange={(e) => setBadge(e.target.value)} placeholder="Ej: Nuevo, Oferta, Hot" className="flex-1 px-3 py-2 border rounded-lg text-sm" />
+            {badge && <button type="button" onClick={() => setBadge("")} className="text-xs text-red-500 hover:bg-red-50 px-2 rounded">Quitar</button>}
+          </div>
+          <div className="flex gap-1.5 mt-1.5">
+            {["Nuevo", "Oferta", "Hot 🔥", "Último"].map((b) => (
+              <button key={b} type="button" onClick={() => setBadge(b)} className={`text-[10px] px-2 py-1 rounded-full font-bold text-white ${badge === b ? "ring-2 ring-blue-400" : ""}`} style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>{b}</button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Pricing */}
