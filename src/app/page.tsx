@@ -387,7 +387,6 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
               ))}
             </div>
           )}
-          {hasDiscount && <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-lg shadow-lg">-{discountPct}%</span>}
           {isOutOfStock && <span className="absolute top-3 left-3 bg-gray-800 text-white text-sm font-bold px-3 py-1.5 rounded-lg shadow-lg">AGOTADO</span>}
           {product.images.length > 1 && <span className="absolute top-3 right-12 bg-black/40 text-white text-[10px] px-2 py-0.5 rounded-full">{currentImage + 1}/{product.images.length}</span>}
           {/* no overlay here — moved to full modal */}
@@ -404,8 +403,8 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 leading-snug">{product.name}</h2>
             <div className="flex items-center gap-2 flex-wrap mt-1.5">
               <span className="text-2xl sm:text-3xl font-bold" style={{ color: primaryColor }}>{fmt(price.toString())}</span>
-              {hasDiscount && <span className="text-sm text-gray-400 line-through">{fmt(product.comparePrice!)}</span>}
-              {hasDiscount && <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">-{discountPct}%</span>}
+              {hasDiscount && <span className="text-sm text-gray-400">{fmt(product.comparePrice!)}</span>}
+              {hasDiscount && <span className="text-xs text-gray-500 font-semibold">-{discountPct}%</span>}
             </div>
           </div>
 
