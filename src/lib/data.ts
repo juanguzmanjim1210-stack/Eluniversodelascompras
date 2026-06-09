@@ -79,7 +79,7 @@ export async function getProducts(filters: { categoryId?: string; search?: strin
   if (filters.active) conditions.push(eq(schema.products.active, true));
   if (filters.search) conditions.push(ilike(schema.products.name, `%${filters.search}%`));
   const where = conditions.length > 0 ? and(...conditions) : undefined;
-  const rows = await db.select().from(schema.products).where(where).orderBy(desc(schema.products.createdAt));
+  const rows = await db.select().from(schema.products).where(where).orderBy(schema.products.sortOrder, desc(schema.products.createdAt));
   return Promise.all(rows.map((r) => enrichProduct(r.id, r as unknown as Record<string, unknown>)));
 }
 
@@ -96,6 +96,8 @@ export async function createProduct(body: Record<string, unknown>) {
     categoryId: (body.categoryId as string) || null,
     basePrice: (body.basePrice as string) || "0",
     comparePrice: (body.comparePrice as string) || null,
+    badge: (body.badge as string) || null,
+    sortOrder: (body.sortOrder as number) ?? 0,
     active: (body.active as boolean) ?? true,
   }).returning();
   return row;
@@ -108,6 +110,8 @@ export async function updateProduct(id: string, body: Record<string, unknown>) {
     categoryId: (body.categoryId as string) || null,
     basePrice: (body.basePrice as string) || "0",
     comparePrice: (body.comparePrice as string) || null,
+    badge: (body.badge as string) || null,
+    sortOrder: (body.sortOrder as number) ?? 0,
     active: (body.active as boolean) ?? true,
     updatedAt: new Date(),
   }).where(eq(schema.products.id, id)).returning();
