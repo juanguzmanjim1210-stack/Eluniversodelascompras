@@ -57,6 +57,7 @@ export const products = pgTable("products", {
   comparePrice: numeric("compare_price", { precision: 12, scale: 2 }),
   stock: integer("stock").notNull().default(0),
   badge: varchar("badge", { length: 50 }),
+  badgeColor: varchar("badge_color", { length: 20 }).notNull().default("#f59e0b"),
   sortOrder: integer("sort_order").notNull().default(0),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
