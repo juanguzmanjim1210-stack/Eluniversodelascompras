@@ -5,7 +5,7 @@ import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { eq, and, ilike, desc, sql } from "drizzle-orm";
 
-let productColumnsCache: { badge: boolean; sortOrder: boolean } | null = null;
+let productColumnsCache: { badge: boolean; sortOrder: boolean; stock: boolean } | null = null;
 
 async function getProductColumnSupport() {
   if (productColumnsCache) return productColumnsCache;
@@ -16,16 +16,17 @@ async function getProductColumnSupport() {
       from information_schema.columns
       where table_schema = 'public'
         and table_name = 'products'
-        and column_name in ('badge', 'sort_order')
+        and column_name in ('badge', 'sort_order', 'stock')
     `);
 
     const rows = ((result as unknown) as { rows?: Array<{ column_name: string }> }).rows ?? [];
     productColumnsCache = {
       badge: rows.some((r) => r.column_name === "badge"),
       sortOrder: rows.some((r) => r.column_name === "sort_order"),
+      stock: rows.some((r) => r.column_name === "stock"),
     };
   } catch {
-    productColumnsCache = { badge: false, sortOrder: false };
+    productColumnsCache = { badge: false, sortOrder: false, stock: false };
   }
 
   return productColumnsCache;
@@ -117,7 +118,7 @@ export async function getProducts(filters: { categoryId?: string; search?: strin
       category_id as "categoryId",
       base_price as "basePrice",
       compare_price as "comparePrice",
-      stock,
+      ${support.stock ? `stock` : `0 as stock`},
       ${support.badge ? `badge` : `NULL as badge`},
       ${support.sortOrder ? `sort_order as "sortOrder"` : `0 as "sortOrder"`},
       active,
@@ -143,7 +144,7 @@ export async function getProduct(id: string) {
       category_id as "categoryId",
       base_price as "basePrice",
       compare_price as "comparePrice",
-      stock,
+      ${support.stock ? `stock` : `0 as stock`},
       ${support.badge ? `badge` : `NULL as badge`},
       ${support.sortOrder ? `sort_order as "sortOrder"` : `0 as "sortOrder"`},
       active,
@@ -169,10 +170,10 @@ export async function createProduct(body: Record<string, unknown>) {
     categoryId: (body.categoryId as string) || null,
     basePrice: (body.basePrice as string) || "0",
     comparePrice: (body.comparePrice as string) || null,
-    stock: (body.stock as number) ?? 0,
     active: (body.active as boolean) ?? true,
   };
 
+  if (support.stock) values.stock = (body.stock as number) ?? 0;
   if (support.badge) values.badge = (body.badge as string) || null;
   if (support.sortOrder) values.sortOrder = (body.sortOrder as number) ?? 0;
 
@@ -189,11 +190,11 @@ export async function updateProduct(id: string, body: Record<string, unknown>) {
     categoryId: (body.categoryId as string) || null,
     basePrice: (body.basePrice as string) || "0",
     comparePrice: (body.comparePrice as string) || null,
-    stock: (body.stock as number) ?? 0,
     active: (body.active as boolean) ?? true,
     updatedAt: new Date(),
   };
 
+  if (support.stock) values.stock = (body.stock as number) ?? 0;
   if (support.badge) values.badge = (body.badge as string) || null;
   if (support.sortOrder) values.sortOrder = (body.sortOrder as number) ?? 0;
 
