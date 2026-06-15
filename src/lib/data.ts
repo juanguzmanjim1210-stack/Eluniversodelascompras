@@ -3,34 +3,7 @@
 */
 import { db } from "@/db";
 import * as schema from "@/db/schema";
-import { eq, and, ilike, desc, sql } from "drizzle-orm";
-
-let productColumnsCache: { badge: boolean; sortOrder: boolean; stock: boolean } | null = null;
-
-async function getProductColumnSupport() {
-  if (productColumnsCache) return productColumnsCache;
-
-  try {
-    const result = await db.execute(sql`
-      select column_name
-      from information_schema.columns
-      where table_schema = 'public'
-        and table_name = 'products'
-        and column_name in ('badge', 'sort_order', 'stock')
-    `);
-
-    const rows = ((result as unknown) as { rows?: Array<{ column_name: string }> }).rows ?? [];
-    productColumnsCache = {
-      badge: rows.some((r) => r.column_name === "badge"),
-      sortOrder: rows.some((r) => r.column_name === "sort_order"),
-      stock: rows.some((r) => r.column_name === "stock"),
-    };
-  } catch {
-    productColumnsCache = { badge: false, sortOrder: false, stock: false };
-  }
-
-  return productColumnsCache;
-}
+import { eq, and, ilike, desc } from "drizzle-orm";
 
 // ===================== STORE SETTINGS =====================
 
@@ -101,104 +74,49 @@ async function enrichProduct(id: string, data: Record<string, unknown>) {
 }
 
 export async function getProducts(filters: { categoryId?: string; search?: string; active?: boolean }) {
-  const support = await getProductColumnSupport();
-
-  const conditions: string[] = [];
-  if (filters.categoryId) conditions.push(`category_id = '${String(filters.categoryId).replace(/'/g, "''")}'`);
-  if (filters.active) conditions.push(`active = true`);
-  if (filters.search) conditions.push(`name ILIKE '%${String(filters.search).replace(/'/g, "''") }%'`);
-  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-  const orderClause = support.sortOrder ? `ORDER BY sort_order ASC, created_at DESC` : `ORDER BY created_at DESC`;
-
-  const result = await db.execute(sql.raw(`
-    SELECT
-      id,
-      name,
-      description,
-      category_id as "categoryId",
-      base_price as "basePrice",
-      compare_price as "comparePrice",
-      ${support.stock ? `stock` : `0 as stock`},
-      ${support.badge ? `badge` : `NULL as badge`},
-      ${support.sortOrder ? `sort_order as "sortOrder"` : `0 as "sortOrder"`},
-      active,
-      created_at as "createdAt",
-      updated_at as "updatedAt"
-    FROM products
-    ${whereClause}
-    ${orderClause}
-  `));
-
-  const rows = ((result as unknown) as { rows?: Array<Record<string, unknown>> }).rows ?? [];
-  return Promise.all(rows.map((r) => enrichProduct(String(r.id), r)));
+  const conditions = [];
+  if (filters.categoryId) conditions.push(eq(schema.products.categoryId, filters.categoryId));
+  if (filters.active) conditions.push(eq(schema.products.active, true));
+  if (filters.search) conditions.push(ilike(schema.products.name, `%${filters.search}%`));
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+  const rows = await db.select().from(schema.products).where(where).orderBy(schema.products.sortOrder, desc(schema.products.createdAt));
+  return Promise.all(rows.map((r) => enrichProduct(r.id, r as unknown as Record<string, unknown>)));
 }
 
 export async function getProduct(id: string) {
-  const support = await getProductColumnSupport();
-
-  const result = await db.execute(sql.raw(`
-    SELECT
-      id,
-      name,
-      description,
-      category_id as "categoryId",
-      base_price as "basePrice",
-      compare_price as "comparePrice",
-      ${support.stock ? `stock` : `0 as stock`},
-      ${support.badge ? `badge` : `NULL as badge`},
-      ${support.sortOrder ? `sort_order as "sortOrder"` : `0 as "sortOrder"`},
-      active,
-      created_at as "createdAt",
-      updated_at as "updatedAt"
-    FROM products
-    WHERE id = '${String(id).replace(/'/g, "''")}'
-    LIMIT 1
-  `));
-
-  const rows = ((result as unknown) as { rows?: Array<Record<string, unknown>> }).rows ?? [];
-  const row = rows[0];
+  const [row] = await db.select().from(schema.products).where(eq(schema.products.id, id));
   if (!row) return null;
-  return enrichProduct(id, row);
+  return enrichProduct(id, row as unknown as Record<string, unknown>);
 }
 
 export async function createProduct(body: Record<string, unknown>) {
-  const support = await getProductColumnSupport();
-
-  const values: typeof schema.products.$inferInsert = {
+  const [row] = await db.insert(schema.products).values({
     name: (body.name as string) || "Producto",
     description: (body.description as string) || null,
     categoryId: (body.categoryId as string) || null,
     basePrice: (body.basePrice as string) || "0",
     comparePrice: (body.comparePrice as string) || null,
+    stock: (body.stock as number) ?? 0,
+    badge: (body.badge as string) || null,
+    sortOrder: (body.sortOrder as number) ?? 0,
     active: (body.active as boolean) ?? true,
-  };
-
-  if (support.stock) values.stock = (body.stock as number) ?? 0;
-  if (support.badge) values.badge = (body.badge as string) || null;
-  if (support.sortOrder) values.sortOrder = (body.sortOrder as number) ?? 0;
-
-  const [row] = await db.insert(schema.products).values(values).returning();
+  }).returning();
   return row;
 }
 
 export async function updateProduct(id: string, body: Record<string, unknown>) {
-  const support = await getProductColumnSupport();
-
-  const values: Partial<typeof schema.products.$inferInsert> = {
+  const [row] = await db.update(schema.products).set({
     name: (body.name as string) || "Producto",
     description: (body.description as string) || null,
     categoryId: (body.categoryId as string) || null,
     basePrice: (body.basePrice as string) || "0",
     comparePrice: (body.comparePrice as string) || null,
+    stock: (body.stock as number) ?? 0,
+    badge: (body.badge as string) || null,
+    sortOrder: (body.sortOrder as number) ?? 0,
     active: (body.active as boolean) ?? true,
     updatedAt: new Date(),
-  };
-
-  if (support.stock) values.stock = (body.stock as number) ?? 0;
-  if (support.badge) values.badge = (body.badge as string) || null;
-  if (support.sortOrder) values.sortOrder = (body.sortOrder as number) ?? 0;
-
-  const [row] = await db.update(schema.products).set(values).where(eq(schema.products.id, id)).returning();
+  }).where(eq(schema.products.id, id)).returning();
   return row;
 }
 
