@@ -231,8 +231,8 @@ export default function CatalogPage() {
                         <svg className="w-10 h-10 sm:w-14 sm:h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                       </div>
                     )}
-                    {hasDiscount && !isOutOfStock && <span className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-md">-{discountPct}%</span>}
-                    {product.badge && !isOutOfStock && !hasDiscount && <span className="absolute top-1.5 left-1.5 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-md" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>{product.badge}</span>}
+                    {hasDiscount && !isOutOfStock && <span className="absolute top-1.5 left-1.5 bg-red-500 text-white text-xs sm:text-sm font-extrabold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-lg">-{discountPct}%</span>}
+                    {product.badge && !isOutOfStock && !hasDiscount && <span className="absolute top-1.5 left-1.5 text-white text-xs sm:text-sm font-extrabold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-lg" style={{ backgroundColor: product.badgeColor || "#f59e0b" }}>{product.badge}</span>}
                     {isOutOfStock && <span className="absolute top-1.5 right-1.5 bg-gray-800 text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-md">AGOTADO</span>}
 
                     {addedToCart === product.id && (
@@ -397,6 +397,7 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
             </div>
           )}
           {isOutOfStock && <span className="absolute top-3 left-3 bg-gray-800 text-white text-sm font-bold px-3 py-1.5 rounded-lg shadow-lg">AGOTADO</span>}
+          {product.badge && !isOutOfStock && <span className="absolute top-3 left-3 text-white text-sm font-extrabold px-3 py-1.5 rounded-lg shadow-lg" style={{ backgroundColor: product.badgeColor || "#f59e0b" }}>{product.badge}</span>}
           {product.images.length > 1 && <span className="absolute top-3 right-3 bg-black/40 text-white text-[10px] px-2 py-0.5 rounded-full">{currentImage + 1}/{product.images.length}</span>}
           {/* desliza a izquierda/derecha para cambiar fotos */}
         </div>
@@ -424,7 +425,13 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
 
           {/* Description */}
           {product.description?.trim() && (
-            <p className="text-base sm:text-lg text-gray-700 leading-relaxed whitespace-pre-line break-words">{product.description.trim()}</p>
+            <div className="text-base sm:text-lg text-gray-700 leading-relaxed whitespace-pre-line break-words">
+              {product.description.trim().split(/(\*\*[^*]+\*\*)/).map((part, i) =>
+                part.startsWith("**") && part.endsWith("**")
+                  ? <strong key={i}>{part.slice(2, -2)}</strong>
+                  : <span key={i}>{part}</span>
+              )}
+            </div>
           )}
 
           {/* Variants */}
