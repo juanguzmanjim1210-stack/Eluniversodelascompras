@@ -59,9 +59,8 @@ export default function CatalogPage() {
         const data = await res.json();
         if (Array.isArray(data)) setProducts(data);
       }
-    } catch {
-      /* no sobreescribir datos buenos */
-    }
+    } catch { /* no sobreescribir datos buenos */ }
+    setLoading(false);
   }, [selectedCategory, search]);
 
   const fetchStore = useCallback(async () => {
@@ -71,9 +70,7 @@ export default function CatalogPage() {
         const data = await r.json();
         if (data && data.updatedAt) setStore(data);
       }
-    } catch {
-      /* no sobreescribir datos buenos */
-    }
+    } catch { /* no sobreescribir datos buenos */ }
   }, []);
 
   const fetchCategories = useCallback(async () => {
@@ -83,29 +80,13 @@ export default function CatalogPage() {
         const data = await r.json();
         if (Array.isArray(data)) setCategories(data);
       }
-    } catch {
-      /* no sobreescribir datos buenos */
-    }
+    } catch { /* no sobreescribir datos buenos */ }
   }, []);
 
+  useEffect(() => { fetchStore(); fetchCategories(); }, [fetchStore, fetchCategories]);
+  useEffect(() => { setLoading(true); fetchProducts(); }, [fetchProducts]);
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    (async () => {
-      await Promise.allSettled([fetchStore(), fetchCategories(), fetchProducts()]);
-      if (!cancelled) setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [fetchProducts, fetchStore, fetchCategories]);
-
-  useEffect(() => {
-    const i = setInterval(() => {
-      fetchProducts();
-      fetchStore();
-      fetchCategories();
-    }, 15000);
+    const i = setInterval(() => { fetchProducts(); fetchStore(); fetchCategories(); }, 15000);
     return () => clearInterval(i);
   }, [fetchProducts, fetchStore, fetchCategories]);
 
