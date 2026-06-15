@@ -4,6 +4,7 @@ import { getProducts, createProduct } from "@/lib/data";
 export async function GET(req: NextRequest) {
   try {
     const p = new URL(req.url).searchParams;
+    // stable products fetch
     const products = await getProducts({
       categoryId: p.get("categoryId") || undefined,
       search: p.get("search") || undefined,
