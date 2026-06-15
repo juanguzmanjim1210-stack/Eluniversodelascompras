@@ -98,6 +98,7 @@ export async function createProduct(body: Record<string, unknown>) {
     comparePrice: (body.comparePrice as string) || null,
     stock: (body.stock as number) ?? 0,
     badge: (body.badge as string) || null,
+    badgeColor: (body.badgeColor as string) || "#f59e0b",
     sortOrder: (body.sortOrder as number) ?? 0,
     active: (body.active as boolean) ?? true,
   }).returning();
@@ -113,6 +114,7 @@ export async function updateProduct(id: string, body: Record<string, unknown>) {
     comparePrice: (body.comparePrice as string) || null,
     stock: (body.stock as number) ?? 0,
     badge: (body.badge as string) || null,
+    badgeColor: (body.badgeColor as string) || "#f59e0b",
     sortOrder: (body.sortOrder as number) ?? 0,
     active: (body.active as boolean) ?? true,
     updatedAt: new Date(),
