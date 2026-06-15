@@ -149,10 +149,9 @@ export default function CatalogPage() {
       {store && (
         <>
           {store.coverUrl && (
-            <div className="relative w-full h-40 sm:h-52 md:h-64 overflow-hidden">
-              <img src={store.coverUrl} alt="Portada" className="w-full h-full object-cover" loading="eager" />
+            <div className="relative w-full h-44 sm:h-56 md:h-72 overflow-hidden">
+              <img src={store.coverUrl} alt="Portada" className="absolute inset-0 w-full h-full object-cover object-center" loading="eager" />
               <div className="absolute inset-0 bg-black/30" />
-              {/* botones ocultos */}
             </div>
           )}
           <div className={`bg-white border-b ${store.coverUrl ? "-mt-16 sm:-mt-20 relative z-10" : ""}`}>
