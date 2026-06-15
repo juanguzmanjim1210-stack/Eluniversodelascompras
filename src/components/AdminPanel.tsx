@@ -712,6 +712,7 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
   const [basePrice, setBasePrice] = useState("");
   const [comparePrice, setComparePrice] = useState("");
   const [badge, setBadge] = useState("");
+  const [badgeColor, setBadgeColor] = useState("#f59e0b");
   const [active, setActive] = useState(true);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState("");
@@ -733,6 +734,7 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
     setBasePrice(p.basePrice);
     setComparePrice(p.comparePrice || "");
     setBadge(p.badge || "");
+    setBadgeColor(p.badgeColor || "#f59e0b");
     setActive(p.active);
 
     setImageUrls(p.images.sort((a, b) => a.sortOrder - b.sortOrder).map((img) => img.url));
@@ -748,7 +750,7 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
     await fetch(`/api/products/${productId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, description, categoryId: categoryId || null, basePrice, comparePrice: comparePrice || null, badge: badge || null, active }),
+      body: JSON.stringify({ name, description, categoryId: categoryId || null, basePrice, comparePrice: comparePrice || null, badge: badge || null, badgeColor, active }),
     });
     setSaving(false);
     setInfoSaved(true);
@@ -845,6 +847,7 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
           {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción del producto" rows={3} className="w-full px-3 py-2 border rounded-lg text-sm resize-none" />
+        <p className="text-[10px] text-gray-400">💡 Para poner texto en <strong>negrita</strong>, escribe **texto aquí** con doble asterisco</p>
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input type="checkbox" checked={!active} onChange={(e) => setActive(!e.target.checked)} className="rounded accent-red-500" />
           <span className={active ? "text-gray-600" : "text-red-600 font-bold"}>❌ Marcar como AGOTADO</span>
@@ -858,9 +861,26 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
           </div>
           <div className="flex gap-1.5 mt-1.5">
             {["Nuevo", "Oferta", "Hot 🔥", "Último"].map((b) => (
-              <button key={b} type="button" onClick={() => setBadge(b)} className={`text-[10px] px-2 py-1 rounded-full font-bold text-white ${badge === b ? "ring-2 ring-blue-400" : ""}`} style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>{b}</button>
+              <button key={b} type="button" onClick={() => setBadge(b)} className={`text-[10px] px-2 py-1 rounded-full font-bold text-white ${badge === b ? "ring-2 ring-blue-400" : ""}`} style={{ backgroundColor: badgeColor }}>{b}</button>
             ))}
           </div>
+          {badge && (
+            <div className="mt-2">
+              <label className="block text-[10px] font-medium text-gray-500 mb-1">Color de la etiqueta</label>
+              <div className="flex items-center gap-2">
+                <input type="color" value={badgeColor} onChange={(e) => setBadgeColor(e.target.value)} className="w-8 h-8 rounded border cursor-pointer" />
+                <div className="flex gap-1">
+                  {["#f59e0b","#ef4444","#10b981","#3b82f6","#8b5cf6","#ec4899","#000000"].map((c) => (
+                    <button key={c} type="button" onClick={() => setBadgeColor(c)} className={`w-6 h-6 rounded-full border-2 ${badgeColor === c ? "border-blue-500 scale-110" : "border-transparent"}`} style={{ backgroundColor: c }} />
+                  ))}
+                </div>
+              </div>
+              <div className="mt-1.5 flex items-center gap-2">
+                <span className="text-[10px] text-gray-400">Vista previa:</span>
+                <span className="text-xs font-extrabold text-white px-2.5 py-1 rounded-lg shadow" style={{ backgroundColor: badgeColor }}>{badge}</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
