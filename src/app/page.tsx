@@ -57,10 +57,12 @@ export default function CatalogPage() {
       const res = await fetch(`/api/products?${p}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data)) setProducts(data);
+        if (Array.isArray(data)) {
+          setProducts(data);
+          setLoading(false);
+        }
       }
-    } catch { /* no sobreescribir datos buenos */ }
-    setLoading(false);
+    } catch { /* no sobreescribir datos buenos — mantener loading hasta que cargue */ }
   }, [selectedCategory, search]);
 
   const fetchStore = useCallback(async () => {
