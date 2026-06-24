@@ -1,5 +1,5 @@
 /* 
-  Data layer — PostgreSQL via Drizzle ORM (Supabase)
+  Data layer — PostgreSQL via Drizzle ORM (Neon/PostgreSQL)
 */
 import { db } from "@/db";
 import * as schema from "@/db/schema";
