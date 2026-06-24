@@ -12,9 +12,11 @@ const globalForDb = globalThis as typeof globalThis & {
 };
 
 const needsSsl =
-  databaseUrl.includes("supabase") ||
+  databaseUrl.includes("sslmode=require") ||
+  databaseUrl.includes("ssl=true") ||
+  databaseUrl.includes("amazonaws.com") ||
   databaseUrl.includes("neon.tech") ||
-  databaseUrl.includes("sslmode=require");
+  databaseUrl.includes("pooler");
 
 export const pool =
   globalForDb.__arenaNextJsPostgresqlPool ??
