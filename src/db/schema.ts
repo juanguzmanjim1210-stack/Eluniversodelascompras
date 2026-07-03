@@ -38,6 +38,9 @@ export const storeSettings = pgTable("store_settings", {
   announcementActive: boolean("announcement_active").notNull().default(false),
   announcementColor: varchar("announcement_color", { length: 20 }).notNull().default("#16a34a"),
   announcementSpeed: integer("announcement_speed").notNull().default(40),
+  warrantyType: varchar("warranty_type", { length: 20 }).notNull().default("none"),
+  warrantyText: text("warranty_text"),
+  warrantyImages: text("warranty_images"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
