@@ -19,6 +19,9 @@ export interface StoreSettings {
   announcementActive: boolean;
   announcementColor: string;
   announcementSpeed: number;
+  warrantyType: string;
+  warrantyText: string | null;
+  warrantyImages: string | null;
   updatedAt: string;
 }
 
