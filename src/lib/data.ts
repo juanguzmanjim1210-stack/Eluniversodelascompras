@@ -37,6 +37,9 @@ export async function updateStoreSettings(data: Record<string, unknown>) {
     announcementActive: (data.announcementActive as boolean) ?? false,
     announcementColor: (data.announcementColor as string) || "#16a34a",
     announcementSpeed: (data.announcementSpeed as number) || 40,
+    warrantyType: (data.warrantyType as string) || "none",
+    warrantyText: (data.warrantyText as string) || null,
+    warrantyImages: (data.warrantyImages as string) || null,
     updatedAt: new Date(),
   };
 
