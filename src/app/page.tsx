@@ -280,6 +280,29 @@ export default function CatalogPage() {
         </button>
       )}
 
+      {/* Políticas de Garantía */}
+      {store && store.warrantyType !== "none" && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 text-center mb-6">📋 Políticas de Garantía</h2>
+          {store.warrantyType === "text" && store.warrantyText && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-8 text-base sm:text-lg text-gray-700 leading-relaxed whitespace-pre-line break-words max-w-3xl mx-auto">
+              {store.warrantyText.trim().split(/(\*\*[^*]+\*\*)/).map((part, i) =>
+                part.startsWith("**") && part.endsWith("**")
+                  ? <strong key={i}>{part.slice(2, -2)}</strong>
+                  : <span key={i}>{part}</span>
+              )}
+            </div>
+          )}
+          {store.warrantyType === "images" && store.warrantyImages && (
+            <div className="flex flex-col items-center gap-4 max-w-3xl mx-auto">
+              {store.warrantyImages.split("\n").filter((u) => u.trim()).map((url, i) => (
+                <img key={i} src={url.trim()} alt={`Política ${i + 1}`} className="w-full rounded-xl shadow-sm border border-gray-100" loading="lazy" />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
       {/* Footer */}
       {store && (
         <footer style={{ backgroundColor: store.footerColor || "#111827" }} className="text-white mt-10 sm:mt-16">
