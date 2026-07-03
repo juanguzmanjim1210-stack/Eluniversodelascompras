@@ -493,6 +493,9 @@ function SettingsTab() {
   const [footerLogoUrl, setFooterLogoUrl] = useState("");
   const [footerName, setFooterName] = useState("");
   const [footerColor, setFooterColor] = useState("#111827");
+  const [warrantyType, setWarrantyType] = useState("none");
+  const [warrantyText, setWarrantyText] = useState("");
+  const [warrantyImages, setWarrantyImages] = useState("");
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementActive, setAnnouncementActive] = useState(false);
   const [announcementColor, setAnnouncementColor] = useState("#16a34a");
@@ -516,6 +519,9 @@ function SettingsTab() {
       setFooterLogoUrl(data.footerLogoUrl || "");
       setFooterName(data.footerName || "");
       setFooterColor(data.footerColor || "#111827");
+      setWarrantyType(data.warrantyType || "none");
+      setWarrantyText(data.warrantyText || "");
+      setWarrantyImages(data.warrantyImages || "");
       setAnnouncementColor(data.announcementColor || "#16a34a");
       setAnnouncementSpeed(data.announcementSpeed || 40);
       setAnnouncementText(data.announcementText || "");
@@ -528,7 +534,7 @@ function SettingsTab() {
     await fetch("/api/store-settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ storeName, storeDescription, logoUrl, coverUrl, facebook, whatsapp, instagram, tiktok, primaryColor, buttonText, currency, footerText, footerLogoUrl, footerName, footerColor, announcementText, announcementActive, announcementColor, announcementSpeed }),
+      body: JSON.stringify({ storeName, storeDescription, logoUrl, coverUrl, facebook, whatsapp, instagram, tiktok, primaryColor, buttonText, currency, footerText, footerLogoUrl, footerName, footerColor, announcementText, announcementActive, announcementColor, announcementSpeed, warrantyType, warrantyText, warrantyImages }),
     });
     setSaving(false); setSaved(true);
     setTimeout(() => setSaved(false), 3000);
@@ -650,6 +656,36 @@ function SettingsTab() {
         <input value={facebook} onChange={(e) => setFacebook(e.target.value)} placeholder="Facebook URL" className="w-full px-3 py-2 border rounded-lg text-sm" />
         <input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="Instagram URL" className="w-full px-3 py-2 border rounded-lg text-sm" />
         <input value={tiktok} onChange={(e) => setTiktok(e.target.value)} placeholder="TikTok URL" className="w-full px-3 py-2 border rounded-lg text-sm" />
+      </div>
+
+      {/* Políticas de Garantía */}
+      <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+        <h4 className="font-semibold text-sm text-gray-700">📋 Políticas de Garantía</h4>
+        <p className="text-xs text-gray-500">Elige cómo mostrar tus políticas en el catálogo</p>
+        <div className="flex gap-2">
+          {([["none","Sin políticas"],["text","Texto"],["images","Imágenes"]] as const).map(([val, label]) => (
+            <button key={val} type="button" onClick={() => setWarrantyType(val)} className={`flex-1 py-2 rounded-lg text-xs font-medium transition ${warrantyType === val ? "bg-blue-600 text-white" : "bg-white border text-gray-600 hover:bg-gray-100"}`}>{label}</button>
+          ))}
+        </div>
+        {warrantyType === "text" && (
+          <div>
+            <textarea value={warrantyText} onChange={(e) => setWarrantyText(e.target.value)} placeholder={"Escribe aquí tus políticas de garantía...\n\nPuedes usar **texto en negrita** con doble asterisco"} rows={6} className="w-full px-3 py-2 border rounded-lg text-sm resize-none" />
+            <p className="text-[10px] text-gray-400 mt-1">💡 Usa **texto** para poner en negrita</p>
+          </div>
+        )}
+        {warrantyType === "images" && (
+          <div>
+            <textarea value={warrantyImages} onChange={(e) => setWarrantyImages(e.target.value)} placeholder={"Pega los enlaces de las imágenes de tus políticas, uno por línea:\n\nhttps://i.ibb.co/xxxx/politica1.jpg\nhttps://i.ibb.co/yyyy/politica2.jpg"} rows={4} className="w-full px-3 py-2 border rounded-lg text-sm font-mono resize-none" />
+            <p className="text-[10px] text-gray-400 mt-1">💡 Sube tus imágenes a imgbb.com y pega los enlaces aquí, uno por línea</p>
+            {warrantyImages && (
+              <div className="mt-2 space-y-2">
+                {warrantyImages.split("\n").filter((u) => u.trim()).map((url, i) => (
+                  <img key={i} src={url.trim()} alt="" className="w-full rounded-lg border" />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Footer */}
