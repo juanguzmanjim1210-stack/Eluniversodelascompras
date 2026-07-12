@@ -461,11 +461,23 @@ function ProductModal({ product, categories, onClose, onAddToCart, addedToCart, 
             <div>
               <p className="text-xs font-semibold text-gray-400 uppercase mb-1.5">Opciones disponibles</p>
               <div className="flex flex-wrap gap-2">
-                {product.variants.map((v) => (
-                  <button key={v.id} onClick={() => setSelectedVariant(v)} className={`rounded-full px-3 py-1.5 text-xs font-medium transition border-2 ${v.stock <= 0 ? "opacity-40" : ""} ${selectedVariant?.id === v.id ? "text-white" : "border-gray-200 text-gray-700 bg-white"}`} style={selectedVariant?.id === v.id ? { backgroundColor: primaryColor, borderColor: primaryColor } : undefined}>
-                    {v.color && v.size ? `${v.color} / ${v.size}` : v.color || v.size || fmt(v.price)} ({v.stock <= 0 ? "Agotado" : v.stock})
-                  </button>
-                ))}
+                {product.variants.map((v) => {
+                  const variantLabel = v.color && v.size ? `${v.color} / ${v.size}` : v.color || v.size || "Opción";
+                  const variantPrice = parseFloat(v.price) > 0 ? fmt(v.price) : fmt(product.basePrice);
+                  return (
+                    <button
+                      key={v.id}
+                      onClick={() => setSelectedVariant(v)}
+                      className={`rounded-2xl px-3 py-2 text-left text-xs font-medium transition border-2 ${v.stock <= 0 ? "opacity-40" : ""} ${selectedVariant?.id === v.id ? "text-white" : "border-gray-200 text-gray-700 bg-white"}`}
+                      style={selectedVariant?.id === v.id ? { backgroundColor: primaryColor, borderColor: primaryColor } : undefined}
+                    >
+                      <span className="block font-semibold">{variantLabel}</span>
+                      <span className={`block text-[11px] mt-0.5 ${selectedVariant?.id === v.id ? "text-white/90" : "text-gray-500"}`}>
+                        {variantPrice} · {v.stock <= 0 ? "Agotado" : `Stock ${v.stock}`}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
