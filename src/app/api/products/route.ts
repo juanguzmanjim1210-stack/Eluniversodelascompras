@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProducts, createProduct } from "@/lib/data";
+import { isAuthenticated } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,6 +21,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!(await isAuthenticated(req))) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
   try {
     const body = await req.json();
     const row = await createProduct(body);

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStoreSettings, updateStoreSettings } from "@/lib/data";
+import { isAuthenticated } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
@@ -12,6 +15,11 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
+  // Sin esta comprobación cualquiera podía reescribir nombre, colores,
+  // redes sociales y textos de la tienda pública.
+  if (!(await isAuthenticated(req))) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
   try {
     const body = await req.json();
     const row = await updateStoreSettings(body);

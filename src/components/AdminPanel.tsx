@@ -191,8 +191,8 @@ function SecurityTab() {
       return;
     }
 
-    if (newPassword.length < 4) {
-      setMessage({ type: "error", text: "La contraseña debe tener al menos 4 caracteres" });
+    if (newPassword.length < 8) {
+      setMessage({ type: "error", text: "La contraseña debe tener al menos 8 caracteres" });
       return;
     }
 
@@ -1026,7 +1026,7 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
                     await fetch(`/api/products/${productId}/variants/stock`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ variantId: v.id, quantity: -1 }),
+                      body: JSON.stringify({ variantId: v.id, setStock: Math.max(0, v.stock - 1) }),
                     });
                     fetchProduct();
                   }}
@@ -1052,7 +1052,7 @@ function ProductEditor({ productId, onBack }: { productId: string; onBack: () =>
                     await fetch(`/api/products/${productId}/variants/stock`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ variantId: v.id, quantity: -(-1) }),
+                      body: JSON.stringify({ variantId: v.id, setStock: v.stock + 1 }),
                     });
                     fetchProduct();
                   }}

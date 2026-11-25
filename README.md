@@ -81,6 +81,41 @@ La nueva contraseña se guarda de forma **encriptada** en la base de datos.
 3. **Gestionar Productos**: Pestaña 📦 Productos
 4. **Configurar Tienda**: Pestaña 🏪 Tienda
 
+## 🔒 Seguridad
+
+Todas las rutas que **modifican** datos exigen sesión de admin (cookie
+`admin_session`, HttpOnly + SameSite=Lax + Secure en producción). Las de
+**lectura** siguen públicas, porque el catálogo se muestra sin login.
+
+| Ruta | Antes | Ahora |
+|------|-------|-------|
+| `POST /api/products` | pública | 🔒 admin |
+| `PUT`/`DELETE /api/products/[id]` | pública | 🔒 admin |
+| `PUT`/`DELETE .../images` | pública | 🔒 admin |
+| `POST`/`DELETE .../features` | pública | 🔒 admin |
+| `POST`/`DELETE .../variants` | pública | 🔒 admin |
+| `POST`/`DELETE /api/categories` | pública | 🔒 admin |
+| `PUT /api/store-settings` | pública | 🔒 admin |
+| `POST .../variants/stock` (`setStock`) | pública | 🔒 admin |
+| `POST .../variants/stock` (`quantity`) | pública | pública, con cantidad entera ≥ 1 |
+| `POST /api/auth/change-password` | pública | 🔒 admin + límite de intentos |
+
+Además:
+
+- **Límite de intentos**: 8 fallos cada 15 minutos por IP en `login`,
+  `change-password` y `reset` → `429 Retry-After`.
+- **`JWT_SECRET` obligatorio en producción**. Sin él, `login` responde `503`
+  en lugar de firmar sesiones con un secreto conocido por todos.
+- **`/api/auth/reset`** ya no acepta el secreto por defecto y compara con
+  comparación constante (`timingSafeEqual`).
+- **Stock**: `quantity` debe ser un entero entre 1 y 1000. Antes un valor
+  negativo *sumaba* stock desde cualquier navegador sin sesión.
+
+> **Pendiente (diseño):** el descuento de stock del checkout llega desde el
+> navegador. Funciona, pero lo ideal es moverlo a un endpoint de pedido en el
+> servidor con validación de precios y stock. Hoy queda mitigado con el
+> límite de rangos, no eliminado.
+
 ## 🌐 Despliegue
 
 ### Vercel

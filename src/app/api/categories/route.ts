@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCategories, createCategory, deleteCategory } from "@/lib/data";
+import { isAuthenticated } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
@@ -11,9 +14,15 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!(await isAuthenticated(req))) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
   try {
     const body = await req.json();
-    const row = await createCategory(body);
+    if (!body?.name || !String(body.name).trim()) {
+      return NextResponse.json({ error: "El nombre es requerido" }, { status: 400 });
+    }
+    const row = await createCategory({ name: String(body.name).trim(), description: body.description });
     return NextResponse.json(row, { status: 201 });
   } catch (e) {
     console.error("POST categories error:", e);
@@ -22,6 +31,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!(await isAuthenticated(req))) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
   try {
     const id = new URL(req.url).searchParams.get("id");
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
