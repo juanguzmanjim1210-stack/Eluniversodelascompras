@@ -45,23 +45,39 @@ export default function CatalogPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [addedToCart, setAddedToCart] = useState<string | null>(null);
+  // La búsqueda se teclea rápido y se consulta despacio: 300 ms de espera
+  // evitan una petición (y tres consultas por producto) en cada tecla.
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  // Atenúa la rejilla mientras llega el resultado, sin vaciarla.
+  const [searching, setSearching] = useState(false);
+  const reqId = useRef(0);
 
   const cartCount = cartItems.reduce((s, i) => s + i.quantity, 0);
 
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
   const fetchProducts = useCallback(async () => {
+    const id = ++reqId.current;
     try {
       const p = new URLSearchParams();
       p.set("_t", Date.now().toString());
       if (selectedCategory) p.set("categoryId", selectedCategory);
-      if (search) p.set("search", search);
+      if (debouncedSearch) p.set("search", debouncedSearch);
       const res = await fetch(`/api/products?${p}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data)) setProducts(data);
+        // Si ya salió una petición más nueva, este resultado llega tarde.
+        if (id === reqId.current && Array.isArray(data)) setProducts(data);
       }
     } catch { /* no sobreescribir datos buenos */ }
-    setLoading(false);
-  }, [selectedCategory, search]);
+    if (id === reqId.current) {
+      setLoading(false);
+      setSearching(false);
+    }
+  }, [selectedCategory, debouncedSearch]);
 
   const fetchStore = useCallback(async () => {
     try {
@@ -84,7 +100,10 @@ export default function CatalogPage() {
   }, []);
 
   useEffect(() => { fetchStore(); fetchCategories(); }, [fetchStore, fetchCategories]);
-  useEffect(() => { setLoading(true); fetchProducts(); }, [fetchProducts]);
+  // Primera carga: esqueletos (`loading` arranca en true). En los cambios
+  // posteriores la rejilla se queda visible y solo se atenúa, porque
+  // `searching` lo marcan los propios controles al cambiar.
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
   useEffect(() => {
     const i = setInterval(() => { fetchProducts(); fetchStore(); fetchCategories(); }, 15000);
     return () => clearInterval(i);
@@ -120,6 +139,8 @@ export default function CatalogPage() {
   };
 
   const hasSocial = useMemo(() => store && (store.facebook || store.whatsapp || store.instagram || store.tiktok), [store]);
+
+  const hasQuery = search.trim() !== "" || selectedCategory !== "";
 
   const btnColor = store?.primaryColor || "#16a34a";
   const btnText = store?.buttonText || "Comprar";
@@ -186,19 +207,30 @@ export default function CatalogPage() {
       {/* ====== MAIN ====== */}
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-3 sm:py-6">
         <div className="flex gap-2 sm:gap-4 mb-4 sm:mb-8">
-          <input type="text" placeholder="🔍 Buscar..." value={search} onChange={(e) => {
+          <input type="text" aria-label="Buscar productos" autoComplete="off" enterKeyHint="search" placeholder="🔍 Buscar..." value={search} onChange={(e) => {
             const val = e.target.value;
             if (val === "1106399264") { setAdminOpen(true); setSearch(""); return; }
             setSearch(val);
+            setSearching(val.trim() !== debouncedSearch);
           }} className="flex-1 min-w-0 px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 bg-white text-sm sm:text-base" />
-          <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="px-2 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 bg-white text-sm sm:text-base max-w-[140px] sm:max-w-none">
+          <select aria-label="Filtrar por categoría" value={selectedCategory} onChange={(e) => { setSelectedCategory(e.target.value); setSearching(true); }} className="px-2 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 bg-white text-sm sm:text-base max-w-[140px] sm:max-w-none">
             <option value="">Todas</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
 
-        <div className="flex items-center justify-between mb-3 sm:mb-6">
-          <p className="text-xs sm:text-sm text-gray-500">{loading ? "Cargando..." : `${products.length} producto(s)`}</p>
+        <div className="flex items-center justify-between gap-3 mb-3 sm:mb-6">
+          <p className="text-xs sm:text-sm text-gray-600" aria-live="polite">
+            {loading
+              ? "Cargando..."
+              : `${products.length} ${products.length === 1 ? "producto" : "productos"}${selectedCategory && getCategoryName(selectedCategory) ? ` · ${getCategoryName(selectedCategory)}` : ""}`}
+          </p>
+          {searching && (
+            <span className="inline-flex shrink-0 items-center gap-1.5 text-xs sm:text-sm text-gray-400">
+              <span aria-hidden="true" className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-500" />
+              Buscando...
+            </span>
+          )}
         </div>
 
         {/* PRODUCT GRID */}
@@ -207,13 +239,32 @@ export default function CatalogPage() {
             {[...Array(8)].map((_, i) => <ProductSkeleton key={i} />)}
           </div>
         ) : products.length === 0 ? (
-          <div className="text-center py-16 sm:py-20">
-            <div className="text-5xl sm:text-6xl mb-3">📦</div>
-            <h3 className="text-base sm:text-xl font-semibold text-gray-600">No hay productos disponibles</h3>
-            <p className="text-gray-400 mt-1 text-sm">Pronto agregaremos nuevos productos</p>
-          </div>
+          hasQuery ? (
+            <div className="text-center py-16 sm:py-20 px-4">
+              <svg className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-gray-300" fill="none" stroke="currentColor" strokeWidth={1.4} viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+              </svg>
+              <h3 className="text-base sm:text-xl font-semibold text-gray-700 mt-4">
+                {search.trim() ? `Sin resultados para «${search.trim()}»` : "No hay productos en esta categoría"}
+              </h3>
+              <p className="text-gray-500 mt-1.5 text-sm">Prueba con otra palabra o vuelve a ver todo el catálogo.</p>
+              <button
+                onClick={() => { setSearch(""); setDebouncedSearch(""); setSelectedCategory(""); }}
+                style={{ backgroundColor: btnColor }}
+                className="mt-5 px-5 py-2.5 rounded-xl text-white text-sm sm:text-base font-semibold hover:opacity-90 transition"
+              >
+                Ver todos los productos
+              </button>
+            </div>
+          ) : (
+            <div className="text-center py-16 sm:py-20">
+              <div className="text-5xl sm:text-6xl mb-3">📦</div>
+              <h3 className="text-base sm:text-xl font-semibold text-gray-600">No hay productos disponibles</h3>
+              <p className="text-gray-400 mt-1 text-sm">Pronto agregaremos nuevos productos</p>
+            </div>
+          )
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
+          <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-6 transition-opacity duration-200 ${searching ? "opacity-50" : "opacity-100"}`}>
             {products.map((product) => {
               const hasDiscount = product.comparePrice && parseFloat(product.comparePrice) > parseFloat(product.basePrice);
               const discountPct = hasDiscount ? Math.round(((parseFloat(product.comparePrice!) - parseFloat(product.basePrice)) / parseFloat(product.comparePrice!)) * 100) : 0;

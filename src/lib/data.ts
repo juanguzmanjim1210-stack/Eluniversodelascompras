@@ -3,7 +3,7 @@
 */
 import { db } from "@/db";
 import * as schema from "@/db/schema";
-import { eq, and, ilike, desc } from "drizzle-orm";
+import { eq, and, or, ilike, desc } from "drizzle-orm";
 
 // ===================== STORE SETTINGS =====================
 
@@ -80,7 +80,13 @@ export async function getProducts(filters: { categoryId?: string; search?: strin
   const conditions = [];
   if (filters.categoryId) conditions.push(eq(schema.products.categoryId, filters.categoryId));
   if (filters.active) conditions.push(eq(schema.products.active, true));
-  if (filters.search) conditions.push(ilike(schema.products.name, `%${filters.search}%`));
+  if (filters.search) {
+    // Busca en nombre y descripción. % y _ son comodines en ILIKE, así que
+    // se escapean para que "50%" busque literalmente "50%".
+    const term = `%${filters.search.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
+    const match = or(ilike(schema.products.name, term), ilike(schema.products.description, term));
+    if (match) conditions.push(match);
+  }
   const where = conditions.length > 0 ? and(...conditions) : undefined;
   const rows = await db.select().from(schema.products).where(where).orderBy(schema.products.sortOrder, desc(schema.products.createdAt));
   return Promise.all(rows.map((r) => enrichProduct(r.id, r as unknown as Record<string, unknown>)));
