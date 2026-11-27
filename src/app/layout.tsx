@@ -12,9 +12,52 @@ const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
 });
 
+const SITE_URL = "https://eluniversodelascompras-alpha.vercel.app";
+
 export const metadata: Metadata = {
-  title: "Catálogo en Línea",
-  description: "Catálogo de productos con panel de administración",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "El Universo de las Compras — Catálogo en línea",
+    template: "%s · El Universo de las Compras",
+  },
+  description:
+    "Catálogo de productos con búsqueda en tiempo real, variantes de talla y color, galería de hasta 10 fotos y panel de administración seguro. Pedidos directos por WhatsApp.",
+  keywords: [
+    "catálogo en línea",
+    "tienda online",
+    "catálogo de productos",
+    "variantes talla color",
+    "panel de administración",
+    "WhatsApp pedidos",
+  ],
+  applicationName: "El Universo de las Compras",
+  authors: [{ name: "El Universo de las Compras" }],
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "es_ES",
+    url: SITE_URL,
+    siteName: "El Universo de las Compras",
+    title: "El Universo de las Compras — Catálogo en línea",
+    description:
+      "Catálogo de productos con búsqueda en tiempo real, variantes de talla y color y pedidos directos por WhatsApp.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "El Universo de las Compras — Catálogo en línea",
+    description:
+      "Catálogo de productos con búsqueda en tiempo real, variantes de talla y color y pedidos directos por WhatsApp.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export const viewport: Viewport = {

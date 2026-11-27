@@ -27,8 +27,8 @@ Un catálogo en línea moderno con panel de administración integrado y seguro.
 
 ### 1. Clonar el repositorio
 ```bash
-git clone https://github.com/tu-usuario/catalogo-digital.git
-cd catalogo-digital
+git clone https://github.com/juanguzmanjim1210-stack/Eluniversodelascompras.git
+cd Eluniversodelascompras
 ```
 
 ### 2. Instalar dependencias
