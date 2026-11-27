@@ -21,7 +21,7 @@ import {
 import { Card, ColorField, Field, LoadingBlock, StockInput, Switch, errorText, useAdmin } from "./ui";
 import { LOGO_SWATCHES } from "@/lib/theme";
 import { GRID_SIZES, THUMB_WIDTHS } from "@/lib/img";
-import { formatMoney, getDiscount } from "@/lib/format";
+import { formatMoney, getDiscount, isPriceHidden } from "@/lib/format";
 
 interface InfoForm {
   name: string;
@@ -436,10 +436,15 @@ export default function ProductEditor({ productId, onBack }: { productId: string
               </div>
               <div className="space-y-2 p-3">
                 <p className="line-clamp-3 text-sm font-bold leading-tight text-slate-900">{form.name.trim() || "Nombre del producto"}</p>
-                <p className="flex items-baseline gap-2">
-                  <span className="text-xl font-extrabold text-brand">{formatMoney("$", form.basePrice || "0")}</span>
-                  {discount && <span className="text-xs text-slate-400 line-through">{formatMoney("$", discount.compare)}</span>}
-                </p>
+                {!isPriceHidden(form.basePrice) && (
+                  <p className="flex items-baseline gap-2">
+                    <span className="text-xl font-extrabold text-brand">{formatMoney("$", form.basePrice || "0")}</span>
+                    {discount && <span className="text-xs text-slate-400 line-through">{formatMoney("$", discount.compare)}</span>}
+                  </p>
+                )}
+                {isPriceHidden(form.basePrice) && (
+                  <p className="text-[11px] font-semibold text-slate-400">Ver precio en opciones</p>
+                )}
                 <span className={`btn pointer-events-none w-full rounded-xl py-2.5 text-sm font-bold ${form.active ? "btn-brand" : "bg-slate-200 text-slate-500"}`}>{form.active ? "Comprar" : "Agotado"}</span>
               </div>
             </div>

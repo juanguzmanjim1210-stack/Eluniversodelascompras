@@ -5,7 +5,7 @@ import type { Product, ProductVariant } from "@/lib/types";
 import FitText from "./FitText";
 import Photo from "./Photo";
 import { CartIcon, CheckIcon, ImageIcon, ZoomIcon } from "./Icons";
-import { formatMoney, getDiscount } from "@/lib/format";
+import { formatMoney, getDiscount, isPriceHidden } from "@/lib/format";
 import { GRID_SIZES } from "@/lib/img";
 
 interface ProductCardProps {
@@ -36,6 +36,7 @@ function ProductCardBase({ product, index, currency, buttonText, onOpen, onAdd }
   const inactive = !product.active;
   const discount = getDiscount(product);
   const hasVariants = product.variants.length > 0;
+  const priceHidden = isPriceHidden(product.basePrice);
   const cover = product.images[0]?.url;
   const second = product.images[1]?.url;
 
@@ -137,14 +138,20 @@ function ProductCardBase({ product, index, currency, buttonText, onOpen, onAdd }
           className={`font-bold ${inactive ? "text-slate-400" : "text-slate-900"}`}
         />
 
-        <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <span className={`text-xl font-extrabold tracking-tight sm:text-2xl ${inactive ? "text-slate-400" : "text-brand"}`}>
-            {formatMoney(currency, product.basePrice)}
-          </span>
-          {discount && !inactive && (
-            <span className="text-sm font-medium text-slate-400 line-through">{formatMoney(currency, discount.compare)}</span>
-          )}
-        </div>
+        {/* Precio: se oculta por completo cuando basePrice es "-" */}
+        {!priceHidden && (
+          <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className={`text-xl font-extrabold tracking-tight sm:text-2xl ${inactive ? "text-slate-400" : "text-brand"}`}>
+              {formatMoney(currency, product.basePrice)}
+            </span>
+            {discount && !inactive && (
+              <span className="text-sm font-medium text-slate-400 line-through">{formatMoney(currency, discount.compare)}</span>
+            )}
+          </div>
+        )}
+        {priceHidden && !inactive && (
+          <p className="mt-2 text-xs font-semibold text-slate-400">Ver precio en opciones</p>
+        )}
 
         <div className="mt-auto pt-3">
           {inactive ? (

@@ -23,6 +23,7 @@ import {
   WhatsAppIcon,
 } from "@/components/Icons";
 import { flyToCart } from "@/lib/fly";
+import { playSaleSound } from "@/lib/sound";
 import { THUMB_WIDTHS } from "@/lib/img";
 import { DEFAULT_APPEARANCE, isLegacyGreen } from "@/lib/theme";
 
@@ -188,6 +189,8 @@ export default function CatalogPage() {
       if (idx >= 0) return prev.map((it, n) => (n === idx ? { ...it, quantity: it.quantity + 1 } : it));
       return [...prev, { product, variant, quantity: 1 }];
     });
+    // Sonido de venta: acorde breve do→mi→sol (Web Audio API, sin archivos externos).
+    playSaleSound();
     // La miniatura vuela al carrito y este «salta» al llegar.
     flyToCart(source, () => {
       setBumping(true);

@@ -7,7 +7,7 @@ import Lightbox from "./Lightbox";
 import Photo from "./Photo";
 import RichText from "./RichText";
 import { CartIcon, CheckIcon, ChevronLeft, ChevronRight, CloseIcon, ImageIcon, TagIcon, ZoomIcon } from "./Icons";
-import { formatMoney, getDiscount, variantLabel } from "@/lib/format";
+import { formatMoney, getDiscount, isPriceHidden, variantLabel } from "@/lib/format";
 import { THUMB_WIDTHS, preloadPhoto } from "@/lib/img";
 
 /** Copias ligeras de la foto principal: se ven al instante mientras baja la original. */
@@ -39,6 +39,7 @@ export default function ProductModal({ product, categories, currency, onClose, o
   // La opción elegida se conserva por id: si el catálogo se refresca mientras
   // el cliente decide, no se le vuelve a la primera opción.
   const variant = product.variants.find((v) => v.id === variantId) ?? product.variants[0] ?? null;
+  const priceHidden = isPriceHidden(product.basePrice);
   const price = variant && parseFloat(variant.price) > 0 ? parseFloat(variant.price) : parseFloat(product.basePrice);
   const discount = getDiscount(product);
   const outOfStock = !product.active;
@@ -247,14 +248,20 @@ export default function ProductModal({ product, categories, currency, onClose, o
             {/* Nombre: se reduce lo necesario para que quepa completo, sea corto o largo */}
             <FitText as="h2" text={product.name.trim()} min={18} max={30} lines={4} className="font-extrabold text-slate-900" />
 
-            <div>
-              <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
-                <span className="text-3xl font-extrabold tracking-tight text-brand sm:text-4xl">{formatMoney(currency, price)}</span>
-                {discount && <span className="pb-1 text-lg font-medium text-slate-400 line-through">{formatMoney(currency, discount.compare)}</span>}
-                {discount && <span className="mb-1.5 rounded-lg bg-[color:var(--c-red)] px-2 py-0.5 text-sm font-extrabold text-white">-{discount.pct}%</span>}
+            {/* Precio principal: se oculta cuando basePrice es "-" */}
+            {!priceHidden && (
+              <div>
+                <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
+                  <span className="text-3xl font-extrabold tracking-tight text-brand sm:text-4xl">{formatMoney(currency, price)}</span>
+                  {discount && <span className="pb-1 text-lg font-medium text-slate-400 line-through">{formatMoney(currency, discount.compare)}</span>}
+                  {discount && <span className="mb-1.5 rounded-lg bg-[color:var(--c-red)] px-2 py-0.5 text-sm font-extrabold text-white">-{discount.pct}%</span>}
+                </div>
+                {discount && <p className="mt-1 text-sm font-semibold text-emerald-600">Ahorras {formatMoney(currency, discount.saving)}</p>}
               </div>
-              {discount && <p className="mt-1 text-sm font-semibold text-emerald-600">Ahorras {formatMoney(currency, discount.saving)}</p>}
-            </div>
+            )}
+            {priceHidden && !outOfStock && (
+              <p className="text-sm font-semibold text-slate-400">👇 Selecciona una opción para ver el precio</p>
+            )}
 
             {product.description?.trim() && (
               <RichText text={product.description} className="text-[15px] leading-relaxed text-slate-600 sm:text-base" />
@@ -326,7 +333,7 @@ export default function ProductModal({ product, categories, currency, onClose, o
                   </>
                 ) : (
                   <>
-                    <CartIcon className="btn-icon h-5 w-5" /> Agregar al carrito · {formatMoney(currency, price)}
+                    <CartIcon className="btn-icon h-5 w-5" /> Agregar al carrito{priceHidden ? "" : ` · ${formatMoney(currency, price)}`}
                   </>
                 )}
               </button>

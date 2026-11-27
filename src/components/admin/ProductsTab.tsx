@@ -6,7 +6,7 @@ import Photo from "../Photo";
 import { ChevronDown, ChevronUp, EditIcon, ImageIcon, PackageIcon, PlusIcon, SearchIcon, TrashIcon } from "../Icons";
 import { EmptyState, Field, LoadingBlock, PageHeader, Toggle, errorText, useAdmin } from "./ui";
 import { THUMB_WIDTHS } from "@/lib/img";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, isPriceHidden } from "@/lib/format";
 
 type StatusFilter = "all" | "active" | "inactive";
 
@@ -236,13 +236,19 @@ export default function ProductsTab({ onEdit }: { onEdit: (id: string) => void }
 
                       {/* Precio */}
                       <div className="flex items-baseline gap-1.5">
-                        <span className="text-sm font-bold tabular-nums text-slate-900">
-                          {formatMoney("$", p.basePrice)}
-                        </span>
-                        {hasDiscount && (
-                          <span className="text-[11px] tabular-nums text-slate-400 line-through">
-                            {formatMoney("$", p.comparePrice!)}
-                          </span>
+                        {isPriceHidden(p.basePrice) ? (
+                          <span className="text-[11px] font-semibold text-slate-400">Ver en opciones</span>
+                        ) : (
+                          <>
+                            <span className="text-sm font-bold tabular-nums text-slate-900">
+                              {formatMoney("$", p.basePrice)}
+                            </span>
+                            {hasDiscount && (
+                              <span className="text-[11px] tabular-nums text-slate-400 line-through">
+                                {formatMoney("$", p.comparePrice!)}
+                              </span>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
