@@ -17,12 +17,14 @@ const TONES = {
 
 function Stat({ label, value, hint, icon, tone }: { label: string; value: ReactNode; hint?: string; icon: ReactNode; tone: keyof typeof TONES }) {
   return (
-    <div className="admin-card relative overflow-hidden p-4">
+    <div className="admin-card relative overflow-hidden p-3 sm:p-4">
       <span className={`absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br opacity-15 ${TONES[tone]}`} />
-      <span className={`mb-3 grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br shadow-lg ${TONES[tone]} ${tone === "gold" ? "text-amber-950" : "text-white"}`}>{icon}</span>
-      <p className="text-2xl font-extrabold tabular-nums text-slate-900">{value}</p>
-      <p className="text-xs font-bold text-slate-500">{label}</p>
-      {hint && <p className="mt-0.5 text-[11px] text-slate-400">{hint}</p>}
+      <span className={`mb-2 grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br shadow-lg sm:mb-3 sm:h-10 sm:w-10 sm:rounded-xl ${TONES[tone]} ${tone === "gold" ? "text-amber-950" : "text-white"}`}>
+        <span className="[&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-5 sm:[&>svg]:w-5">{icon}</span>
+      </span>
+      <p className="text-xl font-extrabold tabular-nums text-slate-900 sm:text-2xl">{value}</p>
+      <p className="text-[11px] font-bold text-slate-500 sm:text-xs">{label}</p>
+      {hint && <p className="mt-0.5 text-[10px] text-slate-400 sm:text-[11px]">{hint}</p>}
     </div>
   );
 }
@@ -100,11 +102,11 @@ export default function DashboardTab({ goTo, openProduct }: { goTo: (tab: AdminT
     <div>
       <PageHeader title="Resumen" subtitle="Así va tu tienda hoy" />
 
-      <div className="space-y-5 px-4 pb-8 sm:px-6">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="space-y-5 px-3 pb-8 sm:px-6">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3 sm:grid-cols-4">
           <Stat label="Productos" value={stats.total} hint={`${stats.active} disponibles`} icon={<PackageIcon className="h-5 w-5" />} tone="blue" />
           <Stat label="Agotados" value={stats.inactive} hint="Marcados como agotados" icon={<AlertIcon className="h-5 w-5" />} tone="red" />
-          <Stat label="Unidades en stock" value={stats.units.toLocaleString("es-CO")} hint="Suma de todas las variantes" icon={<LayersIcon className="h-5 w-5" />} tone="gold" />
+          <Stat label="En stock" value={stats.units.toLocaleString("es-CO")} hint="Todas las variantes" icon={<LayersIcon className="h-5 w-5" />} tone="gold" />
           <Stat label="Categorías" value={categories.length} icon={<TagIcon className="h-5 w-5" />} tone="navy" />
         </div>
 
@@ -131,14 +133,14 @@ export default function DashboardTab({ goTo, openProduct }: { goTo: (tab: AdminT
             ) : (
               <ul className="-my-1 divide-y divide-slate-100">
                 {lowRows.map(({ product, variant }) => (
-                  <li key={variant.id} className="flex flex-wrap items-center gap-3 py-3">
-                    <button type="button" onClick={() => openProduct(product.id)} className="flex min-w-0 flex-1 items-center gap-3 text-left" title="Abrir producto">
-                      <span className="h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                  <li key={variant.id} className="flex flex-wrap items-center gap-2 py-3 sm:gap-3">
+                    <button type="button" onClick={() => openProduct(product.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left sm:gap-3" title="Abrir producto">
+                      <span className="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:h-11 sm:w-11">
                         {product.images[0] && <Photo src={product.images[0].url} sizes="44px" widths={THUMB_WIDTHS} alt="" className="h-full w-full object-cover" />}
                       </span>
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-bold text-slate-900">{product.name.trim()}</span>
-                        <span className="block truncate text-xs text-slate-500">{variantLabel(variant)}</span>
+                        <span className="block truncate text-xs font-bold text-slate-900 sm:text-sm">{product.name.trim()}</span>
+                        <span className="block truncate text-[11px] text-slate-500 sm:text-xs">{variantLabel(variant)}</span>
                       </span>
                     </button>
                     <StockInput value={variant.stock} onCommit={commitStock(product.id, variant.id)} />

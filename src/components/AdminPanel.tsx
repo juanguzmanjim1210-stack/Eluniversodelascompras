@@ -217,18 +217,18 @@ function Workspace({
         </div>
       </aside>
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {/* Barra superior móvil */}
-        <header className="flex shrink-0 items-center gap-3 border-b border-slate-200/70 bg-white/80 px-4 py-3 backdrop-blur-xl md:hidden">
+        <header className="flex shrink-0 items-center gap-2 border-b border-slate-200/70 bg-white/80 px-3 py-2.5 backdrop-blur-xl sm:gap-3 sm:px-4 sm:py-3 md:hidden">
           <span className="logo-chip h-9 w-9 shrink-0">{logo}</span>
           <div className="min-w-0 flex-1">
-            <p className="line-clamp-2 text-sm font-extrabold leading-snug text-slate-900">{store?.storeName ?? "Mi tienda"}</p>
+            <p className="truncate text-sm font-extrabold leading-snug text-slate-900">{store?.storeName ?? "Mi tienda"}</p>
             <p className="text-[11px] font-semibold text-slate-500">Panel de administración</p>
           </div>
-          <button type="button" onClick={onLogout} aria-label="Cerrar sesión" className="btn btn-ghost h-10 w-10 rounded-xl">
+          <button type="button" onClick={onLogout} aria-label="Cerrar sesión" className="btn btn-ghost h-9 w-9 shrink-0 rounded-xl sm:h-10 sm:w-10">
             <LogOutIcon className="h-[18px] w-[18px]" />
           </button>
-          <button type="button" onClick={onClose} aria-label="Cerrar panel" className="btn btn-ghost h-10 w-10 rounded-xl">
+          <button type="button" onClick={onClose} aria-label="Cerrar panel" className="btn btn-ghost h-9 w-9 shrink-0 rounded-xl sm:h-10 sm:w-10">
             <CloseIcon className="h-5 w-5" />
           </button>
         </header>
@@ -240,7 +240,7 @@ function Workspace({
           </button>
         </header>
 
-        <main ref={mainRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <main ref={mainRef} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
           {activeTab === "dashboard" && <DashboardTab goTo={goTo} openProduct={openProduct} />}
           {activeTab === "products" && <ProductsTab onEdit={openProduct} />}
           {activeTab === "categories" && <CategoriesTab />}
@@ -254,9 +254,9 @@ function Workspace({
           {NAV.map(({ key, label, Icon }) => {
             const active = current === key;
             return (
-              <button key={key} type="button" onClick={() => goTo(key)} aria-current={active ? "page" : undefined} className={`flex flex-col items-center gap-0.5 py-2 text-[10px] font-bold transition leading-tight ${active ? "text-brand" : "text-slate-400"}`}>
-                <span className={`grid h-7 w-12 place-items-center rounded-full transition-colors duration-300 ${active ? "bg-brand-soft" : ""}`}>
-                  <Icon className="h-5 w-5" />
+              <button key={key} type="button" onClick={() => goTo(key)} aria-current={active ? "page" : undefined} className={`flex flex-col items-center gap-0.5 py-2 text-[9px] font-bold transition leading-tight sm:text-[10px] ${active ? "text-brand" : "text-slate-400"}`}>
+                <span className={`grid h-7 w-10 place-items-center rounded-full transition-colors duration-300 sm:w-12 ${active ? "bg-brand-soft" : ""}`}>
+                  <Icon className="h-[18px] w-[18px] sm:h-5 sm:w-5" />
                 </span>
                 {label}
               </button>

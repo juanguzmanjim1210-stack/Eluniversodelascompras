@@ -161,7 +161,7 @@ export default function SettingsTab() {
     <div>
       <PageHeader title="Tienda" subtitle="Nombre, logo, colores, anuncios y pie de página" />
 
-      <div className="grid gap-4 px-4 pb-6 sm:px-5 sm:gap-5 lg:grid-cols-2">
+      <div className="grid gap-4 px-3 pb-6 sm:px-5 sm:gap-5 lg:grid-cols-2">
         <Card title="Información" description="Lo primero que ven tus clientes" icon={<StoreIcon className="h-5 w-5" />}>
           <Field label="Nombre de la tienda">
             <input value={f.storeName} onChange={(e) => set("storeName", e.target.value)} placeholder="Nombre de la tienda" className="field" />
@@ -173,19 +173,19 @@ export default function SettingsTab() {
 
         <Card title="Logo y portada" description="Sube la imagen a imgbb.com y pega el enlace" icon={<ImageIcon className="h-5 w-5" />}>
           <div className="flex items-center gap-3">
-            <span className="logo-chip grid h-16 w-16 shrink-0 place-items-center text-slate-300">
-              {f.logoUrl ? <Photo src={f.logoUrl} sizes="64px" widths={THUMB_WIDTHS} alt="" draggable={false} /> : <ImageIcon className="h-7 w-7" />}
+            <span className="logo-chip grid h-14 w-14 shrink-0 place-items-center text-slate-300 sm:h-16 sm:w-16">
+              {f.logoUrl ? <Photo src={f.logoUrl} sizes="64px" widths={THUMB_WIDTHS} alt="" draggable={false} /> : <ImageIcon className="h-6 w-6" />}
             </span>
-            <Field label="URL del logo" hint="Se muestra en círculo. Funciona mejor con un logo cuadrado o redondo." className="flex-1">
-              <input value={f.logoUrl} onChange={(e) => set("logoUrl", e.target.value)} placeholder="https://i.ibb.co/…" className="field font-mono text-sm" />
+            <Field label="URL del logo" hint="Se muestra en círculo. Funciona mejor con un logo cuadrado o redondo." className="min-w-0 flex-1">
+              <input value={f.logoUrl} onChange={(e) => set("logoUrl", e.target.value)} placeholder="https://i.ibb.co/…" className="field font-mono text-xs sm:text-sm" />
             </Field>
           </div>
           <div className="flex items-center gap-3">
-            <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100 text-slate-300">
-              {f.coverUrl ? <Photo src={f.coverUrl} sizes="64px" widths={THUMB_WIDTHS} alt="" className="h-full w-full object-cover" /> : <ImageIcon className="h-7 w-7" />}
+            <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100 text-slate-300 sm:h-16 sm:w-16">
+              {f.coverUrl ? <Photo src={f.coverUrl} sizes="64px" widths={THUMB_WIDTHS} alt="" className="h-full w-full object-cover" /> : <ImageIcon className="h-6 w-6" />}
             </span>
-            <Field label="URL de la portada (opcional)" hint="Si la dejas vacía se usa el fondo con los colores del logo." className="flex-1">
-              <input value={f.coverUrl} onChange={(e) => set("coverUrl", e.target.value)} placeholder="https://i.ibb.co/…" className="field font-mono text-sm" />
+            <Field label="URL de la portada (opcional)" hint="Si la dejas vacía se usa el fondo con los colores del logo." className="min-w-0 flex-1">
+              <input value={f.coverUrl} onChange={(e) => set("coverUrl", e.target.value)} placeholder="https://i.ibb.co/…" className="field font-mono text-xs sm:text-sm" />
             </Field>
           </div>
         </Card>
@@ -217,7 +217,8 @@ export default function SettingsTab() {
           className="lg:col-span-2"
         >
           <div className="grid gap-6 lg:grid-cols-2">
-            <div>
+            {/* ── Colores del logo ── */}
+            <div className="min-w-0">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Colores del logo</p>
                 <button type="button" onClick={resetPalette} className="btn rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-500 hover:text-brand">
@@ -226,21 +227,21 @@ export default function SettingsTab() {
               </div>
               <div className="space-y-2">
                 {PALETTE_LABELS.map(([key, label]) => (
-                  <div key={key} className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50 px-2.5 py-2">
-                    <span className="w-24 shrink-0 text-xs font-bold text-slate-600">{label}</span>
+                  <div key={key} className="flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-2 py-2 sm:gap-2.5 sm:px-2.5">
+                    <span className="w-[4.5rem] shrink-0 text-[11px] font-bold leading-tight text-slate-600 sm:w-24 sm:text-xs">{label}</span>
                     <input
                       type="color"
                       aria-label={`Color ${label}`}
                       value={f.appearance.palette[key]}
                       onChange={(e) => setPal(key, e.target.value)}
-                      className="h-8 w-8 shrink-0 cursor-pointer rounded-md border border-slate-200 bg-white p-0.5"
+                      className="h-7 w-7 shrink-0 cursor-pointer rounded-md border border-slate-200 bg-white p-0.5 sm:h-8 sm:w-8"
                     />
                     <input
                       value={f.appearance.palette[key]}
                       onChange={(e) => setPal(key, e.target.value)}
                       spellCheck={false}
                       aria-label={`Código de ${label}`}
-                      className="min-w-0 flex-1 rounded-md border border-slate-200 bg-white px-2 py-1.5 font-mono text-xs text-slate-700 focus:border-[color:var(--brand)] focus:outline-none"
+                      className="min-w-0 flex-1 rounded-md border border-slate-200 bg-white px-1.5 py-1.5 font-mono text-[11px] text-slate-700 focus:border-[color:var(--brand)] focus:outline-none sm:px-2 sm:text-xs"
                     />
                   </div>
                 ))}
@@ -250,7 +251,8 @@ export default function SettingsTab() {
               </p>
             </div>
 
-            <div>
+            {/* ── Elementos de la portada ── */}
+            <div className="min-w-0">
               <p className="mb-2 text-xs font-extrabold uppercase tracking-wider text-slate-400">Elementos de la portada</p>
               <div className="space-y-2.5">
                 <Switch checked={f.appearance.tricolor} onChange={(v) => setApp("tricolor", v)} label="Franja tricolor" description="Amarillo · azul · rojo en la portada y sobre el pie" />
@@ -300,20 +302,20 @@ export default function SettingsTab() {
 
         <Card title="WhatsApp para pedidos" description="A este número llegan los pedidos" icon={<WhatsAppIcon className="h-5 w-5" />}>
           <Field label="Enlace de WhatsApp" hint="Abre WhatsApp, entra a tu perfil, copia el enlace y pégalo aquí.">
-            <input value={f.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} placeholder="https://wa.me/573001234567" className="field font-mono text-sm" />
+            <input value={f.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} placeholder="https://wa.me/573001234567" className="field font-mono text-xs sm:text-sm" />
           </Field>
         </Card>
 
         <Card title="Redes sociales" description="Aparecen en la portada y en el pie de página" icon={<GlobeIcon className="h-5 w-5" />}>
-          <Field label="Facebook"><input value={f.facebook} onChange={(e) => set("facebook", e.target.value)} placeholder="https://facebook.com/…" className="field" /></Field>
-          <Field label="Instagram"><input value={f.instagram} onChange={(e) => set("instagram", e.target.value)} placeholder="https://instagram.com/…" className="field" /></Field>
-          <Field label="TikTok"><input value={f.tiktok} onChange={(e) => set("tiktok", e.target.value)} placeholder="https://tiktok.com/@…" className="field" /></Field>
+          <Field label="Facebook"><input value={f.facebook} onChange={(e) => set("facebook", e.target.value)} placeholder="https://facebook.com/…" className="field text-sm" /></Field>
+          <Field label="Instagram"><input value={f.instagram} onChange={(e) => set("instagram", e.target.value)} placeholder="https://instagram.com/…" className="field text-sm" /></Field>
+          <Field label="TikTok"><input value={f.tiktok} onChange={(e) => set("tiktok", e.target.value)} placeholder="https://tiktok.com/@…" className="field text-sm" /></Field>
         </Card>
 
         <Card title="Políticas de garantía" description="Elige cómo mostrarlas en el catálogo" icon={<ShieldIcon className="h-5 w-5" />} className="lg:col-span-2">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
             {([["none", "Sin políticas"], ["text", "Texto"], ["images", "Imágenes"]] as const).map(([val, label]) => (
-              <button key={val} type="button" onClick={() => set("warrantyType", val)} className={`btn rounded-xl py-2.5 text-sm font-bold ${f.warrantyType === val ? "btn-brand" : "btn-ghost"}`}>
+              <button key={val} type="button" onClick={() => set("warrantyType", val)} className={`btn rounded-xl py-2.5 text-xs font-bold sm:text-sm ${f.warrantyType === val ? "btn-brand" : "btn-ghost"}`}>
                 {label}
               </button>
             ))}
@@ -326,7 +328,7 @@ export default function SettingsTab() {
           {f.warrantyType === "images" && (
             <>
               <Field label="Enlaces de las imágenes, uno por línea" hint="Sube tus imágenes a imgbb.com y pega los enlaces.">
-                <textarea value={f.warrantyImages} onChange={(e) => set("warrantyImages", e.target.value)} rows={4} placeholder={"https://i.ibb.co/xxxx/politica1.jpg\nhttps://i.ibb.co/yyyy/politica2.jpg"} className="field resize-y font-mono text-sm" />
+                <textarea value={f.warrantyImages} onChange={(e) => set("warrantyImages", e.target.value)} rows={4} placeholder={"https://i.ibb.co/xxxx/politica1.jpg\nhttps://i.ibb.co/yyyy/politica2.jpg"} className="field resize-y font-mono text-xs sm:text-sm" />
               </Field>
               {warrantyUrls.length > 0 && (
                 <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -345,7 +347,7 @@ export default function SettingsTab() {
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-4">
               <Field label="Logo del pie (opcional)" hint="Si lo dejas vacío no aparece logo.">
-                <input value={f.footerLogoUrl} onChange={(e) => set("footerLogoUrl", e.target.value)} placeholder="https://i.ibb.co/…" className="field font-mono text-sm" />
+                <input value={f.footerLogoUrl} onChange={(e) => set("footerLogoUrl", e.target.value)} placeholder="https://i.ibb.co/…" className="field font-mono text-xs sm:text-sm" />
               </Field>
               <Field label="Título sobre las redes (ej: Síguenos)">
                 <input value={f.footerName} onChange={(e) => set("footerName", e.target.value)} placeholder="Ej: Síguenos" className="field" />
@@ -357,10 +359,10 @@ export default function SettingsTab() {
                 <ColorField value={f.footerColor} onChange={(v) => set("footerColor", v)} swatches={FOOTER_SWATCHES} />
               </Field>
             </div>
-            <div style={{ backgroundColor: f.footerColor }} className="flex flex-col items-center justify-center gap-2 rounded-2xl p-6 text-center text-white">
+            <div style={{ backgroundColor: f.footerColor }} className="flex flex-col items-center justify-center gap-2 rounded-2xl p-5 text-center text-white sm:p-6">
               <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Vista previa</p>
               {f.footerLogoUrl && (
-                <span className="logo-chip h-16 w-16"><Photo src={f.footerLogoUrl} sizes="64px" widths={THUMB_WIDTHS} alt="" draggable={false} /></span>
+                <span className="logo-chip h-14 w-14 sm:h-16 sm:w-16"><Photo src={f.footerLogoUrl} sizes="64px" widths={THUMB_WIDTHS} alt="" draggable={false} /></span>
               )}
               {f.footerName && <p className="text-base font-extrabold">{f.footerName}</p>}
               <div className="flex gap-2">
@@ -373,12 +375,13 @@ export default function SettingsTab() {
         </Card>
       </div>
 
-      <div className="sticky bottom-0 z-20 border-t border-slate-200/80 bg-white/85 px-4 py-3 backdrop-blur-xl sm:px-6">
-        <div className="flex items-center justify-between gap-3">
-          <p className={`text-sm font-bold ${dirty ? "text-amber-600" : "text-emerald-600"}`}>{dirty ? "● Cambios sin guardar" : "✓ Todo guardado"}</p>
+      {/* ── Barra de guardado fija ── */}
+      <div className="sticky bottom-0 z-20 border-t border-slate-200/80 bg-white/85 px-3 py-3 backdrop-blur-xl sm:px-6">
+        <div className="flex items-center justify-between gap-2">
+          <p className={`text-xs font-bold sm:text-sm ${dirty ? "text-amber-600" : "text-emerald-600"}`}>{dirty ? "● Sin guardar" : "✓ Todo guardado"}</p>
           <div className="flex gap-2">
-            {dirty && <button type="button" onClick={load} disabled={saving} className="btn btn-ghost rounded-xl px-4 py-2.5 text-sm font-bold">Descartar</button>}
-            <button type="button" onClick={handleSave} disabled={!dirty || saving} className="btn btn-brand btn-shine rounded-xl px-5 py-2.5 text-sm font-bold disabled:opacity-50 disabled:shadow-none">
+            {dirty && <button type="button" onClick={load} disabled={saving} className="btn btn-ghost rounded-xl px-3 py-2.5 text-xs font-bold sm:px-4 sm:text-sm">Descartar</button>}
+            <button type="button" onClick={handleSave} disabled={!dirty || saving} className="btn btn-brand btn-shine rounded-xl px-4 py-2.5 text-xs font-bold disabled:opacity-50 disabled:shadow-none sm:px-5 sm:text-sm">
               <SaveIcon className="h-4 w-4" /> {saving ? "Guardando…" : "Guardar cambios"}
             </button>
           </div>

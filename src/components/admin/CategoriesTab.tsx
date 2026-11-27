@@ -56,7 +56,7 @@ export default function CategoriesTab() {
   return (
     <div>
       <PageHeader title="Categorías" subtitle="Organizan tu catálogo y aparecen como filtros arriba de los productos" />
-      <div className="space-y-4 px-4 pb-8 sm:px-6">
+        <div className="space-y-4 px-3 pb-8 sm:px-6">
         <form onSubmit={handleCreate} className="admin-card flex flex-col gap-3 p-4 sm:flex-row sm:p-5">
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre de la nueva categoría…" aria-label="Nombre de la categoría" className="field flex-1" />
           <button type="submit" disabled={creating || !name.trim()} className="btn btn-brand btn-shine rounded-xl px-6 py-3 text-sm font-bold disabled:opacity-50">

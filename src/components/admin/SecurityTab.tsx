@@ -53,7 +53,7 @@ export default function SecurityTab() {
   return (
     <div>
       <PageHeader title="Seguridad" subtitle="Protege el acceso a tu panel de administración" />
-      <div className="grid gap-5 px-4 pb-8 sm:px-6 lg:grid-cols-5">
+        <div className="grid gap-4 px-3 pb-8 sm:gap-5 sm:px-6 lg:grid-cols-5">
         <Card title="Cambiar contraseña" description="Usa una contraseña que nadie más conozca" icon={<LockIcon className="h-5 w-5" />} className="lg:col-span-3">
           <form onSubmit={handleChange} className="space-y-4">
             <Field label="Contraseña actual">

@@ -115,7 +115,7 @@ export default function ProductsTab({ onEdit }: { onEdit: (id: string) => void }
         }
       />
 
-      <div className="space-y-4 px-4 pb-8 sm:px-6">
+        <div className="space-y-4 px-3 pb-8 sm:px-6">
         {showNew && (
           <form onSubmit={handleCreate} className="admin-card card-enter space-y-4 p-4 sm:p-5">
             <h3 className="text-[15px] font-extrabold text-slate-900">Nuevo producto</h3>
@@ -177,16 +177,16 @@ export default function ProductsTab({ onEdit }: { onEdit: (id: string) => void }
 
               return (
                 <li key={p.id} className="admin-card overflow-hidden">
-                  {/* ── Fila principal: foto + info ── */}
-                  <div className="flex items-stretch gap-0">
-                    {/* Foto cuadrada a la izquierda */}
-                    <button
-                      type="button"
-                      onClick={() => onEdit(p.id)}
-                      aria-label={`Editar ${p.name.trim()}`}
-                      className="relative shrink-0"
-                      style={{ width: 80, minHeight: 80 }}
-                    >
+                   {/* ── Fila principal: foto + info ── */}
+                   <div className="flex items-stretch gap-0">
+                     {/* Foto cuadrada a la izquierda */}
+                     <button
+                       type="button"
+                       onClick={() => onEdit(p.id)}
+                       aria-label={`Editar ${p.name.trim()}`}
+                       className="relative shrink-0"
+                       style={{ width: 72, minHeight: 72 }}
+                     >
                       <span className={`absolute inset-0 overflow-hidden ${p.images[0] ? "" : "flex items-center justify-center bg-slate-100 text-slate-300"}`}>
                         {p.images[0] ? (
                           <Photo

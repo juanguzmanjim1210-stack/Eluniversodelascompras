@@ -270,20 +270,20 @@ export default function ProductEditor({ productId, onBack }: { productId: string
   return (
     <div>
       {/* Cabecera */}
-      <div className="flex items-center gap-3 px-4 pb-4 pt-5 sm:px-6">
-        <button type="button" onClick={onBack} aria-label="Volver a productos" className="btn btn-ghost h-11 w-11 shrink-0 rounded-xl">
+      <div className="flex items-center gap-2 px-3 pb-4 pt-4 sm:gap-3 sm:px-6 sm:pt-5">
+        <button type="button" onClick={onBack} aria-label="Volver a productos" className="btn btn-ghost h-10 w-10 shrink-0 rounded-xl sm:h-11 sm:w-11">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <div className="min-w-0">
-          <h2 className="truncate text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">{form.name.trim() || "Producto sin nombre"}</h2>
-          <p className="text-sm text-slate-500">Editar producto</p>
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-lg font-extrabold tracking-tight text-slate-900 sm:text-2xl">{form.name.trim() || "Producto sin nombre"}</h2>
+          <p className="text-xs text-slate-500 sm:text-sm">Editar producto</p>
         </div>
-        <span className={`ml-auto shrink-0 rounded-full px-3 py-1 text-xs font-extrabold ${form.active ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
+        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-extrabold sm:px-3 sm:text-xs ${form.active ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
           {form.active ? "Disponible" : "Agotado"}
         </span>
       </div>
 
-      <div className="grid gap-5 px-4 pb-6 sm:px-6 lg:grid-cols-5">
+      <div className="grid gap-4 px-3 pb-6 sm:gap-5 sm:px-6 lg:grid-cols-5">
         {/* ───── Columna izquierda ───── */}
         <div className="space-y-5 lg:col-span-3">
           <Card title="Información" description="Nombre, categoría y descripción" icon={<TagIcon className="h-5 w-5" />}>
@@ -479,14 +479,14 @@ export default function ProductEditor({ productId, onBack }: { productId: string
       </div>
 
       {/* Barra de guardado */}
-      <div className="sticky bottom-0 z-20 border-t border-slate-200/80 bg-white/85 px-4 py-3 backdrop-blur-xl sm:px-6">
-        <div className="flex items-center justify-between gap-3">
-          <p className={`text-sm font-bold ${dirty ? "text-amber-600" : "text-emerald-600"}`}>{dirty ? "● Cambios sin guardar" : "✓ Todo guardado"}</p>
+      <div className="sticky bottom-0 z-20 border-t border-slate-200/80 bg-white/85 px-3 py-3 backdrop-blur-xl sm:px-6">
+        <div className="flex items-center justify-between gap-2">
+          <p className={`text-xs font-bold sm:text-sm ${dirty ? "text-amber-600" : "text-emerald-600"}`}>{dirty ? "● Sin guardar" : "✓ Guardado"}</p>
           <div className="flex gap-2">
             {dirty && (
-              <button type="button" onClick={load} disabled={saving} className="btn btn-ghost rounded-xl px-4 py-2.5 text-sm font-bold">Descartar</button>
+              <button type="button" onClick={load} disabled={saving} className="btn btn-ghost rounded-xl px-3 py-2.5 text-xs font-bold sm:px-4 sm:text-sm">Descartar</button>
             )}
-            <button type="button" onClick={saveAll} disabled={!dirty || saving} className="btn btn-brand btn-shine rounded-xl px-5 py-2.5 text-sm font-bold disabled:opacity-50 disabled:shadow-none">
+            <button type="button" onClick={saveAll} disabled={!dirty || saving} className="btn btn-brand btn-shine rounded-xl px-4 py-2.5 text-xs font-bold disabled:opacity-50 disabled:shadow-none sm:px-5 sm:text-sm">
               <SaveIcon className="h-4 w-4" /> {saving ? "Guardando…" : "Guardar cambios"}
             </button>
           </div>
