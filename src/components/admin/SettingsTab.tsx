@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
-import type { StoreSettings } from "@/lib/types";
+import type { AppearancePalette, StoreSettings } from "@/lib/types";
 import Photo from "../Photo";
 import { GlobeIcon, ImageIcon, MegaphoneIcon, PaletteIcon, SaveIcon, ShieldIcon, StoreIcon, WhatsAppIcon } from "../Icons";
 import { Card, ColorField, Field, LoadingBlock, PageHeader, Switch, errorText, useAdmin } from "./ui";
-import { LOGO, LOGO_SWATCHES, isLegacyGreen } from "@/lib/theme";
+import { DEFAULT_APPEARANCE, isLegacyGreen, normalizeAppearance } from "@/lib/theme";
 import { THUMB_WIDTHS } from "@/lib/img";
 
 interface Form {
@@ -31,10 +31,12 @@ interface Form {
   warrantyType: string;
   warrantyText: string;
   warrantyImages: string;
+  appearance: StoreSettings["appearance"];
 }
 
 /** El verde de fábrica se muestra ya como el azul/rojo del logo: es lo que ven los clientes. */
 function toForm(d: StoreSettings): Form {
+  const appearance = normalizeAppearance(d.appearance);
   return {
     storeName: d.storeName || "",
     storeDescription: d.storeDescription || "",
@@ -44,7 +46,7 @@ function toForm(d: StoreSettings): Form {
     whatsapp: d.whatsapp || "",
     instagram: d.instagram || "",
     tiktok: d.tiktok || "",
-    primaryColor: isLegacyGreen(d.primaryColor) ? LOGO.blue : d.primaryColor,
+    primaryColor: isLegacyGreen(d.primaryColor) ? appearance.palette.blue : d.primaryColor,
     buttonText: d.buttonText || "Comprar",
     currency: d.currency || "$",
     footerText: d.footerText || "",
@@ -53,13 +55,24 @@ function toForm(d: StoreSettings): Form {
     footerColor: d.footerColor || "#111827",
     announcementText: d.announcementText || "",
     announcementActive: d.announcementActive ?? false,
-    announcementColor: isLegacyGreen(d.announcementColor) ? LOGO.red : d.announcementColor,
+    announcementColor: isLegacyGreen(d.announcementColor) ? appearance.palette.red : d.announcementColor,
     announcementSpeed: d.announcementSpeed || 40,
     warrantyType: d.warrantyType || "none",
     warrantyText: d.warrantyText || "",
     warrantyImages: d.warrantyImages || "",
+    appearance,
   };
 }
+
+/** Etiquetas de la paleta del logo, en el orden en que se muestran. */
+const PALETTE_LABELS: ReadonlyArray<[keyof AppearancePalette, string]> = [
+  ["navy", "Azul marino"],
+  ["blue", "Azul principal"],
+  ["sky", "Azul cielo"],
+  ["red", "Rojo"],
+  ["gold", "Dorado"],
+  ["yellow", "Amarillo"],
+];
 
 const FOOTER_SWATCHES = ["#0a1a5c", "#111827", "#1e293b", "#0f172a", "#18181b", "#1a1a2e", "#16213e", "#0d1b2a", "#2d1b69", "#1b4332", "#7f1d1d", "#78350f", "#365314"].map((hex) => ({ name: hex, hex }));
 
@@ -94,6 +107,22 @@ export default function SettingsTab() {
   const dirty = useMemo(() => !!f && JSON.stringify(f) !== saved, [f, saved]);
   const set = <K extends keyof Form>(key: K, value: Form[K]) => setF((prev) => (prev ? { ...prev, [key]: value } : prev));
 
+  const setPal = (key: keyof AppearancePalette, value: string) =>
+    setF((prev) => (prev ? { ...prev, appearance: { ...prev.appearance, palette: { ...prev.appearance.palette, [key]: value } } } : prev));
+  const setApp = (key: "tricolor" | "stars" | "titleGradient" | "logoFloat", value: boolean) =>
+    setF((prev) => (prev ? { ...prev, appearance: { ...prev.appearance, [key]: value } } : prev));
+  const resetPalette = () =>
+    setF((prev) => (prev ? { ...prev, appearance: { ...prev.appearance, palette: { ...DEFAULT_APPEARANCE.palette } } } : prev));
+
+  /** Los atajos de color siguen la paleta editable del logo. */
+  const logoSwatches = useMemo(
+    () =>
+      f
+        ? PALETTE_LABELS.map(([key, name]) => ({ name, hex: f.appearance.palette[key] }))
+        : [],
+    [f]
+  );
+
   const handleSave = async () => {
     if (!f) return;
     setSaving(true);
@@ -107,11 +136,20 @@ export default function SettingsTab() {
         announcementText: f.announcementText, announcementActive: f.announcementActive,
         announcementColor: f.announcementColor, announcementSpeed: f.announcementSpeed,
         warrantyType: f.warrantyType, warrantyText: f.warrantyText, warrantyImages: f.warrantyImages,
+        appearance: f.appearance,
       },
     });
     setSaving(false);
     if (!r.ok) return toast(errorText(r, "No se pudo guardar"), "error");
     setSaved(JSON.stringify(f));
+    // La apariencia vive en una columna que puede no existir todavía en la base
+    // de datos: se comprueba que quedó escrita antes de dar el guardado por bueno.
+    const expected = JSON.stringify(f.appearance);
+    const after = await api<StoreSettings>("/api/store-settings");
+    if (after.ok && JSON.stringify(after.data?.appearance) !== expected) {
+      toast("Se guardó la tienda, pero faltan los ajustes de apariencia. Ejecuta «npx drizzle-kit push» en la base de datos.", "error");
+      return;
+    }
     toast("Guardado. Los cambios ya se ven en el catálogo.");
   };
 
@@ -154,7 +192,7 @@ export default function SettingsTab() {
 
         <Card title="Colores y botones" description="Los atajos son los colores de tu logo" icon={<PaletteIcon className="h-5 w-5" />}>
           <Field label="Color principal de la tienda">
-            <ColorField value={f.primaryColor} onChange={(v) => set("primaryColor", v)} swatches={LOGO_SWATCHES} />
+            <ColorField value={f.primaryColor} onChange={(v) => set("primaryColor", v)} swatches={logoSwatches} />
           </Field>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Texto del botón de compra">
@@ -172,13 +210,76 @@ export default function SettingsTab() {
           </div>
         </Card>
 
+        <Card
+          title="Apariencia del catálogo"
+          description="Los colores de tu logo y los elementos decorativos de la portada"
+          icon={<PaletteIcon className="h-5 w-5" />}
+          className="lg:col-span-2"
+        >
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Colores del logo</p>
+                <button type="button" onClick={resetPalette} className="btn rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-500 hover:text-brand">
+                  Restaurar
+                </button>
+              </div>
+              <div className="space-y-2">
+                {PALETTE_LABELS.map(([key, label]) => (
+                  <div key={key} className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50 px-2.5 py-2">
+                    <span className="w-24 shrink-0 text-xs font-bold text-slate-600">{label}</span>
+                    <input
+                      type="color"
+                      aria-label={`Color ${label}`}
+                      value={f.appearance.palette[key]}
+                      onChange={(e) => setPal(key, e.target.value)}
+                      className="h-8 w-8 shrink-0 cursor-pointer rounded-md border border-slate-200 bg-white p-0.5"
+                    />
+                    <input
+                      value={f.appearance.palette[key]}
+                      onChange={(e) => setPal(key, e.target.value)}
+                      spellCheck={false}
+                      aria-label={`Código de ${label}`}
+                      className="min-w-0 flex-1 rounded-md border border-slate-200 bg-white px-2 py-1.5 font-mono text-xs text-slate-700 focus:border-[color:var(--brand)] focus:outline-none"
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-[11px] leading-snug text-slate-400">
+                Estos colores pintan la portada, los botones, la franja tricolor y los atajos de arriba.
+              </p>
+            </div>
+
+            <div>
+              <p className="mb-2 text-xs font-extrabold uppercase tracking-wider text-slate-400">Elementos de la portada</p>
+              <div className="space-y-2.5">
+                <Switch checked={f.appearance.tricolor} onChange={(v) => setApp("tricolor", v)} label="Franja tricolor" description="Amarillo · azul · rojo en la portada y sobre el pie" />
+                <Switch checked={f.appearance.stars} onChange={(v) => setApp("stars", v)} label="Estrellas" description="Fondo cósmico cuando no hay imagen de portada" />
+                <Switch checked={f.appearance.titleGradient} onChange={(v) => setApp("titleGradient", v)} label="Título en degradé" description="El nombre de la tienda en blanco y crema" />
+                <Switch checked={f.appearance.logoFloat} onChange={(v) => setApp("logoFloat", v)} label="Logo flotante" description="Vuelo, órbita dorada y sombra" />
+              </div>
+              <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200">
+                <div className="hero-bg px-4 py-5 text-center">
+                  <p className={`text-base font-extrabold ${f.appearance.titleGradient ? "title-gold" : "text-white"}`}>{f.storeName || "Tu tienda"}</p>
+                </div>
+                <div className={`flex items-center justify-center gap-4 bg-white px-4 py-3 ${f.appearance.tricolor ? "" : "hidden"}`}>
+                  <span className="h-2 w-10 rounded-full" style={{ backgroundColor: f.appearance.palette.yellow }} />
+                  <span className="h-2 w-10 rounded-full" style={{ backgroundColor: f.appearance.palette.blue }} />
+                  <span className="h-2 w-10 rounded-full" style={{ backgroundColor: f.appearance.palette.red }} />
+                </div>
+              </div>
+              <p className="mt-2 text-[11px] leading-snug text-slate-400">Vista previa de cómo se vería la portada.</p>
+            </div>
+          </div>
+        </Card>
+
         <Card title="Anuncio / promoción" description="Banner animado arriba del catálogo" icon={<MegaphoneIcon className="h-5 w-5" />}>
           <Switch checked={f.announcementActive} onChange={(v) => set("announcementActive", v)} label="Mostrar anuncio en el catálogo" />
           <Field label="Texto del anuncio">
             <input value={f.announcementText} onChange={(e) => set("announcementText", e.target.value)} placeholder="Ej: ¡Envío gratis en compras mayores a $100.000!" className="field" />
           </Field>
           <Field label="Color del banner">
-            <ColorField value={f.announcementColor} onChange={(v) => set("announcementColor", v)} swatches={LOGO_SWATCHES} />
+            <ColorField value={f.announcementColor} onChange={(v) => set("announcementColor", v)} swatches={logoSwatches} />
           </Field>
           <Field label={`Velocidad (${f.announcementSpeed} s)`}>
             <input type="range" min={10} max={80} value={f.announcementSpeed} onChange={(e) => set("announcementSpeed", parseInt(e.target.value, 10))} className="w-full accent-[color:var(--brand)]" />

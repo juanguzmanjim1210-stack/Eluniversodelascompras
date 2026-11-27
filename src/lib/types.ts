@@ -1,3 +1,26 @@
+/** Paleta tomada de los píxeles del logo. */
+export interface AppearancePalette {
+  navy: string;
+  blue: string;
+  sky: string;
+  red: string;
+  gold: string;
+  yellow: string;
+}
+
+/** Elementos nuevos del catálogo que el administrador puede encender o apagar. */
+export interface AppearanceSettings {
+  palette: AppearancePalette;
+  /** Franja amarillo · azul · rojo bajo la portada. */
+  tricolor: boolean;
+  /** Campo de estrellas del fondo «cosmos» (solo sin imagen de portada). */
+  stars: boolean;
+  /** Título de la tienda en degradé blanco → crema. */
+  titleGradient: boolean;
+  /** Vuelo, órbita y sombra del logo. */
+  logoFloat: boolean;
+}
+
 export interface StoreSettings {
   id: number;
   storeName: string;
@@ -23,6 +46,7 @@ export interface StoreSettings {
   warrantyText: string | null;
   warrantyImages: string | null;
   updatedAt: string;
+  appearance: AppearanceSettings;
 }
 
 export interface Category { id: string; name: string; description: string | null; createdAt: string; }

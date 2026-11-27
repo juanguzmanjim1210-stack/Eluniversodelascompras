@@ -42,12 +42,15 @@ const BADGE_SWATCHES = [
   { name: "Negro", hex: "#111827" },
 ];
 
+/** La base devuelve «210000.00»; en el campo se muestra «210000». */
+const pretty = (v: string) => (v ? v.replace(/\.00$/, "") : "");
+
 const toForm = (p: Product): InfoForm => ({
   name: p.name,
   description: p.description || "",
   categoryId: p.categoryId || "",
-  basePrice: p.basePrice,
-  comparePrice: p.comparePrice || "",
+  basePrice: pretty(p.basePrice),
+  comparePrice: pretty(p.comparePrice || ""),
   badge: p.badge || "",
   badgeColor: p.badgeColor || "#f59e0b",
   active: p.active,
@@ -331,7 +334,7 @@ export default function ProductEditor({ productId, onBack }: { productId: string
 
           <Card title="Precios" description="El precio «antes» muestra el descuento automáticamente" icon={<DollarIcon className="h-5 w-5" />}>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Precio de venta *">
+              <Field label="Precio de venta *" hint={form.basePrice ? `Se verá como ${formatMoney("$", form.basePrice)}` : "Escribe un precio en pesos"}>
                 <span className="relative block">
                   <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-400">$</span>
                   <input type="text" inputMode="decimal" value={form.basePrice} onChange={(e) => set("basePrice", money(e.target.value))} placeholder="0" className="field pl-8" />

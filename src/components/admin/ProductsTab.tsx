@@ -197,16 +197,16 @@ export default function ProductsTab({ onEdit }: { onEdit: (id: string) => void }
                       )}
                     </span>
                     <span className="min-w-0">
-                      <span className="line-clamp-2 break-words text-sm font-extrabold leading-snug text-slate-900 sm:text-[15px]">{p.name.trim()}</span>
+                      <span className="line-clamp-2 break-words text-sm font-semibold leading-snug text-slate-900 sm:text-[15px]">{p.name.trim()}</span>
                       <span className="mt-1 flex flex-wrap items-center gap-1.5">
-                        {categoryName && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600">{categoryName.trim()}</span>}
+                        {categoryName && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">{categoryName.trim()}</span>}
                         {p.badge && (
                           <span className="rounded-full px-2 py-0.5 text-[11px] font-extrabold text-white" style={{ backgroundColor: p.badgeColor || "#f59e0b" }}>
                             {p.badge}
                           </span>
                         )}
                         {p.variants.length > 0 && (
-                          <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${units > 0 ? "bg-sky-50 text-sky-700" : "bg-rose-50 text-rose-600"}`}>
+                          <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${units > 0 ? "bg-slate-100 text-slate-500" : "bg-rose-50 text-rose-600"}`}>
                             {units > 0 ? `${units} uds · ${p.variants.length} ${p.variants.length === 1 ? "variante" : "variantes"}` : "Sin stock"}
                           </span>
                         )}
@@ -215,9 +215,9 @@ export default function ProductsTab({ onEdit }: { onEdit: (id: string) => void }
                   </button>
 
                   <div className="shrink-0 text-right">
-                    <p className="text-base font-extrabold tabular-nums text-brand">{formatMoney("$", p.basePrice)}</p>
+                    <p className="text-[15px] font-semibold tabular-nums text-slate-900">{formatMoney("$", p.basePrice)}</p>
                     {p.comparePrice && parseFloat(p.comparePrice) > parseFloat(p.basePrice) && (
-                      <p className="text-xs text-slate-400 line-through">{formatMoney("$", p.comparePrice)}</p>
+                      <p className="text-[11px] font-medium tabular-nums text-slate-400 line-through">{formatMoney("$", p.comparePrice)}</p>
                     )}
                   </div>
 

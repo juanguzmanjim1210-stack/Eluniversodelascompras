@@ -1,10 +1,71 @@
 /* 
   Data layer — PostgreSQL via Drizzle ORM (Neon/PostgreSQL)
 */
-import { db } from "@/db";
+import { db, pool } from "@/db";
 import * as schema from "@/db/schema";
 import { eq, and, or, ilike, desc } from "drizzle-orm";
 import { compareVariants } from "@/lib/variants";
+import { DEFAULT_APPEARANCE, normalizeAppearance } from "@/lib/theme";
+import type { AppearanceSettings } from "@/lib/types";
+
+
+/*
+  Apariencia del catálogo (colores del logo y elementos de la portada).
+
+  Se guarda como JSON en la columna `appearance` de `store_settings`. Para no
+  depender de que la columna exista ya en la base de datos, se crea sola con
+  ALTER TABLE ... IF NOT EXISTS la primera vez que se usa. Si el rol de base de
+  datos no tuviera permisos, la lectura devuelve los valores por defecto y la
+  tienda sigue funcionando igual (solo no se guardarían estos ajustes).
+*/
+let appearanceColumn: boolean | null = null;
+
+async function appearanceReady(): Promise<boolean> {
+  if (appearanceColumn !== null) return appearanceColumn;
+  const exists = async () =>
+    (
+      await pool.query(
+        "SELECT 1 FROM information_schema.columns WHERE table_name = 'store_settings' AND column_name = 'appearance'"
+      )
+    ).rows.length > 0;
+  try {
+    let ready = await exists();
+    if (!ready) {
+      await pool.query("ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS appearance TEXT");
+      ready = await exists();
+    }
+    appearanceColumn = ready;
+    if (!ready) {
+      console.warn("[settings] Sin permisos para crear store_settings.appearance: no se guardarán los ajustes de apariencia.");
+    }
+  } catch (e) {
+    console.warn("[settings] No se pudo preparar la columna appearance:", (e as Error).message);
+    appearanceColumn = false;
+  }
+  return appearanceColumn;
+}
+
+async function readAppearance(): Promise<AppearanceSettings> {
+  if (!(await appearanceReady())) return DEFAULT_APPEARANCE;
+  try {
+    const r = await pool.query<{ appearance: string | null }>("SELECT appearance FROM store_settings WHERE id = 1");
+    return normalizeAppearance(r.rows[0]?.appearance);
+  } catch {
+    return DEFAULT_APPEARANCE;
+  }
+}
+
+async function writeAppearance(value: unknown): Promise<void> {
+  if (value === undefined || value === null) return;
+  if (!(await appearanceReady())) return;
+  try {
+    await pool.query("UPDATE store_settings SET appearance = $1, updated_at = NOW() WHERE id = 1", [
+      JSON.stringify(normalizeAppearance(value)),
+    ]);
+  } catch (e) {
+    console.warn("[settings] No se pudo guardar la apariencia:", (e as Error).message);
+  }
+}
 
 // ===================== STORE SETTINGS =====================
 
@@ -12,9 +73,9 @@ export async function getStoreSettings() {
   const [row] = await db.select().from(schema.storeSettings).where(eq(schema.storeSettings.id, 1));
   if (!row) {
     const [created] = await db.insert(schema.storeSettings).values({ id: 1, storeName: "Mi Tienda" }).returning();
-    return created;
+    return { ...created, appearance: await readAppearance() };
   }
-  return row;
+  return { ...row, appearance: await readAppearance() };
 }
 
 export async function updateStoreSettings(data: Record<string, unknown>) {
@@ -46,11 +107,12 @@ export async function updateStoreSettings(data: Record<string, unknown>) {
 
   const existing = await db.select().from(schema.storeSettings).where(eq(schema.storeSettings.id, 1));
   if (existing.length > 0) {
-    const [row] = await db.update(schema.storeSettings).set(clean).where(eq(schema.storeSettings.id, 1)).returning();
-    return row;
+    await db.update(schema.storeSettings).set(clean).where(eq(schema.storeSettings.id, 1)).returning();
+  } else {
+    await db.insert(schema.storeSettings).values({ id: 1, storeName: clean.storeName }).returning();
   }
-  const [row] = await db.insert(schema.storeSettings).values({ id: 1, storeName: clean.storeName }).returning();
-  return row;
+  await writeAppearance(data.appearance);
+  return await getStoreSettings();
 }
 
 // ===================== CATEGORIES =====================

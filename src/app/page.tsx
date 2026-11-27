@@ -24,7 +24,7 @@ import {
 } from "@/components/Icons";
 import { flyToCart } from "@/lib/fly";
 import { THUMB_WIDTHS } from "@/lib/img";
-import { LOGO, isLegacyGreen, resolveAnnouncement, resolveBrand } from "@/lib/theme";
+import { DEFAULT_APPEARANCE, isLegacyGreen } from "@/lib/theme";
 
 /* El panel de administración pesa bastante y solo lo usa el dueño: se descarga
    únicamente cuando se abre, así la tienda carga más rápido para los clientes. */
@@ -207,10 +207,14 @@ export default function CatalogPage() {
   const hasSocial = useMemo(() => store && (store.facebook || store.whatsapp || store.instagram || store.tiktok), [store]);
   const hasQuery = search.trim() !== "" || selectedCategory !== "";
 
-  const btnColor = resolveBrand(store?.primaryColor);
+  // Apariencia editable desde el panel: colores del logo y elementos de portada.
+  const appearance = store?.appearance ?? DEFAULT_APPEARANCE;
+  const pal = appearance.palette;
+  const btnColor = isLegacyGreen(store?.primaryColor) ? pal.blue : (store?.primaryColor || pal.blue);
   const announceBg = isLegacyGreen(store?.announcementColor)
-    ? `linear-gradient(90deg, #b3121f, ${LOGO.red}, #b3121f)`
-    : resolveAnnouncement(store?.announcementColor);
+    ? `linear-gradient(90deg, color-mix(in srgb, ${pal.red} 76%, black), ${pal.red}, color-mix(in srgb, ${pal.red} 76%, black))`
+    : (store?.announcementColor || pal.red);
+  const paletteCss = `:root{--brand:${btnColor};--c-navy:${pal.navy};--c-blue:${pal.blue};--c-sky:${pal.sky};--c-red:${pal.red};--c-gold:${pal.gold};--c-yellow:${pal.yellow};}`;
   const btnText = store?.buttonText || "Comprar";
   const cur = store?.currency || "$";
 
@@ -246,6 +250,10 @@ export default function CatalogPage() {
 
   return (
     <div id="top" className="min-h-screen" style={{ "--brand": btnColor } as CSSProperties}>
+      {/* La paleta se inyecta en :root para que también la usen los elementos
+          que viven fuera de este contenedor (el resplandor de fondo del body). */}
+      <style dangerouslySetInnerHTML={{ __html: paletteCss }} />
+
       {/* ====== ANUNCIO ====== */}
       {store?.announcementActive && store.announcementText && (
         <div style={{ background: announceBg }} className="overflow-hidden py-2 text-white sm:py-2.5">
@@ -374,7 +382,7 @@ export default function CatalogPage() {
           ) : (
             <>
               <div className="hero-bg absolute inset-0 -z-10" />
-              <div className="stars -z-10" aria-hidden="true" />
+              {appearance.stars && <div className="stars -z-10" aria-hidden="true" />}
               <span className="float-slow pointer-events-none absolute -right-16 -top-16 -z-10 h-64 w-64 rounded-full bg-[color:var(--c-gold)]/25 blur-3xl" />
               <span className="float-slow pointer-events-none absolute -bottom-24 left-1/4 -z-10 h-56 w-56 rounded-full bg-[color:var(--c-red)]/20 blur-3xl [animation-delay:-3s]" />
             </>
@@ -382,8 +390,8 @@ export default function CatalogPage() {
 
           <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 px-4 pb-14 pt-10 text-center sm:px-6 md:pb-16 md:pt-12 lg:px-8">
             {/* Logo redondo con aro de vidrio, órbita dorada y sombra que acompaña al vuelo */}
-            <div className="logo-float mb-8 h-32 w-32 shrink-0 sm:h-40 sm:w-40">
-              <div className="logo-orbit" aria-hidden="true" />
+            <div className={`${appearance.logoFloat ? "logo-float" : ""} mb-8 h-32 w-32 shrink-0 sm:h-40 sm:w-40`}>
+              {appearance.logoFloat && <div className="logo-orbit" aria-hidden="true" />}
               <div className="logo-ring">
                 <div className="logo-disc">
                   {store.logoUrl ? (
@@ -395,11 +403,18 @@ export default function CatalogPage() {
                   )}
                 </div>
               </div>
-              <span className="logo-shadow" aria-hidden="true" />
+              {appearance.logoFloat && <span className="logo-shadow" aria-hidden="true" />}
             </div>
 
             <div className="w-full max-w-3xl">
-              <FitText as="h1" text={store.storeName} min={22} max={38} lines={2} className="title-gold text-center font-extrabold tracking-tight" />
+              <FitText
+                as="h1"
+                text={store.storeName}
+                min={22}
+                max={38}
+                lines={2}
+                className={`text-center font-extrabold tracking-tight ${appearance.titleGradient ? "title-gold" : "text-white [text-shadow:0_2px_14px_rgb(2_6_40/0.55)]"}`}
+              />
             </div>
 
             {descBlocks.length > 1 ? (
@@ -429,7 +444,7 @@ export default function CatalogPage() {
           </div>
         </section>
       )}
-      <div className="tricolor" aria-hidden="true" />
+      {appearance.tricolor && <div className="tricolor" aria-hidden="true" />}
 
       {/* ====== CATÁLOGO ====== */}
       <main className="mx-auto max-w-[1400px] px-3 pb-6 sm:px-6 lg:px-8">
@@ -567,7 +582,7 @@ export default function CatalogPage() {
       {/* ====== PIE DE PÁGINA ====== */}
       {store && (
         <footer style={{ backgroundColor: store.footerColor || "#111827" }} className="relative mt-10 text-white sm:mt-16">
-          <div className="tricolor absolute inset-x-0 top-0" aria-hidden="true" />
+          {appearance.tricolor && <div className="tricolor absolute inset-x-0 top-0" aria-hidden="true" />}
           <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
             {/* Logo del footer — solo si se configuró uno específico */}
             {store.footerLogoUrl && (

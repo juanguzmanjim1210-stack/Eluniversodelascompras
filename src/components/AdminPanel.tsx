@@ -192,7 +192,7 @@ function Workspace({
         <div className="relative mb-7 flex items-center gap-3 px-1 pt-1">
           <span className="logo-chip h-12 w-12 shrink-0">{logo}</span>
           <div className="min-w-0">
-            <p className="truncate text-sm font-extrabold leading-tight">{store?.storeName ?? "Mi tienda"}</p>
+            <p className="line-clamp-2 text-sm font-extrabold leading-snug">{store?.storeName ?? "Mi tienda"}</p>
             <p className="text-[11px] font-semibold text-white/60">Panel de administración</p>
           </div>
         </div>
@@ -220,7 +220,7 @@ function Workspace({
         <header className="flex shrink-0 items-center gap-3 border-b border-slate-200/70 bg-white/80 px-4 py-3 backdrop-blur-xl md:hidden">
           <span className="logo-chip h-9 w-9 shrink-0">{logo}</span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-extrabold leading-tight text-slate-900">{store?.storeName ?? "Mi tienda"}</p>
+            <p className="line-clamp-2 text-sm font-extrabold leading-snug text-slate-900">{store?.storeName ?? "Mi tienda"}</p>
             <p className="text-[11px] font-semibold text-slate-500">Panel de administración</p>
           </div>
           <button type="button" onClick={onLogout} aria-label="Cerrar sesión" className="btn btn-ghost h-10 w-10 rounded-xl">
