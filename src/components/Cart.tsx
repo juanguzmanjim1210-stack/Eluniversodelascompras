@@ -1,5 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
+import FitText from "./FitText";
+import Photo from "./Photo";
+import { THUMB_WIDTHS } from "@/lib/img";
+import { ArrowLeft, CartIcon, CloseIcon, MinusIcon, PlusIcon, TrashIcon, WhatsAppIcon } from "./Icons";
 import type { CartItem, CustomerData } from "@/lib/types";
 
 interface CartProps {
@@ -115,157 +119,217 @@ export default function Cart({
 
   const isFormValid = customerData.fullName.trim() !== "" && customerData.whatsapp.trim() !== "" && customerData.city.trim() !== "" && customerData.department.trim() !== "" && customerData.address.trim() !== "";
 
+  // Esc cierra el carrito.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-[60] flex" role="dialog" aria-modal="true" aria-label="Carrito de compras">
+      <div className="modal-backdrop absolute inset-0 bg-slate-900/55 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative ml-auto w-full max-w-md bg-white shadow-2xl flex flex-col h-full overflow-hidden animate-slide-in">
-        {/* Header */}
-        <div style={{ backgroundColor: primaryColor }} className="text-white p-3 sm:p-4 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <span className="text-xl sm:text-2xl">🛒</span>
-            <div>
-              <span className="font-bold text-sm sm:text-base">Mi Carrito</span>
-              <span className="ml-1.5 text-green-100 text-xs sm:text-sm">({itemCount})</span>
+      <aside className="animate-slide-in relative ml-auto flex h-full w-full max-w-md flex-col overflow-hidden bg-white shadow-2xl sm:rounded-l-[2rem]">
+        {/* Encabezado */}
+        <header className="cart-head shrink-0 px-5 pb-5 pt-5 text-white">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/20 ring-1 ring-white/30">
+                <CartIcon className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <h2 className="truncate text-lg font-extrabold leading-tight">{showCheckout ? "Datos de entrega" : "Mi carrito"}</h2>
+                <p className="text-xs font-medium text-white/80">
+                  {itemCount} {itemCount === 1 ? "artículo" : "artículos"}
+                </p>
+              </div>
             </div>
+            <button type="button" onClick={onClose} aria-label="Cerrar carrito" className="btn h-10 w-10 shrink-0 rounded-full bg-white/15 text-white hover:bg-white/25">
+              <CloseIcon className="h-5 w-5" />
+            </button>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-green-700 flex items-center justify-center transition text-sm">✕</button>
-        </div>
+          {items.length > 0 && (
+            <div className="mt-4 flex gap-2" aria-hidden="true">
+              <span className="h-1.5 flex-1 rounded-full bg-white" />
+              <span className={`h-1.5 flex-1 rounded-full transition-colors duration-500 ${showCheckout ? "bg-white" : "bg-white/30"}`} />
+            </div>
+          )}
+        </header>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Contenido */}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50/60">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400 p-6">
-              <span className="text-5xl mb-3">🛒</span>
-              <p className="text-base font-medium">Tu carrito está vacío</p>
-              <p className="text-xs mt-1">Agrega productos para hacer tu pedido</p>
+            <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+              <span className="grid h-24 w-24 place-items-center rounded-full bg-slate-100 text-slate-300">
+                <CartIcon className="h-11 w-11" />
+              </span>
+              <p className="mt-5 text-lg font-extrabold text-slate-800">Tu carrito está vacío</p>
+              <p className="mt-1 text-sm text-slate-500">Agrega productos para hacer tu pedido</p>
+              <button type="button" onClick={onClose} className="btn btn-brand btn-shine mt-6 rounded-xl px-6 py-3 text-sm font-bold">
+                Ver productos
+              </button>
             </div>
           ) : showCheckout ? (
-            <div className="p-3 sm:p-4 space-y-3">
-              <button onClick={() => setShowCheckout(false)} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1">← Volver al carrito</button>
+            <div className="space-y-4 p-4 sm:p-5">
+              <button type="button" onClick={() => setShowCheckout(false)} className="btn -ml-2 rounded-lg px-2 py-1.5 text-sm font-semibold text-slate-500 hover:text-slate-900">
+                <ArrowLeft className="h-4 w-4" /> Volver al carrito
+              </button>
 
-              <div className="bg-green-50 rounded-xl p-3 border border-green-200">
-                <h3 className="font-bold text-green-800 text-sm mb-0.5">📋 Completa tus datos</h3>
-                <p className="text-xs text-green-600">Para enviar tu pedido por WhatsApp</p>
+              <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                <h3 className="text-sm font-extrabold text-slate-900">📋 Completa tus datos</h3>
+                <p className="mt-0.5 text-xs text-slate-500">Para enviar tu pedido por WhatsApp</p>
               </div>
 
-              <div className="space-y-2.5">
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Nombre Completo *</label>
-                  <input type="text" value={customerData.fullName} onChange={(e) => setCustomerData({ ...customerData, fullName: e.target.value })} placeholder="Tu nombre completo" className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500" />
+                  <label htmlFor="c-name" className="mb-1.5 block text-xs font-bold text-slate-600">Nombre completo *</label>
+                  <input id="c-name" type="text" autoComplete="name" value={customerData.fullName} onChange={(e) => setCustomerData({ ...customerData, fullName: e.target.value })} placeholder="Tu nombre completo" className="field" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Número de WhatsApp *</label>
-                  <input type="tel" value={customerData.whatsapp} onChange={(e) => setCustomerData({ ...customerData, whatsapp: e.target.value })} placeholder="Ej: 3001234567" className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500" />
+                  <label htmlFor="c-phone" className="mb-1.5 block text-xs font-bold text-slate-600">Número de WhatsApp *</label>
+                  <input id="c-phone" type="tel" inputMode="tel" autoComplete="tel" value={customerData.whatsapp} onChange={(e) => setCustomerData({ ...customerData, whatsapp: e.target.value })} placeholder="Ej: 3001234567" className="field" />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Ciudad *</label>
-                    <input type="text" value={customerData.city} onChange={(e) => setCustomerData({ ...customerData, city: e.target.value })} placeholder="Ciudad" className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500" />
+                    <label htmlFor="c-city" className="mb-1.5 block text-xs font-bold text-slate-600">Ciudad *</label>
+                    <input id="c-city" type="text" autoComplete="address-level2" value={customerData.city} onChange={(e) => setCustomerData({ ...customerData, city: e.target.value })} placeholder="Ciudad" className="field" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Departamento *</label>
-                    <input type="text" value={customerData.department} onChange={(e) => setCustomerData({ ...customerData, department: e.target.value })} placeholder="Depto." className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500" />
+                    <label htmlFor="c-dept" className="mb-1.5 block text-xs font-bold text-slate-600">Departamento *</label>
+                    <input id="c-dept" type="text" autoComplete="address-level1" value={customerData.department} onChange={(e) => setCustomerData({ ...customerData, department: e.target.value })} placeholder="Depto." className="field" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Dirección de Entrega *</label>
-                  <textarea value={customerData.address} onChange={(e) => setCustomerData({ ...customerData, address: e.target.value })} placeholder="Dirección completa" rows={2} className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 resize-none" />
+                  <label htmlFor="c-addr" className="mb-1.5 block text-xs font-bold text-slate-600">Dirección de entrega *</label>
+                  <textarea id="c-addr" autoComplete="street-address" value={customerData.address} onChange={(e) => setCustomerData({ ...customerData, address: e.target.value })} placeholder="Dirección completa" rows={2} className="field resize-none" />
                 </div>
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-3">
-                <h4 className="font-semibold text-xs text-gray-700 mb-1.5">Resumen</h4>
-                <div className="space-y-1 text-xs">
+              <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                <h4 className="mb-2 text-xs font-extrabold uppercase tracking-wider text-slate-400">Resumen</h4>
+                <div className="space-y-1.5 text-sm">
                   {items.map((item, i) => (
-                    <div key={i} className="flex justify-between gap-2">
-                      <span className="text-gray-600 truncate">
-                        {item.quantity}x {item.product.name}
+                    <div key={i} className="flex justify-between gap-3">
+                      <span className="truncate text-slate-600">
+                        {item.quantity}x {item.product.name.trim()}
                         {item.variant?.color && ` (${item.variant.color})`}
                         {item.variant?.size && ` - ${item.variant.size}`}
                       </span>
-                      <span className="font-medium flex-shrink-0">
+                      <span className="shrink-0 font-bold text-slate-800">
                         {fmt((item.variant && parseFloat(item.variant.price) > 0 ? parseFloat(item.variant.price) : parseFloat(item.product.basePrice)) * item.quantity)}
                       </span>
                     </div>
                   ))}
                 </div>
-                <div className="border-t mt-2 pt-2 flex justify-between font-bold text-sm">
+                <div className="mt-3 flex justify-between border-t border-slate-100 pt-3 text-base font-extrabold">
                   <span>Total</span>
-                   <span style={{ color: primaryColor }}>{fmt(total)}</span>
+                  <span className="text-brand">{fmt(total)}</span>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="p-3 sm:p-4 space-y-2">
+            <ul className="space-y-3 p-4 sm:p-5">
               {items.map((item, index) => {
                 const price = item.variant && parseFloat(item.variant.price) > 0 ? parseFloat(item.variant.price) : parseFloat(item.product.basePrice);
                 return (
-                  <div key={index} className="bg-gray-50 rounded-xl p-2.5 flex gap-2.5">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg bg-white overflow-hidden flex-shrink-0">
-                      {item.product.images[0] ? <img src={item.product.images[0].url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-300 text-sm">📷</div>}
+                  <li
+                    key={`${item.product.id}-${item.variant?.id ?? "base"}`}
+                    className="card-enter flex gap-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm"
+                    style={{ "--i": Math.min(index, 8) } as CSSProperties}
+                  >
+                    <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                      {item.product.images[0] ? (
+                        <Photo src={item.product.images[0].url} sizes="80px" widths={THUMB_WIDTHS} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-slate-300"><CartIcon className="h-6 w-6" /></div>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-xs sm:text-sm text-gray-900 line-clamp-1">{item.product.name}</h4>
+
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <FitText as="h4" text={item.product.name.trim()} min={12} max={15} lines={2} className="font-bold text-slate-900" />
                       {item.variant && (
-                        <p className="text-[10px] sm:text-xs text-gray-500">
-                          {item.variant.color && <span className="mr-1.5">{item.variant.color}</span>}
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          {item.variant.color && <span className="mr-2">{item.variant.color}</span>}
                           {item.variant.size && <span>Talla: {item.variant.size}</span>}
                         </p>
                       )}
-                      <p className="text-xs sm:text-sm font-bold mt-0.5" style={{ color: primaryColor }}>{fmt(price * item.quantity)}</p>
-                      <div className="flex items-center gap-1.5 mt-1.5">
-                        <button onClick={() => onUpdateQuantity(index, Math.max(1, item.quantity - 1))} className="w-6 h-6 rounded bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-xs font-bold">-</button>
-                        <span className="w-6 text-center text-xs font-medium">{item.quantity}</span>
-                        <button onClick={() => onUpdateQuantity(index, item.quantity + 1)} className="w-6 h-6 rounded bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-xs font-bold">+</button>
-                        <button onClick={() => onRemoveItem(index)} className="ml-auto text-red-500 text-[10px] sm:text-xs hover:bg-red-50 px-1.5 py-0.5 rounded">Eliminar</button>
+                      <div className="mt-auto flex items-center gap-2 pt-2">
+                        <div className="inline-flex items-center rounded-xl bg-slate-100 p-1">
+                          <button type="button" aria-label="Quitar una unidad" onClick={() => onUpdateQuantity(index, Math.max(1, item.quantity - 1))} className="btn h-7 w-7 rounded-lg bg-white text-slate-700 shadow-sm">
+                            <MinusIcon className="h-3.5 w-3.5" />
+                          </button>
+                          <span key={item.quantity} className="num-pop w-8 text-center text-sm font-extrabold tabular-nums">{item.quantity}</span>
+                          <button type="button" aria-label="Agregar una unidad" onClick={() => onUpdateQuantity(index, item.quantity + 1)} className="btn h-7 w-7 rounded-lg bg-white text-slate-700 shadow-sm">
+                            <PlusIcon className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                        <span key={price * item.quantity} className="num-pop ml-auto text-base font-extrabold text-brand">{fmt(price * item.quantity)}</span>
+                        <button type="button" aria-label="Eliminar del carrito" onClick={() => onRemoveItem(index)} className="btn h-8 w-8 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-500">
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
-                  </div>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           )}
         </div>
 
-        {/* Footer */}
+        {/* Pie con total y acciones */}
         {items.length > 0 && (
-          <div className="border-t p-3 sm:p-4 bg-white flex-shrink-0 space-y-2 sm:space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600 text-sm">Total:</span>
-              <span className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>{fmt(total)}</span>
+          <div className="shrink-0 space-y-3 border-t border-slate-100 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-5">
+            <div className="flex items-end justify-between">
+              <span className="text-sm font-semibold text-slate-500">Total</span>
+              <span key={total} className="num-pop text-3xl font-extrabold tracking-tight text-brand">{fmt(total)}</span>
             </div>
+
+            {showCheckout && !storeWhatsapp && (
+              <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">La tienda no tiene WhatsApp configurado.</p>
+            )}
+
             {showCheckout ? (
-              <button onClick={handleSendOrder} disabled={!isFormValid || sending || !storeWhatsapp} style={{ backgroundColor: primaryColor }} className="w-full text-white py-2.5 sm:py-3 rounded-xl font-semibold hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2 text-sm sm:text-base">
-                {sending ? "Enviando..." : <><WhatsAppIcon /> Enviar Pedido por WhatsApp</>}
+              <button
+                type="button"
+                onClick={handleSendOrder}
+                disabled={!isFormValid || sending || !storeWhatsapp}
+                className="btn btn-brand btn-shine w-full rounded-2xl py-3.5 text-base font-bold disabled:opacity-50 disabled:shadow-none"
+              >
+                {sending ? (
+                  <>
+                    <span aria-hidden="true" className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> Enviando...
+                  </>
+                ) : (
+                  <>
+                    <WhatsAppIcon className="btn-icon h-5 w-5" /> Enviar pedido por WhatsApp
+                  </>
+                )}
               </button>
             ) : (
-              <button onClick={() => setShowCheckout(true)} style={{ backgroundColor: primaryColor }} className="w-full text-white py-2.5 sm:py-3 rounded-xl font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 text-sm sm:text-base">
-                Continuar con el Pedido →
+              <button type="button" onClick={() => setShowCheckout(true)} className="btn btn-brand btn-shine btn-pulse w-full rounded-2xl py-3.5 text-base font-bold">
+                Continuar con el pedido <span className="btn-nudge" aria-hidden="true">→</span>
               </button>
             )}
+
             {!showCheckout && (
               <div className="flex gap-2">
-                <button onClick={onClose} className="flex-1 text-gray-600 text-sm hover:bg-gray-100 py-2 rounded-lg transition font-medium border border-gray-200">
-                  ← Seguir comprando
+                <button type="button" onClick={onClose} className="btn btn-ghost flex-1 rounded-xl py-2.5 text-sm font-bold">
+                  <ArrowLeft className="h-4 w-4" /> Seguir comprando
                 </button>
-                <button onClick={onClearCart} className="text-red-500 text-xs hover:bg-red-50 px-3 py-2 rounded-lg transition">Vaciar</button>
+                <button type="button" onClick={onClearCart} className="btn rounded-xl px-4 py-2.5 text-sm font-bold text-rose-500 hover:bg-rose-50">
+                  Vaciar
+                </button>
               </div>
             )}
           </div>
         )}
-      </div>
-
-      <style jsx>{`
-        @keyframes slide-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
-        .animate-slide-in { animation: slide-in 0.3s ease-out; }
-      `}</style>
+      </aside>
     </div>
   );
-}
-
-function WhatsAppIcon() {
-  return <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>;
 }

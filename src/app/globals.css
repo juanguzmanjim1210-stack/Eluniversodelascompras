@@ -1,60 +1,326 @@
 @import "tailwindcss";
 
+/* ════════════════════════════════════════════════════════════════════
+   BASE
+   El color de marca (--brand) lo fija la página con el color primario
+   que el administrador elige en la tienda; todo lo demás se deriva de él.
+   ════════════════════════════════════════════════════════════════════ */
 @layer base {
   :root {
     --color-primary: #2563eb;
     --color-primary-dark: #1d4ed8;
+    --brand: #16a34a;
+    --ink: #0f172a;
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    background: #f4f6f9;
+    color: var(--ink);
+  }
+
+  img {
+    image-rendering: auto;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--brand) 25%, white);
   }
 }
 
-/* Hide scrollbar but allow scroll */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+/* ════════════════════════════════════════════════════════════════════
+   COMPONENTES
+   Van en @layer components para que las utilidades de Tailwind
+   (hidden, flex, px-4…) sigan pudiendo sobrescribirlos.
+   ════════════════════════════════════════════════════════════════════ */
+@layer components {
+  /* ── Helpers de color de marca ── */
+  .text-brand { color: var(--brand); }
+  .bg-brand { background-color: var(--brand); }
+  .bg-brand-soft { background-color: color-mix(in srgb, var(--brand) 10%, white); }
+  .border-brand { border-color: var(--brand); }
+
+  /* ── Botón base: elevación al pasar el mouse, presión al tocar ── */
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    overflow: hidden;
+    isolation: isolate;
+    cursor: pointer;
+    user-select: none;
+    transition:
+      transform 0.28s var(--ease-spring),
+      box-shadow 0.3s ease,
+      background-color 0.25s ease,
+      color 0.25s ease,
+      border-color 0.25s ease,
+      filter 0.25s ease,
+      opacity 0.25s ease;
+    will-change: transform;
+  }
+  .btn:hover:not(:disabled) { transform: translateY(-2px); }
+  .btn:active:not(:disabled) { transform: translateY(0) scale(0.95); transition-duration: 0.09s; }
+  .btn:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--brand) 55%, transparent);
+    outline-offset: 2px;
+  }
+  .btn:disabled { cursor: not-allowed; }
+
+  /* El icono de dentro también reacciona */
+  .btn .btn-icon { transition: transform 0.35s var(--ease-spring); }
+  .btn:hover:not(:disabled) .btn-icon { transform: rotate(-12deg) scale(1.18); }
+  .btn .btn-nudge { transition: transform 0.3s var(--ease-spring); }
+  .btn:hover:not(:disabled) .btn-nudge { transform: translateX(4px); }
+
+  /* ── Variantes ── */
+  .btn-brand {
+    background-color: var(--brand);
+    color: #fff;
+    box-shadow:
+      0 6px 16px -6px color-mix(in srgb, var(--brand) 85%, transparent),
+      inset 0 1px 0 rgb(255 255 255 / 0.22);
+  }
+  .btn-brand:hover:not(:disabled) {
+    filter: saturate(1.08) brightness(1.05);
+    box-shadow:
+      0 16px 30px -10px color-mix(in srgb, var(--brand) 90%, transparent),
+      inset 0 1px 0 rgb(255 255 255 / 0.3);
+  }
+  .btn-success {
+    background-color: #059669;
+    color: #fff;
+    box-shadow: 0 10px 24px -8px rgb(5 150 105 / 0.7), inset 0 1px 0 rgb(255 255 255 / 0.25);
+  }
+  .btn-dark {
+    background-color: var(--ink);
+    color: #fff;
+  }
+  .btn-dark:hover:not(:disabled) {
+    background-color: var(--brand);
+    box-shadow: 0 14px 28px -10px color-mix(in srgb, var(--brand) 85%, transparent);
+  }
+  .btn-ghost {
+    background-color: #fff;
+    color: #334155;
+    border: 1.5px solid #e2e8f0;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    border-color: var(--brand);
+    color: var(--brand);
+    box-shadow: 0 10px 22px -12px rgb(15 23 42 / 0.3);
+  }
+
+  /* ── Destello que cruza el botón ── */
+  .btn-shine::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.5) 50%, transparent 65%);
+    transform: translateX(-130%);
+  }
+  .btn-shine:hover:not(:disabled)::after { animation: btn-shine 0.85s ease; }
+
+  /* ── Latido suave para llamar la atención en la acción principal ── */
+  .btn-pulse { animation: btn-pulse 2.6s ease-out infinite; }
+
+  /* ── Onda al hacer clic (la crea ButtonEffects) ── */
+  .ripple {
+    position: absolute;
+    z-index: 1;
+    border-radius: 9999px;
+    background: currentColor;
+    opacity: 0.28;
+    transform: scale(0);
+    pointer-events: none;
+    animation: ripple 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  }
+
+  /* ── Tarjeta de producto ── */
+  .card {
+    background: #fff;
+    border-radius: 1.25rem;
+    border: 1px solid rgb(15 23 42 / 0.06);
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 10px 26px -18px rgb(15 23 42 / 0.22);
+    transition: transform 0.4s var(--ease-out), box-shadow 0.4s ease;
+  }
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 2px 4px rgb(15 23 42 / 0.05), 0 26px 46px -24px rgb(15 23 42 / 0.4);
+  }
+  .card-img { transition: transform 0.7s var(--ease-out), opacity 0.5s ease, filter 0.3s ease; }
+  .card:hover .card-img { transform: scale(1.07); }
+  .card-enter { animation: fade-up 0.55s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 45ms); }
+
+  /* ── Campos de formulario ── */
+  .field {
+    width: 100%;
+    border-radius: 0.9rem;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    padding: 0.8rem 0.95rem;
+    font-size: 16px; /* 16px evita el zoom automático de iOS */
+    line-height: 1.3;
+    color: var(--ink);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .field::placeholder { color: #94a3b8; }
+  .field:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 18%, transparent);
+  }
+
+  /* ── Fondos con el color de marca ── */
+  .hero-bg {
+    background:
+      radial-gradient(1100px 420px at 88% -12%, rgb(255 255 255 / 0.22), transparent 60%),
+      radial-gradient(800px 520px at -8% 112%, color-mix(in srgb, var(--brand) 40%, black), transparent 62%),
+      linear-gradient(135deg, color-mix(in srgb, var(--brand) 76%, black) 0%, var(--brand) 55%, color-mix(in srgb, var(--brand) 68%, #22d3ee) 100%);
+  }
+  .cart-head {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--brand) 78%, black), var(--brand));
+  }
+
+  /* ── Carga ── */
+  .skeleton {
+    background: linear-gradient(100deg, #e9edf2 30%, #f6f8fa 50%, #e9edf2 70%);
+    background-size: 200% 100%;
+    animation: shimmer 1.35s linear infinite;
+  }
+
+  /* ── Títulos que se autoajustan (ver FitText.tsx) ── */
+  .fit-text {
+    display: block;
+    /* Palabras completas: si no caben, la letra se reduce; solo se parte una palabra si ella sola excede el ancho. */
+    overflow-wrap: break-word;
+    hyphens: manual;
+    word-spacing: 0.06em;
+    text-wrap: balance;
+  }
+  .fit-text[data-clamp] {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: var(--fit-lines, 2);
+    line-clamp: var(--fit-lines, 2);
+    overflow: hidden;
+  }
+
+  /* ── Ventanas ── */
+  .modal-backdrop { animation: fade-in 0.28s ease both; }
+  .modal-panel { animation: sheet-up 0.45s var(--ease-out) both; }
+  .img-fade { animation: fade-in 0.35s ease both; }
+
+  /* ── Flotantes ── */
+  .wa-fab {
+    background: #25d366;
+    color: #fff;
+    animation: wa-pulse 2.4s ease-out infinite;
+  }
+  .wa-fab:hover:not(:disabled) { background: #1ebe5b; }
+  .hero-logo { transition: transform 0.6s var(--ease-spring); }
+  .hero-logo:hover { transform: rotate(-4deg) scale(1.05); }
+  .float-slow { animation: float 7s ease-in-out infinite; }
+
+  /* ── Carrito del encabezado ── */
+  .cart-bump { animation: cart-bump 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+  .badge-pop { animation: badge-pop 0.5s var(--ease-spring); }
+  .num-pop { display: inline-block; animation: num-pop 0.38s var(--ease-spring); }
+
+  /* ── Check que se dibuja ── */
+  .check-draw path {
+    stroke-dasharray: 26;
+    stroke-dashoffset: 26;
+    animation: check-draw 0.45s 0.05s ease forwards;
+  }
 }
 
-/* Marquee animation */
-@keyframes marquee-scroll {
-  0% { transform: translateX(0%); }
-  100% { transform: translateX(-50%); }
-}
+/* ════════════════════════════════════════════════════════════════════
+   UTILIDADES PROPIAS (ya existían: las usa el panel de administración)
+   ════════════════════════════════════════════════════════════════════ */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 .marquee-track {
   display: inline-flex;
   animation: marquee-scroll 25s linear infinite;
   will-change: transform;
 }
-.marquee-track:hover {
-  animation-play-state: paused;
-}
+.marquee-track:hover { animation-play-state: paused; }
 
-/* Cart added animation */
-@keyframes cart-added-in {
-  0% { opacity: 0; transform: scale(0.5); }
-  50% { opacity: 1; transform: scale(1.1); }
-  100% { opacity: 1; transform: scale(1); }
-}
-.animate-cart-added {
-  animation: cart-added-in 0.4s ease-out;
-}
+.animate-cart-added { animation: cart-added-in 0.4s ease-out; }
+.animate-save-success { animation: save-pulse 0.5s ease-out; }
+.animate-slide-in { animation: slide-in 0.38s var(--ease-out); }
+.animate-fade { animation: fade-in 0.3s ease both; }
 
-/* Save success animation */
-@keyframes save-pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+/* ════════════════════════════════════════════════════════════════════
+   KEYFRAMES
+   ════════════════════════════════════════════════════════════════════ */
+@keyframes marquee-scroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-50%); } }
+@keyframes cart-added-in { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1.1); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes save-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+@keyframes slide-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes sheet-up { from { opacity: 0; transform: translateY(40px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@keyframes ripple { to { transform: scale(1); opacity: 0; } }
+@keyframes btn-shine { to { transform: translateX(130%); } }
+@keyframes btn-pulse {
+  0% { box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--brand) 85%, transparent), 0 0 0 0 color-mix(in srgb, var(--brand) 45%, transparent); }
+  70% { box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--brand) 85%, transparent), 0 0 0 14px transparent; }
+  100% { box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--brand) 85%, transparent), 0 0 0 0 transparent; }
 }
-.animate-save-success {
-  animation: save-pulse 0.5s ease-out;
+@keyframes wa-pulse {
+  0% { box-shadow: 0 10px 24px -8px rgb(37 211 102 / 0.7), 0 0 0 0 rgb(37 211 102 / 0.5); }
+  70% { box-shadow: 0 10px 24px -8px rgb(37 211 102 / 0.7), 0 0 0 16px rgb(37 211 102 / 0); }
+  100% { box-shadow: 0 10px 24px -8px rgb(37 211 102 / 0.7), 0 0 0 0 rgb(37 211 102 / 0); }
 }
+@keyframes cart-bump {
+  0%, 100% { transform: translateX(0) rotate(0) scale(1); }
+  15% { transform: translateX(-4px) rotate(-8deg) scale(1.12); }
+  35% { transform: translateX(4px) rotate(7deg) scale(1.12); }
+  55% { transform: translateX(-3px) rotate(-4deg) scale(1.06); }
+  75% { transform: translateX(2px) rotate(2deg) scale(1.03); }
+}
+@keyframes num-pop { 0% { transform: scale(0.88); opacity: 0.55; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes badge-pop { 0% { transform: scale(0.2); } 60% { transform: scale(1.35); } 100% { transform: scale(1); } }
+@keyframes check-draw { to { stroke-dashoffset: 0; } }
+@keyframes float { 0%, 100% { transform: translate3d(0, 0, 0); } 50% { transform: translate3d(0, -16px, 0); } }
 
-/* Slide in from right */
-@keyframes slide-in {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+/* En escritorio la ventana de producto aparece con un zoom suave en vez de subir desde abajo */
+@media (min-width: 768px) {
+  .modal-panel { animation-name: pop-in; }
 }
-.animate-slide-in {
-  animation: slide-in 0.3s ease-out;
+@keyframes pop-in { from { opacity: 0; transform: translateY(18px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* Respeto a quien pide menos movimiento en su sistema */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .marquee-track { animation: none !important; }
 }
