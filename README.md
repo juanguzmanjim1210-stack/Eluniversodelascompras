@@ -125,6 +125,13 @@ Además:
    - `DATABASE_URL`
    - `ADMIN_PASSWORD` (contraseña inicial)
    - `JWT_SECRET`
+   - `NEXT_PUBLIC_SITE_URL` (dominio definitivo)
+
+> ⚠️ **Dominio sin desplegar:** el dominio que figura como *homepage* de este
+> respositorio, `https://eluniversodelascompras-alpha.vercel.app`, responde
+> `404 DEPLOYMENT_NOT_FOUND`. Tras el primer despliegue, actualiza el *homepage*
+> del repositorio y define `NEXT_PUBLIC_SITE_URL` con el dominio real; si no,
+> las etiquetas OG y el `sitemap.xml` apuntan a una URL muerta.
 
 ### Variables de Entorno
 
@@ -133,6 +140,7 @@ Además:
 | `DATABASE_URL` | URL de PostgreSQL |
 | `ADMIN_PASSWORD` | Contraseña inicial del admin |
 | `JWT_SECRET` | Secreto para tokens (mínimo 32 caracteres) |
+| `NEXT_PUBLIC_SITE_URL` | Dominio público (OG, `sitemap.xml`, `robots.txt`). Opcional |
 
 ## 📦 Tecnologías
 

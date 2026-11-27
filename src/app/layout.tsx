@@ -12,7 +12,10 @@ const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
 });
 
-const SITE_URL = "https://eluniversodelascompras-alpha.vercel.app";
+/* La URL de producción la fija Vercel (varios dominios suben y bajan con cada
+   despliegue), así que sale del entorno y solo se usa como último recurso. */
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ??
+  "https://eluniversodelascompras-alpha.vercel.app").replace(/\/$/, "");
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
