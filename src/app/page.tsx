@@ -7,6 +7,7 @@ import FitText from "@/components/FitText";
 import Lightbox from "@/components/Lightbox";
 import ProductCard from "@/components/ProductCard";
 import ProductModal from "@/components/ProductModal";
+import Photo from "@/components/Photo";
 import RichText from "@/components/RichText";
 import {
   ArrowUp,
@@ -22,6 +23,8 @@ import {
   WhatsAppIcon,
 } from "@/components/Icons";
 import { flyToCart } from "@/lib/fly";
+import { THUMB_WIDTHS } from "@/lib/img";
+import { LOGO, isLegacyGreen, resolveAnnouncement, resolveBrand } from "@/lib/theme";
 
 /* El panel de administración pesa bastante y solo lo usa el dueño: se descarga
    únicamente cuando se abre, así la tienda carga más rápido para los clientes. */
@@ -161,7 +164,7 @@ export default function CatalogPage() {
   }, []);
 
   // Con una ventana abierta, la página de fondo no se desplaza.
-  const locked = !!selectedProduct || cartOpen || warrantyIdx !== null;
+  const locked = !!selectedProduct || cartOpen || warrantyIdx !== null || adminOpen;
   useEffect(() => {
     if (!locked) return;
     const { body, documentElement: root } = document;
@@ -204,7 +207,10 @@ export default function CatalogPage() {
   const hasSocial = useMemo(() => store && (store.facebook || store.whatsapp || store.instagram || store.tiktok), [store]);
   const hasQuery = search.trim() !== "" || selectedCategory !== "";
 
-  const btnColor = store?.primaryColor || "#16a34a";
+  const btnColor = resolveBrand(store?.primaryColor);
+  const announceBg = isLegacyGreen(store?.announcementColor)
+    ? `linear-gradient(90deg, #b3121f, ${LOGO.red}, #b3121f)`
+    : resolveAnnouncement(store?.announcementColor);
   const btnText = store?.buttonText || "Comprar";
   const cur = store?.currency || "$";
 
@@ -242,7 +248,7 @@ export default function CatalogPage() {
     <div id="top" className="min-h-screen" style={{ "--brand": btnColor } as CSSProperties}>
       {/* ====== ANUNCIO ====== */}
       {store?.announcementActive && store.announcementText && (
-        <div style={{ backgroundColor: store.announcementColor || btnColor }} className="overflow-hidden py-2 text-white sm:py-2.5">
+        <div style={{ background: announceBg }} className="overflow-hidden py-2 text-white sm:py-2.5">
           <div className="marquee-track inline-flex whitespace-nowrap" style={{ animationDuration: `${store.announcementSpeed || 40}s` }}>
             {[0, 1].map((half) => (
               <span key={half} className="inline-flex">
@@ -267,12 +273,11 @@ export default function CatalogPage() {
         <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-3 sm:gap-6 sm:px-6 lg:px-8">
           <a href="#top" className="flex shrink-0 items-center gap-3" aria-label={store?.storeName ?? "Inicio"}>
             {store?.logoUrl ? (
-              <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={store.logoUrl} alt="" className="h-full w-full object-contain" decoding="async" />
+              <span className="logo-chip h-10 w-10">
+                <Photo src={store.logoUrl} sizes="40px" widths={THUMB_WIDTHS} alt="" decoding="async" draggable={false} />
               </span>
             ) : (
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand text-lg font-extrabold text-white">
+              <span className="logo-chip grid h-10 w-10 place-items-center bg-brand text-lg font-extrabold text-white">
                 {(store?.storeName ?? "T").charAt(0).toUpperCase()}
               </span>
             )}
@@ -317,7 +322,7 @@ export default function CatalogPage() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Escríbenos por WhatsApp"
-              className="btn wa-fab hidden h-11 shrink-0 rounded-2xl px-4 text-sm font-bold sm:inline-flex"
+              className="btn btn-wa wa-fab hidden h-11 shrink-0 rounded-2xl px-4 text-sm font-bold sm:inline-flex"
             >
               <WhatsAppIcon className="btn-icon h-5 w-5" />
               <span className="hidden lg:inline">WhatsApp</span>
@@ -338,7 +343,7 @@ export default function CatalogPage() {
             {cartCount > 0 && (
               <span
                 key={cartCount}
-                className="badge-pop pointer-events-none absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[11px] font-extrabold text-white ring-2 ring-white"
+                className="badge-pop pointer-events-none absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-[color:var(--c-red)] px-1 text-[11px] font-extrabold text-white ring-2 ring-white"
               >
                 {cartCount}
               </span>
@@ -349,14 +354,13 @@ export default function CatalogPage() {
 
       {/* ====== PORTADA ====== */}
       {!store ? (
-        <section className="hero-bg">
-          <div className="mx-auto flex max-w-[1400px] flex-col items-center gap-5 px-4 py-10 sm:px-6 md:flex-row md:gap-10 md:py-14 lg:px-8">
-            <div className="h-28 w-28 animate-pulse rounded-[1.75rem] bg-white/25 sm:h-36 sm:w-36 md:h-40 md:w-40" />
-            <div className="w-full max-w-xl space-y-3">
-              <div className="h-10 w-3/4 animate-pulse rounded-lg bg-white/25" />
-              <div className="h-5 w-full animate-pulse rounded bg-white/20" />
-              <div className="h-5 w-2/3 animate-pulse rounded bg-white/20" />
-            </div>
+        <section className="relative isolate overflow-hidden">
+          <div className="hero-bg absolute inset-0 -z-10" />
+          <div className="stars -z-10" aria-hidden="true" />
+          <div className="mx-auto flex max-w-3xl flex-col items-center gap-5 px-4 py-12 sm:px-6">
+            <div className="h-32 w-32 animate-pulse rounded-full bg-white/25 sm:h-40 sm:w-40" />
+            <div className="mt-6 h-8 w-2/3 animate-pulse rounded-lg bg-white/25" />
+            <div className="h-5 w-full max-w-md animate-pulse rounded bg-white/20" />
           </div>
         </section>
       ) : (
@@ -370,57 +374,67 @@ export default function CatalogPage() {
           ) : (
             <>
               <div className="hero-bg absolute inset-0 -z-10" />
-              <span className="float-slow pointer-events-none absolute -right-16 -top-16 -z-10 h-64 w-64 rounded-full bg-white/10 blur-2xl" />
-              <span className="float-slow pointer-events-none absolute -bottom-24 left-1/4 -z-10 h-56 w-56 rounded-full bg-white/10 blur-2xl [animation-delay:-3s]" />
+              <div className="stars -z-10" aria-hidden="true" />
+              <span className="float-slow pointer-events-none absolute -right-16 -top-16 -z-10 h-64 w-64 rounded-full bg-[color:var(--c-gold)]/25 blur-3xl" />
+              <span className="float-slow pointer-events-none absolute -bottom-24 left-1/4 -z-10 h-56 w-56 rounded-full bg-[color:var(--c-red)]/20 blur-3xl [animation-delay:-3s]" />
             </>
           )}
 
-          <div className="mx-auto flex max-w-[1400px] flex-col items-center gap-6 px-4 py-9 text-center sm:px-6 md:flex-row md:gap-10 md:py-14 md:text-left lg:px-8">
-            <div className="hero-logo shrink-0">
-              {store.logoUrl ? (
-                <div className="grid h-28 w-28 place-items-center rounded-[1.75rem] bg-white p-2 shadow-2xl ring-4 ring-white/30 sm:h-36 sm:w-36 md:h-40 md:w-40">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={store.logoUrl} alt="Logo" loading="eager" decoding="async" className="h-full w-full object-contain" />
+          <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 px-4 pb-14 pt-10 text-center sm:px-6 md:pb-16 md:pt-12 lg:px-8">
+            {/* Logo redondo con aro de vidrio, órbita dorada y sombra que acompaña al vuelo */}
+            <div className="logo-float mb-8 h-32 w-32 shrink-0 sm:h-40 sm:w-40">
+              <div className="logo-orbit" aria-hidden="true" />
+              <div className="logo-ring">
+                <div className="logo-disc">
+                  {store.logoUrl ? (
+                    <Photo src={store.logoUrl} sizes="160px" widths={[256, 384]} alt="Logo" loading="eager" fetchPriority="high" decoding="async" draggable={false} />
+                  ) : (
+                    <span className="grid h-full w-full place-items-center bg-white text-5xl font-extrabold text-brand">
+                      {store.storeName.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                 </div>
-              ) : (
-                <div className="grid h-28 w-28 place-items-center rounded-[1.75rem] bg-white/95 text-5xl font-extrabold text-brand shadow-2xl ring-4 ring-white/30 sm:h-36 sm:w-36 md:h-40 md:w-40">
-                  {store.storeName.charAt(0).toUpperCase()}
-                </div>
-              )}
+              </div>
+              <span className="logo-shadow" aria-hidden="true" />
             </div>
 
-            <div className="min-w-0 flex-1 space-y-4">
-              <FitText as="h1" text={store.storeName} min={26} max={52} lines={2} className="font-extrabold tracking-tight drop-shadow-sm" />
-
-              {descBlocks.length > 1 ? (
-                <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-                  {descBlocks.map((b, i) => (
-                    <p key={i} className="whitespace-pre-line rounded-2xl bg-white/12 px-4 py-3 text-left text-sm font-semibold leading-snug ring-1 ring-white/25 backdrop-blur-sm sm:text-[15px]">
-                      {b}
-                    </p>
-                  ))}
-                </div>
-              ) : descBlocks.length === 1 ? (
-                <p className="mx-auto max-w-2xl whitespace-pre-line text-base font-medium text-white/90 sm:text-lg md:mx-0">{descBlocks[0]}</p>
-              ) : null}
-
-              {hasSocial && (
-                <div className="flex items-center justify-center gap-2.5 md:justify-start">
-                  {store.facebook && <a href={store.facebook} target="_blank" rel="noopener noreferrer" title="Facebook" aria-label="Facebook" className="btn h-11 w-11 rounded-full bg-white/15 text-white ring-1 ring-white/25 hover:bg-white hover:text-[#1877f2]"><FacebookIcon className="h-5 w-5" /></a>}
-                  {store.whatsapp && <a href={store.whatsapp} target="_blank" rel="noopener noreferrer" title="WhatsApp" aria-label="WhatsApp" className="btn h-11 w-11 rounded-full bg-white/15 text-white ring-1 ring-white/25 hover:bg-white hover:text-[#25d366]"><WhatsAppIcon className="h-5 w-5" /></a>}
-                  {store.instagram && <a href={store.instagram} target="_blank" rel="noopener noreferrer" title="Instagram" aria-label="Instagram" className="btn h-11 w-11 rounded-full bg-white/15 text-white ring-1 ring-white/25 hover:bg-white hover:text-[#e1306c]"><InstagramIcon className="h-5 w-5" /></a>}
-                  {store.tiktok && <a href={store.tiktok} target="_blank" rel="noopener noreferrer" title="TikTok" aria-label="TikTok" className="btn h-11 w-11 rounded-full bg-white/15 text-white ring-1 ring-white/25 hover:bg-white hover:text-slate-900"><TikTokIcon className="h-5 w-5" /></a>}
-                </div>
-              )}
+            <div className="w-full max-w-3xl">
+              <FitText as="h1" text={store.storeName} min={22} max={38} lines={2} className="title-gold text-center font-extrabold tracking-tight" />
             </div>
+
+            {descBlocks.length > 1 ? (
+              <div className={`grid w-full gap-2.5 ${descBlocks.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
+                {descBlocks.map((b, i) => (
+                  <p
+                    key={i}
+                    className="whitespace-pre-line rounded-2xl bg-white/12 px-4 py-3 text-center text-sm font-semibold leading-snug ring-1 ring-white/25 backdrop-blur-md sm:text-[15px]"
+                    style={{ boxShadow: "inset 0 1px 0 rgb(255 255 255 / 0.35)" }}
+                  >
+                    {b}
+                  </p>
+                ))}
+              </div>
+            ) : descBlocks.length === 1 ? (
+              <p className="mx-auto max-w-2xl whitespace-pre-line text-base font-medium text-white/90 sm:text-lg">{descBlocks[0]}</p>
+            ) : null}
+
+            {hasSocial && (
+              <div className="flex items-center justify-center gap-3">
+                {store.facebook && <a href={store.facebook} target="_blank" rel="noopener noreferrer" title="Facebook" aria-label="Facebook" className="btn btn-glass h-11 w-11 rounded-full hover:bg-white hover:text-[#1877f2]"><FacebookIcon className="h-5 w-5" /></a>}
+                {store.whatsapp && <a href={store.whatsapp} target="_blank" rel="noopener noreferrer" title="WhatsApp" aria-label="WhatsApp" className="btn btn-glass h-11 w-11 rounded-full hover:bg-white hover:text-[#12b350]"><WhatsAppIcon className="h-5 w-5" /></a>}
+                {store.instagram && <a href={store.instagram} target="_blank" rel="noopener noreferrer" title="Instagram" aria-label="Instagram" className="btn btn-glass h-11 w-11 rounded-full hover:bg-white hover:text-[#e1306c]"><InstagramIcon className="h-5 w-5" /></a>}
+                {store.tiktok && <a href={store.tiktok} target="_blank" rel="noopener noreferrer" title="TikTok" aria-label="TikTok" className="btn btn-glass h-11 w-11 rounded-full hover:bg-white hover:text-slate-900"><TikTokIcon className="h-5 w-5" /></a>}
+              </div>
+            )}
           </div>
         </section>
       )}
+      <div className="tricolor" aria-hidden="true" />
 
       {/* ====== CATÁLOGO ====== */}
       <main className="mx-auto max-w-[1400px] px-3 pb-6 sm:px-6 lg:px-8">
         {/* Categorías */}
-        <div className="no-scrollbar -mx-3 flex gap-2 overflow-x-auto px-3 py-4 sm:mx-0 sm:px-0 sm:py-5" role="tablist" aria-label="Categorías">
+        <div className="no-scrollbar -mx-3 flex gap-2 overflow-x-auto px-3 pb-7 pt-4 sm:-mx-6 sm:px-6 sm:pt-5 lg:-mx-8 lg:px-8" role="tablist" aria-label="Categorías">
           {[{ id: "", name: "Todas" }, ...categories].map((c) => {
             const active = selectedCategory === c.id;
             return (
@@ -430,11 +444,7 @@ export default function CatalogPage() {
                 role="tab"
                 aria-selected={active}
                 onClick={() => changeCategory(c.id)}
-                className={`btn shrink-0 rounded-full border-2 px-5 py-2.5 text-sm font-bold whitespace-nowrap ${
-                  active
-                    ? "border-transparent bg-brand text-white shadow-lg shadow-black/10"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-[color:var(--brand)] hover:text-[color:var(--brand)]"
-                }`}
+                className={`btn shrink-0 rounded-full px-5 py-2.5 text-sm font-bold whitespace-nowrap ${active ? "btn-brand" : "btn-ghost"}`}
               >
                 {c.name.trim()}
               </button>
@@ -456,19 +466,19 @@ export default function CatalogPage() {
               </span>
             )}
             <label className="relative inline-flex items-center">
-              <SortIcon className="pointer-events-none absolute left-3 h-4 w-4 text-slate-500" />
+              <SortIcon className="pointer-events-none absolute left-3 z-10 h-4 w-4 text-slate-500" />
               <select
                 aria-label="Ordenar productos"
                 value={sort}
                 onChange={(e) => setSort(e.target.value as SortKey)}
-                className="h-10 cursor-pointer appearance-none rounded-xl border border-slate-200 bg-white pl-9 pr-8 text-sm font-semibold text-slate-700 transition focus:border-[color:var(--brand)] focus:outline-none"
+                className="h-10 cursor-pointer appearance-none rounded-xl border border-white/80 bg-white/70 pl-9 pr-8 text-sm font-semibold text-slate-700 shadow-[0_8px_20px_-12px_rgb(15_23_42/0.35)] backdrop-blur-md transition focus:border-[color:var(--brand)] focus:outline-none"
               >
                 <option value="default">Destacados</option>
                 <option value="price-asc">Menor precio</option>
                 <option value="price-desc">Mayor precio</option>
                 <option value="name">Nombre A–Z</option>
               </select>
-              <span aria-hidden="true" className="pointer-events-none absolute right-3 text-xs text-slate-400">▾</span>
+              <span aria-hidden="true" className="pointer-events-none absolute right-3 z-10 text-xs text-slate-400">▾</span>
             </label>
           </div>
         </div>
@@ -557,15 +567,14 @@ export default function CatalogPage() {
       {/* ====== PIE DE PÁGINA ====== */}
       {store && (
         <footer style={{ backgroundColor: store.footerColor || "#111827" }} className="relative mt-10 text-white sm:mt-16">
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-[color:var(--brand)] to-transparent" aria-hidden="true" />
+          <div className="tricolor absolute inset-x-0 top-0" aria-hidden="true" />
           <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
             {/* Logo del footer — solo si se configuró uno específico */}
             {store.footerLogoUrl && (
-              <div className="mb-5 flex justify-center">
-                <div className="h-16 w-16 overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={store.footerLogoUrl} alt="Logo" loading="lazy" decoding="async" className="h-full w-full object-contain" />
-                </div>
+              <div className="mb-6 flex justify-center">
+                <span className="logo-chip h-20 w-20">
+                  <Photo src={store.footerLogoUrl} sizes="80px" widths={THUMB_WIDTHS} alt="Logo" loading="lazy" decoding="async" draggable={false} />
+                </span>
               </div>
             )}
 
@@ -574,10 +583,10 @@ export default function CatalogPage() {
               <div className="flex flex-col items-center">
                 {store.footerName && <h4 className="mb-4 text-xl font-extrabold tracking-tight">{store.footerName}</h4>}
                 <div className="flex items-center gap-3.5">
-                  {store.facebook && <a href={store.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="btn h-12 w-12 rounded-full bg-white/10 hover:bg-[#1877f2]"><FacebookIcon className="h-5 w-5" /></a>}
-                  {store.whatsapp && <a href={store.whatsapp} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="btn h-12 w-12 rounded-full bg-white/10 hover:bg-[#25d366]"><WhatsAppIcon className="h-5 w-5" /></a>}
-                  {store.instagram && <a href={store.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="btn h-12 w-12 rounded-full bg-white/10 hover:bg-[#e1306c]"><InstagramIcon className="h-5 w-5" /></a>}
-                  {store.tiktok && <a href={store.tiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="btn h-12 w-12 rounded-full bg-white/10 hover:bg-white/30"><TikTokIcon className="h-5 w-5" /></a>}
+                  {store.facebook && <a href={store.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="btn btn-glass h-12 w-12 rounded-full hover:bg-[#1877f2]"><FacebookIcon className="h-5 w-5" /></a>}
+                  {store.whatsapp && <a href={store.whatsapp} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="btn btn-glass h-12 w-12 rounded-full hover:bg-[#25d366]"><WhatsAppIcon className="h-5 w-5" /></a>}
+                  {store.instagram && <a href={store.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="btn btn-glass h-12 w-12 rounded-full hover:bg-[#e1306c]"><InstagramIcon className="h-5 w-5" /></a>}
+                  {store.tiktok && <a href={store.tiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="btn btn-glass h-12 w-12 rounded-full hover:bg-white/30"><TikTokIcon className="h-5 w-5" /></a>}
                 </div>
               </div>
             )}
@@ -590,7 +599,7 @@ export default function CatalogPage() {
               <button
                 type="button"
                 onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                className="btn rounded-full bg-white/10 px-4 py-2 text-xs font-bold hover:bg-white/20"
+                className="btn btn-glass rounded-full px-4 py-2 text-xs font-bold"
               >
                 <ArrowUp className="btn-nudge h-4 w-4" /> Volver arriba
               </button>
@@ -606,11 +615,11 @@ export default function CatalogPage() {
             type="button"
             onClick={() => setCartOpen(true)}
             aria-label={`Ver carrito, ${cartCount} artículos`}
-            className="btn btn-brand h-14 w-14 rounded-full sm:h-16 sm:w-16"
+            className="btn btn-gold h-14 w-14 rounded-full sm:h-16 sm:w-16"
           >
             <CartIcon className="btn-icon h-7 w-7" />
           </button>
-          <span key={cartCount} className="badge-pop pointer-events-none absolute -right-1 -top-1 grid h-6 min-w-6 place-items-center rounded-full bg-rose-500 px-1 text-xs font-extrabold text-white ring-2 ring-white">
+          <span key={cartCount} className="badge-pop pointer-events-none absolute -right-1 -top-1 grid h-6 min-w-6 place-items-center rounded-full bg-[color:var(--c-red)] px-1 text-xs font-extrabold text-white ring-2 ring-white">
             {cartCount}
           </span>
         </div>

@@ -1,41 +1,66 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-import type { Product, Category, StoreSettings } from "@/lib/types";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import type { StoreSettings } from "@/lib/types";
+import Photo from "./Photo";
+import { CloseIcon, DashboardIcon, ExternalIcon, LockIcon, LogOutIcon, PackageIcon, StoreIcon, TagIcon } from "./Icons";
+import { AdminProvider, type AdminTab } from "./admin/ui";
+import LoginView from "./admin/LoginView";
+import DashboardTab from "./admin/DashboardTab";
+import ProductsTab from "./admin/ProductsTab";
+import ProductEditor from "./admin/ProductEditor";
+import CategoriesTab from "./admin/CategoriesTab";
+import SettingsTab from "./admin/SettingsTab";
+import SecurityTab from "./admin/SecurityTab";
+import { THUMB_WIDTHS } from "@/lib/img";
 
 interface AdminPanelProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type Tab = "products" | "categories" | "settings" | "security" | "edit-product";
+type StoreBrief = Pick<StoreSettings, "storeName" | "logoUrl">;
+
+const NAV = [
+  { key: "dashboard", label: "Resumen", Icon: DashboardIcon },
+  { key: "products", label: "Productos", Icon: PackageIcon },
+  { key: "categories", label: "Categorías", Icon: TagIcon },
+  { key: "settings", label: "Tienda", Icon: StoreIcon },
+  { key: "security", label: "Seguridad", Icon: LockIcon },
+] as const;
 
 export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [notice, setNotice] = useState("");
   const [loggingIn, setLoggingIn] = useState(false);
+  const [store, setStore] = useState<StoreBrief | null>(null);
 
-  const [activeTab, setActiveTab] = useState<Tab>("products");
+  const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      fetch("/api/auth/check")
-        .then((r) => r.json())
-        .then((data) => {
-          setIsAuthenticated(data.authenticated);
-          setCheckingAuth(false);
-        })
-        .catch(() => setCheckingAuth(false));
-    }
+    if (!isOpen) return;
+    fetch("/api/auth/check")
+      .then((r) => r.json())
+      .then((data) => {
+        setIsAuthenticated(data.authenticated);
+        setCheckingAuth(false);
+      })
+      .catch(() => setCheckingAuth(false));
+    // Logo y nombre para la pantalla de acceso y la barra lateral (dato público).
+    fetch("/api/store-settings", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: StoreSettings) => setStore({ storeName: d.storeName, logoUrl: d.logoUrl }))
+      .catch(() => {});
   }, [isOpen]);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setLoginError("");
+    setNotice("");
     setLoggingIn(true);
-
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -43,7 +68,6 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
         body: JSON.stringify({ password }),
       });
       const data = await res.json();
-
       if (!res.ok) {
         setLoginError(data.error || "Contraseña incorrecta");
       } else {
@@ -59,1022 +83,185 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setIsAuthenticated(false);
-    setActiveTab("products");
+    setActiveTab("dashboard");
+    setEditingProductId(null);
     onClose();
   };
 
-  const openProductEditor = (productId: string) => {
-    setEditingProductId(productId);
-    setActiveTab("edit-product");
-  };
+  // Una petición respondió 401: la sesión caducó, se vuelve al acceso.
+  const handleExpired = useCallback(() => {
+    setIsAuthenticated(false);
+    setNotice("Tu sesión expiró. Vuelve a ingresar para continuar.");
+  }, []);
 
-  const closeProductEditor = () => {
+  const openProduct = useCallback((id: string) => {
+    setEditingProductId(id);
+    setActiveTab("edit-product");
+  }, []);
+
+  const goTo = useCallback((tab: AdminTab) => {
     setEditingProductId(null);
-    setActiveTab("products");
-  };
+    setActiveTab(tab);
+  }, []);
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+  const authed = isAuthenticated && !checkingAuth;
 
-      <div className="relative ml-auto w-full max-w-2xl bg-white shadow-2xl flex flex-col h-full overflow-hidden animate-slide-in">
-        <div className="bg-gray-900 text-white p-4 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-sm font-bold">⚙️</span>
-            </div>
-            <span className="font-bold">Panel de Administración</span>
+  return (
+    <div className="fixed inset-0 z-[70] flex items-stretch justify-center md:items-center md:p-6" role="dialog" aria-modal="true" aria-label="Panel de administración">
+      <div className="modal-backdrop absolute inset-0 bg-slate-950/60 backdrop-blur-md" onClick={onClose} />
+
+      <div
+        className={`modal-panel relative flex w-full flex-col overflow-hidden bg-[#f3f6fc] shadow-2xl md:rounded-[1.75rem] ${
+          authed ? "md:h-[min(94dvh,900px)] md:max-w-6xl md:flex-row" : "md:max-w-md"
+        }`}
+      >
+        {checkingAuth ? (
+          <div className="grid h-full min-h-[24rem] flex-1 place-items-center">
+            <span className="h-9 w-9 animate-spin rounded-full border-4 border-slate-300 border-t-[color:var(--brand)]" />
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-gray-800 flex items-center justify-center transition">
-            ✕
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          {checkingAuth ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
-            </div>
-          ) : !isAuthenticated ? (
-            <LoginForm password={password} setPassword={setPassword} onSubmit={handleLogin} error={loginError} loading={loggingIn} />
-          ) : (
-            <div className="flex flex-col h-full">
-              {activeTab !== "edit-product" && (
-                <div className="flex border-b bg-gray-50 flex-shrink-0 overflow-x-auto">
-                  <button onClick={() => setActiveTab("products")} className={`flex-1 px-3 py-3 text-xs font-medium transition whitespace-nowrap ${activeTab === "products" ? "text-blue-600 border-b-2 border-blue-600 bg-white" : "text-gray-500 hover:text-gray-700"}`}>
-                    📦 Productos
-                  </button>
-                  <button onClick={() => setActiveTab("categories")} className={`flex-1 px-3 py-3 text-xs font-medium transition whitespace-nowrap ${activeTab === "categories" ? "text-blue-600 border-b-2 border-blue-600 bg-white" : "text-gray-500 hover:text-gray-700"}`}>
-                    🏷️ Categorías
-                  </button>
-                  <button onClick={() => setActiveTab("settings")} className={`flex-1 px-3 py-3 text-xs font-medium transition whitespace-nowrap ${activeTab === "settings" ? "text-blue-600 border-b-2 border-blue-600 bg-white" : "text-gray-500 hover:text-gray-700"}`}>
-                    🏪 Tienda
-                  </button>
-                  <button onClick={() => setActiveTab("security")} className={`flex-1 px-3 py-3 text-xs font-medium transition whitespace-nowrap ${activeTab === "security" ? "text-blue-600 border-b-2 border-blue-600 bg-white" : "text-gray-500 hover:text-gray-700"}`}>
-                    🔐 Seguridad
-                  </button>
-                </div>
-              )}
-
-              <div className="flex-1 overflow-y-auto">
-                {activeTab === "products" && <ProductsTab onEdit={openProductEditor} />}
-                {activeTab === "categories" && <CategoriesTab />}
-                {activeTab === "settings" && <SettingsTab />}
-                {activeTab === "security" && <SecurityTab />}
-                {activeTab === "edit-product" && editingProductId && <ProductEditor productId={editingProductId} onBack={closeProductEditor} />}
-              </div>
-
-              <div className="border-t p-3 bg-gray-50 flex-shrink-0">
-                <button onClick={handleLogout} className="w-full py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition font-medium">
-                  🚪 Cerrar Sesión
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <style jsx>{`
-        @keyframes slide-in {
-          from { transform: translateX(100%); }
-          to { transform: translateX(0); }
-        }
-        .animate-slide-in { animation: slide-in 0.3s ease-out; }
-      `}</style>
-    </div>
-  );
-}
-
-// ============ LOGIN FORM ============
-function LoginForm({ password, setPassword, onSubmit, error, loading }: { password: string; setPassword: (v: string) => void; onSubmit: (e: React.FormEvent) => void; error: string; loading: boolean }) {
-  return (
-    <div className="p-8 max-w-sm mx-auto">
-      <div className="text-center mb-6">
-        <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <span className="text-3xl">🔐</span>
-        </div>
-        <h2 className="text-xl font-bold text-gray-900">Acceso Administrador</h2>
-        <p className="text-gray-500 text-sm mt-1">Ingresa tu contraseña</p>
-      </div>
-
-      <form onSubmit={onSubmit} className="space-y-4">
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" autoFocus className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-        {error && <p className="text-red-500 text-sm bg-red-50 px-3 py-2 rounded-lg">⚠️ {error}</p>}
-        <button type="submit" disabled={loading || !password} className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition disabled:opacity-50">
-          {loading ? "Verificando..." : "Ingresar"}
-        </button>
-      </form>
-
-      <p className="text-center text-xs text-gray-400 mt-6">
-        Contraseña inicial: la configurada en tu servidor
-      </p>
-    </div>
-  );
-}
-
-// ============ SECURITY TAB (CHANGE PASSWORD) ============
-function SecurityTab() {
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage(null);
-
-    if (newPassword !== confirmPassword) {
-      setMessage({ type: "error", text: "Las contraseñas nuevas no coinciden" });
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      setMessage({ type: "error", text: "La contraseña debe tener al menos 8 caracteres" });
-      return;
-    }
-
-    setSaving(true);
-
-    try {
-      const res = await fetch("/api/auth/change-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setMessage({ type: "error", text: data.error || "Error al cambiar contraseña" });
-      } else {
-        setMessage({ type: "success", text: "¡Contraseña actualizada correctamente!" });
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
-      }
-    } catch {
-      setMessage({ type: "error", text: "Error de conexión" });
-    }
-
-    setSaving(false);
-  };
-
-  return (
-    <div className="p-4">
-      <div className="bg-gray-50 rounded-xl p-4 mb-4">
-        <div className="flex items-center gap-3 mb-2">
-          <span className="text-2xl">🔐</span>
-          <h3 className="font-semibold text-gray-900">Cambiar Contraseña</h3>
-        </div>
-        <p className="text-sm text-gray-500">
-          Cambia la contraseña de acceso al panel de administración. Asegúrate de usar una contraseña segura.
-        </p>
-      </div>
-
-      <form onSubmit={handleChangePassword} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña Actual</label>
-          <input
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            placeholder="Tu contraseña actual"
-            required
-            className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Nueva Contraseña</label>
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="Tu nueva contraseña"
-            required
-            minLength={4}
-            className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar Nueva Contraseña</label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Repite la nueva contraseña"
-            required
-            className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        {message && (
-          <div className={`px-4 py-3 rounded-xl text-sm font-medium ${message.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
-            {message.type === "success" ? "✓" : "⚠️"} {message.text}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={saving || !currentPassword || !newPassword || !confirmPassword}
-          className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition disabled:opacity-50"
-        >
-          {saving ? "Guardando..." : "🔒 Cambiar Contraseña"}
-        </button>
-      </form>
-
-      <div className="mt-6 bg-yellow-50 rounded-xl p-4">
-        <h4 className="font-medium text-yellow-800 text-sm mb-2">💡 Consejos de Seguridad</h4>
-        <ul className="text-xs text-yellow-700 space-y-1">
-          <li>• Usa al menos 8 caracteres</li>
-          <li>• Combina letras, números y símbolos</li>
-          <li>• No uses información personal</li>
-          <li>• No compartas tu contraseña</li>
-        </ul>
-      </div>
-    </div>
-  );
-}
-
-// ============ PRODUCTS TAB ============
-function ProductsTab({ onEdit }: { onEdit: (id: string) => void }) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [basePrice, setBasePrice] = useState("");
-
-  const fetchData = useCallback(async () => {
-    const [pRes, cRes] = await Promise.all([fetch("/api/products"), fetch("/api/categories")]);
-    setProducts(await pRes.json());
-    setCategories(await cRes.json());
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await fetch("/api/products", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, description, categoryId: categoryId || null, basePrice: basePrice || "0" }),
-    });
-    setName(""); setDescription(""); setCategoryId(""); setBasePrice("");
-    setShowForm(false);
-    fetchData();
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("¿Eliminar este producto?")) return;
-    await fetch(`/api/products/${id}`, { method: "DELETE" });
-    fetchData();
-  };
-
-  const toggleActive = async (product: Product) => {
-    await fetch(`/api/products/${product.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...product, active: !product.active }),
-    });
-    fetchData();
-  };
-
-  const moveProduct = async (index: number, direction: "up" | "down") => {
-    const swapIdx = direction === "up" ? index - 1 : index + 1;
-    if (swapIdx < 0 || swapIdx >= products.length) return;
-    const a = products[index];
-    const b = products[swapIdx];
-    await Promise.all([
-      fetch(`/api/products/${a.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...a, sortOrder: swapIdx }) }),
-      fetch(`/api/products/${b.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...b, sortOrder: index }) }),
-    ]);
-    fetchData();
-  };
-
-  if (loading) return <div className="p-6 text-center text-gray-400">Cargando...</div>;
-
-  return (
-    <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-900">Productos ({products.length})</h3>
-        <button onClick={() => setShowForm(!showForm)} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-          {showForm ? "Cancelar" : "+ Nuevo"}
-        </button>
-      </div>
-
-      {showForm && (
-        <form onSubmit={handleCreate} className="bg-gray-50 rounded-xl p-4 mb-4 space-y-3">
-          <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del producto *" className="w-full px-3 py-2 border rounded-lg text-sm" />
-          <div className="grid grid-cols-2 gap-3">
-            <input type="number" step="0.01" value={basePrice} onChange={(e) => setBasePrice(e.target.value)} placeholder="Precio" className="px-3 py-2 border rounded-lg text-sm" />
-            <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="px-3 py-2 border rounded-lg text-sm">
-              <option value="">Sin categoría</option>
-              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-          <button type="submit" className="w-full bg-green-600 text-white py-2 rounded-lg text-sm font-medium">Crear Producto</button>
-        </form>
-      )}
-
-      <div className="space-y-2">
-        {products.length === 0 ? (
-          <p className="text-center text-gray-400 py-8">No hay productos</p>
+        ) : !isAuthenticated ? (
+          <>
+            <button type="button" onClick={onClose} aria-label="Cerrar" className="btn btn-glass absolute right-4 top-4 z-20 h-10 w-10 rounded-full">
+              <CloseIcon className="h-5 w-5" />
+            </button>
+            <LoginView
+              storeName={store?.storeName ?? "Tu tienda"}
+              logoUrl={store?.logoUrl ?? null}
+              password={password}
+              setPassword={setPassword}
+              onSubmit={handleLogin}
+              error={loginError}
+              notice={notice}
+              loading={loggingIn}
+            />
+          </>
         ) : (
-          products.map((p, idx) => (
-            <div key={p.id} className="bg-white border rounded-xl p-3 flex items-center gap-2">
-              {/* Flechas de orden */}
-              <div className="flex flex-col gap-0.5 flex-shrink-0">
-                <button onClick={() => moveProduct(idx, "up")} disabled={idx === 0} className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-[10px] disabled:opacity-30">▲</button>
-                <button onClick={() => moveProduct(idx, "down")} disabled={idx === products.length - 1} className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-[10px] disabled:opacity-30">▼</button>
-              </div>
-              <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
-                {p.images[0] ? <img src={p.images[0].url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-300">📷</div>}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="font-medium text-sm truncate">{p.name}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${p.active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{p.active ? "Disponible" : "Agotado"}</span>
-                  {p.badge && <span className="text-[10px] px-1.5 py-0.5 rounded text-white font-bold" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>{p.badge}</span>}
-                </div>
-                <p className="text-xs text-gray-500">${parseFloat(p.basePrice).toFixed(2)}</p>
-              </div>
-              <div className="flex gap-1 flex-shrink-0">
-                <button onClick={() => toggleActive(p)} className="p-1.5 text-xs hover:bg-gray-100 rounded" title={p.active ? "Marcar agotado" : "Marcar disponible"}>{p.active ? "❌" : "✅"}</button>
-                <button onClick={() => onEdit(p.id)} className="p-1.5 text-xs hover:bg-blue-50 text-blue-600 rounded">✏️</button>
-                <button onClick={() => handleDelete(p.id)} className="p-1.5 text-xs hover:bg-red-50 text-red-600 rounded">🗑️</button>
-              </div>
-            </div>
-          ))
+          <AdminProvider onExpired={handleExpired}>
+            <Workspace
+              store={store}
+              activeTab={activeTab}
+              editingProductId={editingProductId}
+              goTo={goTo}
+              openProduct={openProduct}
+              onLogout={handleLogout}
+              onClose={onClose}
+            />
+          </AdminProvider>
         )}
       </div>
     </div>
   );
 }
 
-// ============ CATEGORIES TAB ============
-function CategoriesTab() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [name, setName] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  const fetchCategories = useCallback(async () => {
-    const res = await fetch("/api/categories");
-    setCategories(await res.json());
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { fetchCategories(); }, [fetchCategories]);
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-    await fetch("/api/categories", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
-    setName("");
-    fetchCategories();
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("¿Eliminar categoría?")) return;
-    await fetch(`/api/categories?id=${id}`, { method: "DELETE" });
-    fetchCategories();
-  };
-
-  if (loading) return <div className="p-6 text-center text-gray-400">Cargando...</div>;
-
-  return (
-    <div className="p-4">
-      <form onSubmit={handleCreate} className="flex gap-2 mb-4">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nueva categoría..." className="flex-1 px-3 py-2 border rounded-lg text-sm" />
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">+ Crear</button>
-      </form>
-
-      <div className="space-y-2">
-        {categories.length === 0 ? (
-          <p className="text-center text-gray-400 py-8">No hay categorías</p>
-        ) : (
-          categories.map((c) => (
-            <div key={c.id} className="bg-white border rounded-xl p-3 flex items-center justify-between">
-              <span className="font-medium text-sm">{c.name}</span>
-              <button onClick={() => handleDelete(c.id)} className="text-red-500 text-xs hover:bg-red-50 px-2 py-1 rounded">Eliminar</button>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ============ SETTINGS TAB ============
-function SettingsTab() {
-  const [settings, setSettings] = useState<StoreSettings | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-
-  const [storeName, setStoreName] = useState("");
-  const [storeDescription, setStoreDescription] = useState("");
-  const [logoUrl, setLogoUrl] = useState("");
-  const [coverUrl, setCoverUrl] = useState("");
-  const [facebook, setFacebook] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
-  const [instagram, setInstagram] = useState("");
-  const [tiktok, setTiktok] = useState("");
-  const [primaryColor, setPrimaryColor] = useState("#16a34a");
-  const [buttonText, setButtonText] = useState("Comprar");
-  const [currency, setCurrency] = useState("$");
-  const [footerText, setFooterText] = useState("");
-  const [footerLogoUrl, setFooterLogoUrl] = useState("");
-  const [footerName, setFooterName] = useState("");
-  const [footerColor, setFooterColor] = useState("#111827");
-  const [warrantyType, setWarrantyType] = useState("none");
-  const [warrantyText, setWarrantyText] = useState("");
-  const [warrantyImages, setWarrantyImages] = useState("");
-  const [announcementText, setAnnouncementText] = useState("");
-  const [announcementActive, setAnnouncementActive] = useState(false);
-  const [announcementColor, setAnnouncementColor] = useState("#16a34a");
-  const [announcementSpeed, setAnnouncementSpeed] = useState(40);
+function Workspace({
+  store,
+  activeTab,
+  editingProductId,
+  goTo,
+  openProduct,
+  onLogout,
+  onClose,
+}: {
+  store: StoreBrief | null;
+  activeTab: AdminTab;
+  editingProductId: string | null;
+  goTo: (tab: AdminTab) => void;
+  openProduct: (id: string) => void;
+  onLogout: () => void;
+  onClose: () => void;
+}) {
+  const mainRef = useRef<HTMLElement>(null);
+  const current = activeTab === "edit-product" ? "products" : activeTab;
 
   useEffect(() => {
-    fetch("/api/store-settings").then((r) => r.json()).then((data: StoreSettings) => {
-      setSettings(data);
-      setStoreName(data.storeName || "");
-      setStoreDescription(data.storeDescription || "");
-      setLogoUrl(data.logoUrl || "");
-      setCoverUrl(data.coverUrl || "");
-      setFacebook(data.facebook || "");
-      setWhatsapp(data.whatsapp || "");
-      setInstagram(data.instagram || "");
-      setTiktok(data.tiktok || "");
-      setPrimaryColor(data.primaryColor || "#16a34a");
-      setButtonText(data.buttonText || "Comprar");
-      setCurrency(data.currency || "$");
-      setFooterText(data.footerText || "");
-      setFooterLogoUrl(data.footerLogoUrl || "");
-      setFooterName(data.footerName || "");
-      setFooterColor(data.footerColor || "#111827");
-      setWarrantyType(data.warrantyType || "none");
-      setWarrantyText(data.warrantyText || "");
-      setWarrantyImages(data.warrantyImages || "");
-      setAnnouncementColor(data.announcementColor || "#16a34a");
-      setAnnouncementSpeed(data.announcementSpeed || 40);
-      setAnnouncementText(data.announcementText || "");
-      setAnnouncementActive(data.announcementActive ?? false);
-    });
-  }, []);
+    mainRef.current?.scrollTo({ top: 0 });
+  }, [activeTab, editingProductId]);
 
-  const handleSave = async () => {
-    setSaving(true); setSaved(false);
-    await fetch("/api/store-settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ storeName, storeDescription, logoUrl, coverUrl, facebook, whatsapp, instagram, tiktok, primaryColor, buttonText, currency, footerText, footerLogoUrl, footerName, footerColor, announcementText, announcementActive, announcementColor, announcementSpeed, warrantyType, warrantyText, warrantyImages }),
-    });
-    setSaving(false); setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  };
-
-  if (!settings) return <div className="p-6 text-center text-gray-400">Cargando...</div>;
-
-  return (
-    <div className="p-4 space-y-4">
-      {/* Store Info */}
-      <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-        <h4 className="font-semibold text-sm text-gray-700">🏪 Información de la Tienda</h4>
-        <input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="Nombre de la tienda" className="w-full px-3 py-2 border rounded-lg text-sm" />
-        <textarea value={storeDescription} onChange={(e) => setStoreDescription(e.target.value)} placeholder="Descripción / Eslogan" rows={2} className="w-full px-3 py-2 border rounded-lg text-sm resize-none" />
-      </div>
-
-      {/* Logo & Cover */}
-      <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-        <h4 className="font-semibold text-sm text-gray-700">🖼️ Logo y Portada</h4>
-        <p className="text-xs text-gray-500">Sube a imgbb.com y pega el enlace</p>
-        <div className="space-y-2">
-          <div className="flex gap-2 items-center">
-            {logoUrl && <img src={logoUrl} alt="" className="w-10 h-10 rounded object-contain bg-white border" />}
-            <input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="URL del logo" className="flex-1 px-3 py-2 border rounded-lg text-sm font-mono" />
-          </div>
-          <div className="flex gap-2 items-center">
-            {coverUrl && <img src={coverUrl} alt="" className="w-10 h-10 rounded object-cover bg-white border" />}
-            <input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="URL de la portada / banner" className="flex-1 px-3 py-2 border rounded-lg text-sm font-mono" />
-          </div>
-        </div>
-      </div>
-
-      {/* Announcement Banner */}
-      <div className="bg-yellow-50 rounded-xl p-4 space-y-3 border border-yellow-200">
-        <h4 className="font-semibold text-sm text-yellow-800">📢 Anuncio / Promoción</h4>
-        <p className="text-xs text-yellow-600">Banner animado que se desliza arriba del catálogo</p>
-        <input value={announcementText} onChange={(e) => setAnnouncementText(e.target.value)} placeholder="Ej: ¡Envío gratis en compras mayores a $100.000!" className="w-full px-3 py-2 border border-yellow-300 rounded-lg text-sm" />
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-yellow-800 mb-1">Color del banner</label>
-            <div className="flex items-center gap-2">
-              <input type="color" value={announcementColor} onChange={(e) => setAnnouncementColor(e.target.value)} className="w-10 h-10 rounded-lg border cursor-pointer" />
-              <input value={announcementColor} onChange={(e) => setAnnouncementColor(e.target.value)} className="flex-1 px-2 py-1.5 border rounded text-xs font-mono" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-yellow-800 mb-1">Velocidad ({announcementSpeed}s)</label>
-            <input type="range" min="10" max="80" value={announcementSpeed} onChange={(e) => setAnnouncementSpeed(parseInt(e.target.value))} className="w-full mt-2" />
-            <div className="flex justify-between text-[10px] text-yellow-700"><span>Rápido</span><span>Lento</span></div>
-          </div>
-        </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={announcementActive} onChange={(e) => setAnnouncementActive(e.target.checked)} className="rounded" />
-          Mostrar anuncio en el catálogo
-        </label>
-        {announcementActive && announcementText && (
-          <div style={{ backgroundColor: announcementColor }} className="rounded-lg overflow-hidden py-2">
-            <div className="whitespace-nowrap inline-flex" style={{ animation: `marquee-preview ${announcementSpeed}s linear infinite` }}>
-              {[0,1].map((h) => (
-                <span key={h} className="inline-flex">
-                  {[0,1,2].map((i) => (
-                    <span key={i} className="mx-6 text-xs font-bold tracking-wide uppercase text-white" style={{ fontFamily: "'Courier New', monospace" }}>★ {announcementText} ★</span>
-                  ))}
-                </span>
-              ))}
-            </div>
-            <style>{`@keyframes marquee-preview { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}</style>
-          </div>
-        )}
-      </div>
-
-      {/* Appearance */}
-      <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-        <h4 className="font-semibold text-sm text-gray-700">🎨 Apariencia del Catálogo</h4>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Color de botones</label>
-            <div className="flex items-center gap-2">
-              <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-10 h-10 rounded-lg border cursor-pointer" />
-              <input value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="flex-1 px-2 py-1.5 border rounded text-xs font-mono" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Moneda</label>
-            <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm">
-              <option value="$">$ (Peso / Dólar)</option>
-              <option value="€">€ (Euro)</option>
-              <option value="S/.">S/. (Sol)</option>
-              <option value="Q">Q (Quetzal)</option>
-              <option value="L">L (Lempira)</option>
-              <option value="C$">C$ (Córdoba)</option>
-              <option value="₡">₡ (Colón)</option>
-              <option value="Bs">Bs (Bolívar)</option>
-              <option value="RD$">RD$ (Peso Dom.)</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Texto del botón de compra</label>
-          <input value={buttonText} onChange={(e) => setButtonText(e.target.value)} placeholder="Ej: Comprar, Pedir, Agregar..." className="w-full px-3 py-2 border rounded-lg text-sm" />
-          <div className="mt-2 flex items-center gap-2">
-            <span className="text-xs text-gray-500">Vista previa:</span>
-            <span style={{ backgroundColor: primaryColor }} className="text-white text-xs px-4 py-1.5 rounded-lg font-medium">🛒 {buttonText || "Comprar"}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* WhatsApp for Orders */}
-      <div className="bg-green-50 rounded-xl p-4 space-y-3 border border-green-200">
-        <h4 className="font-semibold text-sm text-green-800">📱 WhatsApp para Pedidos</h4>
-        <p className="text-xs text-green-600">Pega aquí el enlace de tu WhatsApp</p>
-        <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="https://wa.me/573001234567" className="w-full px-3 py-2 border border-green-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 font-mono" />
-        <p className="text-xs text-green-600">💡 Abre WhatsApp → tu perfil → copia el enlace y pégalo aquí</p>
-      </div>
-
-      {/* Social Media */}
-      <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-        <h4 className="font-semibold text-sm text-gray-700">🌐 Redes Sociales</h4>
-        <input value={facebook} onChange={(e) => setFacebook(e.target.value)} placeholder="Facebook URL" className="w-full px-3 py-2 border rounded-lg text-sm" />
-        <input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="Instagram URL" className="w-full px-3 py-2 border rounded-lg text-sm" />
-        <input value={tiktok} onChange={(e) => setTiktok(e.target.value)} placeholder="TikTok URL" className="w-full px-3 py-2 border rounded-lg text-sm" />
-      </div>
-
-      {/* Políticas de Garantía */}
-      <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-        <h4 className="font-semibold text-sm text-gray-700">📋 Políticas de Garantía</h4>
-        <p className="text-xs text-gray-500">Elige cómo mostrar tus políticas en el catálogo</p>
-        <div className="flex gap-2">
-          {([["none","Sin políticas"],["text","Texto"],["images","Imágenes"]] as const).map(([val, label]) => (
-            <button key={val} type="button" onClick={() => setWarrantyType(val)} className={`flex-1 py-2 rounded-lg text-xs font-medium transition ${warrantyType === val ? "bg-blue-600 text-white" : "bg-white border text-gray-600 hover:bg-gray-100"}`}>{label}</button>
-          ))}
-        </div>
-        {warrantyType === "text" && (
-          <div>
-            <textarea value={warrantyText} onChange={(e) => setWarrantyText(e.target.value)} placeholder={"Escribe aquí tus políticas de garantía...\n\nPuedes usar **texto en negrita** con doble asterisco"} rows={6} className="w-full px-3 py-2 border rounded-lg text-sm resize-none" />
-            <p className="text-[10px] text-gray-400 mt-1">💡 Usa **texto** para poner en negrita</p>
-          </div>
-        )}
-        {warrantyType === "images" && (
-          <div>
-            <textarea value={warrantyImages} onChange={(e) => setWarrantyImages(e.target.value)} placeholder={"Pega los enlaces de las imágenes de tus políticas, uno por línea:\n\nhttps://i.ibb.co/xxxx/politica1.jpg\nhttps://i.ibb.co/yyyy/politica2.jpg"} rows={4} className="w-full px-3 py-2 border rounded-lg text-sm font-mono resize-none" />
-            <p className="text-[10px] text-gray-400 mt-1">💡 Sube tus imágenes a imgbb.com y pega los enlaces aquí, uno por línea</p>
-            {warrantyImages && (
-              <div className="mt-2 space-y-2">
-                {warrantyImages.split("\n").filter((u) => u.trim()).map((url, i) => (
-                  <img key={i} src={url.trim()} alt="" className="w-full rounded-lg border" />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-        <h4 className="font-semibold text-sm text-gray-700">🦶 Pie de Página</h4>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Logo (opcional — si no se pone, no aparece)</label>
-          <div className="flex gap-2 items-center">
-            {footerLogoUrl && <img src={footerLogoUrl} alt="" className="w-10 h-10 rounded object-contain bg-white border" />}
-            <input value={footerLogoUrl} onChange={(e) => setFooterLogoUrl(e.target.value)} placeholder="Dejar vacío para no mostrar logo" className="flex-1 px-3 py-2 border rounded-lg text-sm font-mono" />
-          </div>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Título sobre las redes sociales (ej: Síguenos)</label>
-          <input value={footerName} onChange={(e) => setFooterName(e.target.value)} placeholder="Ej: Síguenos" className="w-full px-3 py-2 border rounded-lg text-sm" />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Texto central (ej: Calidad y Cumplimiento)</label>
-          <input value={footerText} onChange={(e) => setFooterText(e.target.value)} placeholder="Ej: Calidad y Cumplimiento" className="w-full px-3 py-2 border rounded-lg text-sm" />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Color de fondo</label>
-          <div className="flex items-center gap-2">
-            <input type="color" value={footerColor} onChange={(e) => setFooterColor(e.target.value)} className="w-10 h-10 rounded-lg border cursor-pointer" />
-            <input value={footerColor} onChange={(e) => setFooterColor(e.target.value)} className="flex-1 px-2 py-1.5 border rounded text-xs font-mono" />
-          </div>
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {["#111827","#1e293b","#0f172a","#18181b","#1a1a2e","#16213e","#0d1b2a","#2d1b69","#1b4332","#7f1d1d","#78350f","#365314"].map((c) => (
-              <button key={c} onClick={() => setFooterColor(c)} className={`w-7 h-7 rounded-lg border-2 transition ${footerColor === c ? "border-blue-500 scale-110" : "border-transparent"}`} style={{ backgroundColor: c }} />
-            ))}
-          </div>
-        </div>
-        {/* Vista previa */}
-        <div style={{ backgroundColor: footerColor }} className="rounded-lg p-3 text-white text-center space-y-1.5">
-          <p className="text-[10px] text-white/50 uppercase">Vista previa</p>
-          {footerLogoUrl && <img src={footerLogoUrl} alt="" className="w-10 h-10 mx-auto object-contain" />}
-          {footerName && <p className="font-bold text-sm">{footerName}</p>}
-          <p className="text-white/50 text-xs">🔵 🟢 🟣 (redes sociales)</p>
-          {footerText && <p className="text-white/60 text-xs">{footerText}</p>}
-          <p className="text-white/30 text-[10px]">© 2026 {storeName}</p>
-        </div>
-      </div>
-
-      <button onClick={handleSave} disabled={saving} className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition disabled:opacity-50">
-        {saving ? "Guardando..." : saved ? "✓ Guardado — cambios visibles en el catálogo" : "💾 Guardar Todo"}
-      </button>
-    </div>
+  const logo = store?.logoUrl ? (
+    <Photo src={store.logoUrl} sizes="48px" widths={THUMB_WIDTHS} alt="" draggable={false} />
+  ) : (
+    <span className="grid h-full w-full place-items-center bg-brand text-lg font-extrabold text-white">{(store?.storeName ?? "T").charAt(0).toUpperCase()}</span>
   );
-}
-
-// ============ PRODUCT EDITOR ============
-function ProductEditor({ productId, onBack }: { productId: string; onBack: () => void }) {
-  const [product, setProduct] = useState<Product | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [saving, setSaving] = useState(false);
-
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [basePrice, setBasePrice] = useState("");
-  const [comparePrice, setComparePrice] = useState("");
-  const [badge, setBadge] = useState("");
-  const [badgeColor, setBadgeColor] = useState("#f59e0b");
-  const [active, setActive] = useState(true);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [newImageUrl, setNewImageUrl] = useState("");
-
-  // stock se maneja solo por variantes
-  const [varColor, setVarColor] = useState("");
-  const [varSize, setVarSize] = useState("");
-  const [varPrice, setVarPrice] = useState("");
-  const [varStock, setVarStock] = useState("0");
-
-  const fetchProduct = useCallback(async () => {
-    const [pRes, cRes] = await Promise.all([fetch(`/api/products/${productId}`), fetch("/api/categories")]);
-    const p: Product = await pRes.json();
-    setProduct(p);
-    setCategories(await cRes.json());
-    setName(p.name);
-    setDescription(p.description || "");
-    setCategoryId(p.categoryId || "");
-    setBasePrice(p.basePrice);
-    setComparePrice(p.comparePrice || "");
-    setBadge(p.badge || "");
-    setBadgeColor(p.badgeColor || "#f59e0b");
-    setActive(p.active);
-
-    setImageUrls(p.images.sort((a, b) => a.sortOrder - b.sortOrder).map((img) => img.url));
-  }, [productId]);
-
-  useEffect(() => { fetchProduct(); }, [fetchProduct]);
-
-  const [infoSaved, setInfoSaved] = useState(false);
-  const [imagesSaved, setImagesSaved] = useState(false);
-
-  const handleSaveInfo = async () => {
-    setSaving(true);
-    await fetch(`/api/products/${productId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, description, categoryId: categoryId || null, basePrice, comparePrice: comparePrice || null, badge: badge || null, badgeColor, active }),
-    });
-    setSaving(false);
-    setInfoSaved(true);
-    setTimeout(() => setInfoSaved(false), 2500);
-    fetchProduct();
-  };
-
-  const handleSaveImages = async () => {
-    const urls = imageUrls.filter((u) => u.trim() !== "");
-    await fetch(`/api/products/${productId}/images`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ urls }) });
-    setImagesSaved(true);
-    setTimeout(() => setImagesSaved(false), 2500);
-    fetchProduct();
-  };
-
-  const addImage = () => {
-    if (!newImageUrl.trim() || imageUrls.length >= 10) return;
-    // Smart detection: extract all image URLs from pasted text
-    const text = newImageUrl.trim();
-    const urlRegex = /https?:\/\/[^\s,;"""''<>]+\.(?:jpg|jpeg|png|gif|webp|bmp|svg)(?:\?[^\s,;"""''<>]*)?/gi;
-    const ibbRegex = /https?:\/\/i\.ibb\.co\/[^\s,;"""''<>]+/gi;
-    const found = new Set<string>();
-    // Match standard image URLs
-    const imgMatches = text.match(urlRegex);
-    if (imgMatches) imgMatches.forEach((u) => found.add(u));
-    // Match ibb.co URLs (even without extension)
-    const ibbMatches = text.match(ibbRegex);
-    if (ibbMatches) ibbMatches.forEach((u) => found.add(u));
-    // If no pattern matched, treat the whole thing as lines of URLs
-    if (found.size === 0) {
-      const lines = text.split(/[\n\r]+/).map((l) => l.trim()).filter((l) => l.startsWith("http"));
-      lines.forEach((l) => found.add(l));
-    }
-    if (found.size > 0) {
-      const newUrls = Array.from(found);
-      setImageUrls((prev) => {
-        const combined = [...prev, ...newUrls];
-        return combined.slice(0, 10);
-      });
-    } else {
-      // Single URL fallback
-      setImageUrls((prev) => [...prev, text]);
-    }
-    setNewImageUrl("");
-  };
-
-  const removeImage = (i: number) => {
-    setImageUrls((prev) => prev.filter((_, idx) => idx !== i));
-  };
-
-  const moveImage = (from: number, to: number) => {
-    if (to < 0 || to >= imageUrls.length) return;
-    setImageUrls((prev) => {
-      const arr = [...prev];
-      const item = arr.splice(from, 1)[0];
-      arr.splice(to, 0, item);
-      return arr;
-    });
-  };
-
-  const handleAddVariant = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await fetch(`/api/products/${productId}/variants`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ color: varColor, size: varSize, price: varPrice || "0", stock: parseInt(varStock) || 0 }),
-    });
-    setVarColor(""); setVarSize(""); setVarPrice(""); setVarStock("0");
-    fetchProduct();
-  };
-
-  const handleDeleteVariant = async (vId: string) => {
-    await fetch(`/api/products/${productId}/variants?variantId=${vId}`, { method: "DELETE" });
-    fetchProduct();
-  };
-
-  if (!product) return <div className="p-6 text-center text-gray-400">Cargando...</div>;
-
-  // Discount calculation for preview
-  const discountPercent = comparePrice && parseFloat(comparePrice) > 0 && parseFloat(basePrice) < parseFloat(comparePrice)
-    ? Math.round(((parseFloat(comparePrice) - parseFloat(basePrice)) / parseFloat(comparePrice)) * 100)
-    : 0;
 
   return (
-    <div className="p-4 space-y-4">
-      <button onClick={onBack} className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">← Volver a productos</button>
-
-      {/* Info */}
-      <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-        <h4 className="font-semibold text-sm text-gray-700">📝 Información</h4>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del producto" className="w-full px-3 py-2 border rounded-lg text-sm" />
-        <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm">
-          <option value="">Sin categoría</option>
-          {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción del producto" rows={3} className="w-full px-3 py-2 border rounded-lg text-sm resize-none" />
-        <p className="text-[10px] text-gray-400">💡 Para poner texto en <strong>negrita</strong>, escribe **texto aquí** con doble asterisco</p>
-        <label className="flex items-center gap-2 text-sm cursor-pointer">
-          <input type="checkbox" checked={!active} onChange={(e) => setActive(!e.target.checked)} className="rounded accent-red-500" />
-          <span className={active ? "text-gray-600" : "text-red-600 font-bold"}>❌ Marcar como AGOTADO</span>
-        </label>
-        {/* Badge */}
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">🏷️ Etiqueta (opcional)</label>
-          <div className="flex gap-2">
-            <input value={badge} onChange={(e) => setBadge(e.target.value)} placeholder="Ej: Nuevo, Oferta, Hot" className="flex-1 px-3 py-2 border rounded-lg text-sm" />
-            {badge && <button type="button" onClick={() => setBadge("")} className="text-xs text-red-500 hover:bg-red-50 px-2 rounded">Quitar</button>}
-          </div>
-          <div className="flex gap-1.5 mt-1.5">
-            {["Nuevo", "Oferta", "Hot 🔥", "Último"].map((b) => (
-              <button key={b} type="button" onClick={() => setBadge(b)} className={`text-[10px] px-2 py-1 rounded-full font-bold text-white ${badge === b ? "ring-2 ring-blue-400" : ""}`} style={{ backgroundColor: badgeColor }}>{b}</button>
-            ))}
-          </div>
-          {badge && (
-            <div className="mt-2">
-              <label className="block text-[10px] font-medium text-gray-500 mb-1">Color de la etiqueta</label>
-              <div className="flex items-center gap-2">
-                <input type="color" value={badgeColor} onChange={(e) => setBadgeColor(e.target.value)} className="w-8 h-8 rounded border cursor-pointer" />
-                <div className="flex gap-1">
-                  {["#f59e0b","#ef4444","#10b981","#3b82f6","#8b5cf6","#ec4899","#000000"].map((c) => (
-                    <button key={c} type="button" onClick={() => setBadgeColor(c)} className={`w-6 h-6 rounded-full border-2 ${badgeColor === c ? "border-blue-500 scale-110" : "border-transparent"}`} style={{ backgroundColor: c }} />
-                  ))}
-                </div>
-              </div>
-              <div className="mt-1.5 flex items-center gap-2">
-                <span className="text-[10px] text-gray-400">Vista previa:</span>
-                <span className="text-xs font-extrabold text-white px-2.5 py-1 rounded-lg shadow" style={{ backgroundColor: badgeColor }}>{badge}</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Pricing */}
-      <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-        <h4 className="font-semibold text-sm text-gray-700">💰 Precios</h4>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Precio de venta *</label>
-            <input type="number" step="0.01" value={basePrice} onChange={(e) => setBasePrice(e.target.value)} placeholder="0.00" className="w-full px-3 py-2 border rounded-lg text-sm" />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Precio antes (opcional)</label>
-            <input type="number" step="0.01" value={comparePrice} onChange={(e) => setComparePrice(e.target.value)} placeholder="Precio normal" className="w-full px-3 py-2 border rounded-lg text-sm" />
+    <>
+      {/* ───── Barra lateral (escritorio) ───── */}
+      <aside className="admin-side hidden w-64 shrink-0 flex-col p-4 text-white md:flex">
+        <div className="relative mb-7 flex items-center gap-3 px-1 pt-1">
+          <span className="logo-chip h-12 w-12 shrink-0">{logo}</span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-extrabold leading-tight">{store?.storeName ?? "Mi tienda"}</p>
+            <p className="text-[11px] font-semibold text-white/60">Panel de administración</p>
           </div>
         </div>
-        {discountPercent > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-3">
-            <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">-{discountPercent}%</span>
-            <div className="text-xs">
-              <span className="text-gray-400 line-through">${parseFloat(comparePrice).toFixed(2)}</span>
-              <span className="font-bold text-red-600 ml-2">${parseFloat(basePrice).toFixed(2)}</span>
-            </div>
-            <span className="text-xs text-gray-500 ml-auto">Así se verá en el catálogo</span>
-          </div>
-        )}
-        <p className="text-xs text-gray-400">Si pones un precio antes mayor al precio de venta, se mostrará el descuento automáticamente</p>
-      </div>
 
-      {/* Stock se maneja por variantes */}
+        <nav className="relative space-y-1.5" aria-label="Secciones">
+          {NAV.map(({ key, label, Icon }) => (
+            <button key={key} type="button" onClick={() => goTo(key)} aria-current={current === key ? "page" : undefined} className="admin-nav">
+              <Icon className="h-5 w-5 shrink-0" /> {label}
+            </button>
+          ))}
+        </nav>
 
-      {/* Save Info */}
-      <button onClick={handleSaveInfo} disabled={saving} className={`w-full text-white py-2.5 rounded-lg text-sm font-medium transition-all ${infoSaved ? "bg-green-500 animate-save-success" : "bg-blue-600 hover:bg-blue-700"}`}>
-        {saving ? "⏳ Guardando..." : infoSaved ? "✅ ¡Guardado correctamente!" : "💾 Guardar Información y Precios"}
-      </button>
-
-      {/* Images */}
-      <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-        <h4 className="font-semibold text-sm text-gray-700">🖼️ Imágenes ({imageUrls.length}/10)</h4>
-        {/* Smart image input */}
-        {imageUrls.length < 10 && (
-          <div className="space-y-2">
-            <textarea
-              value={newImageUrl}
-              onChange={(e) => setNewImageUrl(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addImage(); } }}
-              placeholder={"Pega uno o varios enlaces de imágenes aquí...\n\nEjemplo:\nhttps://i.ibb.co/xxxx/foto1.jpg\nhttps://i.ibb.co/yyyy/foto2.png"}
-              rows={3}
-              className="w-full px-3 py-2 border rounded-lg text-sm font-mono resize-none focus:ring-2 focus:ring-blue-500"
-            />
-            <div className="flex gap-2">
-              <button onClick={addImage} disabled={!newImageUrl.trim()} className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-1.5">
-                🔍 Detectar y Agregar
-              </button>
-            </div>
-            <p className="text-[10px] text-blue-600 bg-blue-50 px-2 py-1.5 rounded-lg">💡 Pega varios enlaces de imgbb a la vez — se detectan automáticamente</p>
-          </div>
-        )}
-        {/* Image grid with previews */}
-        {imageUrls.length > 0 && (
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-            {imageUrls.map((url, i) => (
-              <div key={i} className="relative group">
-                <div className="aspect-square rounded-lg overflow-hidden bg-white border">
-                  <img src={url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = ""; (e.target as HTMLImageElement).alt = "❌"; }} />
-                </div>
-                <button onClick={() => removeImage(i)} className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition shadow-lg font-bold">✕</button>
-                <span className="absolute bottom-0.5 left-0.5 bg-black/50 text-white text-[9px] px-1 rounded">{i + 1}</span>
-                {/* Flechas para reordenar */}
-                <div className="absolute bottom-0.5 right-0.5 flex gap-0.5">
-                  {i > 0 && <button onClick={() => moveImage(i, i - 1)} className="w-5 h-5 bg-black/60 text-white rounded text-[10px] flex items-center justify-center hover:bg-black/80">←</button>}
-                  {i < imageUrls.length - 1 && <button onClick={() => moveImage(i, i + 1)} className="w-5 h-5 bg-black/60 text-white rounded text-[10px] flex items-center justify-center hover:bg-black/80">→</button>}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        {imageUrls.length > 0 && (
-          <button onClick={handleSaveImages} className={`w-full text-white py-2 rounded-lg text-sm font-medium transition-all ${imagesSaved ? "bg-green-500 animate-save-success" : "bg-green-600 hover:bg-green-700"}`}>
-            {imagesSaved ? "✅ ¡Imágenes guardadas!" : "💾 Guardar Imágenes"}
+        <div className="relative mt-auto space-y-2">
+          <a href="/" target="_blank" rel="noopener noreferrer" className="btn btn-glass w-full rounded-xl py-2.5 text-sm font-bold">
+            <ExternalIcon className="h-4 w-4" /> Ver catálogo
+          </a>
+          <button type="button" onClick={onLogout} className="btn btn-glass w-full rounded-xl py-2.5 text-sm font-bold">
+            <LogOutIcon className="h-4 w-4" /> Cerrar sesión
           </button>
-        )}
-        <p className="text-[10px] text-gray-400">Acepta JPG, PNG, WebP, GIF — enlaces de imgbb.com o cualquier imagen</p>
-      </div>
+        </div>
+      </aside>
 
-      {/* Variants */}
-      <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-        <h4 className="font-semibold text-sm text-gray-700">🎨 Variantes y Stock</h4>
-        {product.variants.map((v) => (
-          <div key={v.id} className="bg-white rounded-lg px-3 py-2.5 text-xs space-y-1.5">
-            <div className="flex items-center justify-between">
-              <div className="flex gap-1 flex-wrap items-center">
-                {v.color && <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{v.color}</span>}
-                {v.size && <span className="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">{v.size}</span>}
-                {parseFloat(v.price) > 0 ? <span className="font-medium text-green-700">${parseFloat(v.price).toFixed(2)}</span> : <span className="text-gray-400 text-[10px]">Precio del producto</span>}
-              </div>
-              <button onClick={() => handleDeleteVariant(v.id)} className="text-red-500 hover:bg-red-50 px-1.5 py-0.5 rounded">✕</button>
-            </div>
-            {/* Stock editable */}
-            <div className="flex items-center gap-2">
-              <span className={`text-xs font-medium ${v.stock <= 0 ? "text-red-500" : "text-green-600"}`}>
-                📦 Stock: {v.stock} {v.stock <= 0 ? "(Agotado)" : ""}
-              </span>
-              <div className="flex items-center gap-1 ml-auto">
-                <button
-                  onClick={async () => {
-                    await fetch(`/api/products/${productId}/variants/stock`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ variantId: v.id, setStock: Math.max(0, v.stock - 1) }),
-                    });
-                    fetchProduct();
-                  }}
-                  className="w-7 h-7 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 flex items-center justify-center font-bold text-sm"
-                >−</button>
-                <input
-                  type="number"
-                  min="0"
-                  value={v.stock}
-                  onChange={async (e) => {
-                    const val = parseInt(e.target.value) || 0;
-                    await fetch(`/api/products/${productId}/variants/stock`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ variantId: v.id, setStock: val }),
-                    });
-                    fetchProduct();
-                  }}
-                  className="w-14 text-center border rounded-lg py-1 text-sm font-bold"
-                />
-                <button
-                  onClick={async () => {
-                    await fetch(`/api/products/${productId}/variants/stock`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ variantId: v.id, setStock: v.stock + 1 }),
-                    });
-                    fetchProduct();
-                  }}
-                  className="w-7 h-7 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center font-bold text-sm"
-                >+</button>
-              </div>
-            </div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        {/* Barra superior móvil */}
+        <header className="flex shrink-0 items-center gap-3 border-b border-slate-200/70 bg-white/80 px-4 py-3 backdrop-blur-xl md:hidden">
+          <span className="logo-chip h-9 w-9 shrink-0">{logo}</span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-extrabold leading-tight text-slate-900">{store?.storeName ?? "Mi tienda"}</p>
+            <p className="text-[11px] font-semibold text-slate-500">Panel de administración</p>
           </div>
-        ))}
-        <form onSubmit={handleAddVariant} className="space-y-2">
-          <div className="grid grid-cols-3 gap-2">
-            <input value={varColor} onChange={(e) => setVarColor(e.target.value)} placeholder="Color" className="px-2 py-1.5 border rounded text-sm" />
-            <input value={varSize} onChange={(e) => setVarSize(e.target.value)} placeholder="Talla" className="px-2 py-1.5 border rounded text-sm" />
-            <input type="number" value={varStock} onChange={(e) => setVarStock(e.target.value)} placeholder="Stock" className="px-2 py-1.5 border rounded text-sm" />
-          </div>
-          <details className="text-xs">
-            <summary className="text-gray-400 cursor-pointer hover:text-gray-600">💲 Precio diferente (opcional)</summary>
-            <input type="number" step="0.01" value={varPrice} onChange={(e) => setVarPrice(e.target.value)} placeholder="Dejar en 0 = usa precio del producto" className="w-full px-2 py-1.5 border rounded text-sm mt-1" />
-          </details>
-        </form>
-        <button onClick={handleAddVariant} className="w-full bg-gray-800 text-white py-2 rounded-lg text-sm font-medium">+ Agregar Variante</button>
+          <button type="button" onClick={onLogout} aria-label="Cerrar sesión" className="btn btn-ghost h-10 w-10 rounded-xl">
+            <LogOutIcon className="h-[18px] w-[18px]" />
+          </button>
+          <button type="button" onClick={onClose} aria-label="Cerrar panel" className="btn btn-ghost h-10 w-10 rounded-xl">
+            <CloseIcon className="h-5 w-5" />
+          </button>
+        </header>
+
+        {/* Barra superior escritorio */}
+        <header className="hidden shrink-0 items-center justify-end border-b border-slate-200/70 bg-white/60 px-6 py-3 backdrop-blur-xl md:flex">
+          <button type="button" onClick={onClose} className="btn btn-ghost rounded-xl px-4 py-2 text-sm font-bold">
+            <CloseIcon className="h-4 w-4" /> Cerrar panel
+          </button>
+        </header>
+
+        <main ref={mainRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          {activeTab === "dashboard" && <DashboardTab goTo={goTo} openProduct={openProduct} />}
+          {activeTab === "products" && <ProductsTab onEdit={openProduct} />}
+          {activeTab === "categories" && <CategoriesTab />}
+          {activeTab === "settings" && <SettingsTab />}
+          {activeTab === "security" && <SecurityTab />}
+          {activeTab === "edit-product" && editingProductId && <ProductEditor key={editingProductId} productId={editingProductId} onBack={() => goTo("products")} />}
+        </main>
+
+        {/* Navegación inferior (móvil) */}
+        <nav className="grid shrink-0 grid-cols-5 border-t border-slate-200/70 bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden" aria-label="Secciones">
+          {NAV.map(({ key, label, Icon }) => {
+            const active = current === key;
+            return (
+              <button key={key} type="button" onClick={() => goTo(key)} aria-current={active ? "page" : undefined} className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-bold transition ${active ? "text-brand" : "text-slate-400"}`}>
+                <span className={`grid h-7 w-12 place-items-center rounded-full transition-colors duration-300 ${active ? "bg-brand-soft" : ""}`}>
+                  <Icon className="h-5 w-5" />
+                </span>
+                {label}
+              </button>
+            );
+          })}
+        </nav>
       </div>
-    </div>
+    </>
   );
 }

@@ -4,6 +4,7 @@
 import { db } from "@/db";
 import * as schema from "@/db/schema";
 import { eq, and, or, ilike, desc } from "drizzle-orm";
+import { compareVariants } from "@/lib/variants";
 
 // ===================== STORE SETTINGS =====================
 
@@ -72,7 +73,8 @@ export async function deleteCategory(id: string) {
 async function enrichProduct(id: string, data: Record<string, unknown>) {
   const images = await db.select().from(schema.productImages).where(eq(schema.productImages.productId, id)).orderBy(schema.productImages.sortOrder);
   const features = await db.select().from(schema.productFeatures).where(eq(schema.productFeatures.productId, id));
-  const variants = await db.select().from(schema.productVariants).where(eq(schema.productVariants.productId, id));
+  // Orden fijo: sin él, editar el stock de una variante la mandaba al final de la lista.
+  const variants = (await db.select().from(schema.productVariants).where(eq(schema.productVariants.productId, id))).sort(compareVariants);
   return { id, ...data, images, features, variants };
 }
 

@@ -102,7 +102,7 @@ function ProductCardBase({ product, index, currency, buttonText, onOpen, onAdd }
 
         <span className="absolute left-2 top-2 flex flex-col items-start gap-1.5">
           {discount && !inactive && (
-            <span className="rounded-lg bg-rose-500 px-2 py-1 text-xs font-extrabold text-white shadow-lg shadow-rose-500/30 sm:text-sm">
+            <span className="rounded-lg bg-[color:var(--c-red)] px-2 py-1 text-xs font-extrabold text-white shadow-lg shadow-black/20 sm:text-sm">
               -{discount.pct}%
             </span>
           )}

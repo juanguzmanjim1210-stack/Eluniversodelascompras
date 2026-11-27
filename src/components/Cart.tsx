@@ -140,7 +140,7 @@ export default function Cart({
         <header className="cart-head shrink-0 px-5 pb-5 pt-5 text-white">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/20 ring-1 ring-white/30">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/20 ring-1 ring-white/30 backdrop-blur">
                 <CartIcon className="h-5 w-5" />
               </span>
               <div className="min-w-0">
@@ -150,7 +150,7 @@ export default function Cart({
                 </p>
               </div>
             </div>
-            <button type="button" onClick={onClose} aria-label="Cerrar carrito" className="btn h-10 w-10 shrink-0 rounded-full bg-white/15 text-white hover:bg-white/25">
+            <button type="button" onClick={onClose} aria-label="Cerrar carrito" className="btn btn-glass h-10 w-10 shrink-0 rounded-full">
               <CloseIcon className="h-5 w-5" />
             </button>
           </div>
@@ -261,11 +261,11 @@ export default function Cart({
                       )}
                       <div className="mt-auto flex items-center gap-2 pt-2">
                         <div className="inline-flex items-center rounded-xl bg-slate-100 p-1">
-                          <button type="button" aria-label="Quitar una unidad" onClick={() => onUpdateQuantity(index, Math.max(1, item.quantity - 1))} className="btn h-7 w-7 rounded-lg bg-white text-slate-700 shadow-sm">
+                          <button type="button" aria-label="Quitar una unidad" onClick={() => onUpdateQuantity(index, Math.max(1, item.quantity - 1))} className="btn btn-ghost h-7 w-7 rounded-lg">
                             <MinusIcon className="h-3.5 w-3.5" />
                           </button>
                           <span key={item.quantity} className="num-pop w-8 text-center text-sm font-extrabold tabular-nums">{item.quantity}</span>
-                          <button type="button" aria-label="Agregar una unidad" onClick={() => onUpdateQuantity(index, item.quantity + 1)} className="btn h-7 w-7 rounded-lg bg-white text-slate-700 shadow-sm">
+                          <button type="button" aria-label="Agregar una unidad" onClick={() => onUpdateQuantity(index, item.quantity + 1)} className="btn btn-ghost h-7 w-7 rounded-lg">
                             <PlusIcon className="h-3.5 w-3.5" />
                           </button>
                         </div>

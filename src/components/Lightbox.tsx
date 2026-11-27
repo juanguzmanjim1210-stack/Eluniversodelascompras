@@ -84,7 +84,7 @@ export default function Lightbox({ images, index, alt, onIndex, onClose }: Light
           type="button"
           onClick={onClose}
           aria-label="Cerrar visor"
-          className="btn h-11 w-11 rounded-full bg-white/10 text-white hover:bg-white/20"
+          className="btn btn-glass h-11 w-11 rounded-full"
         >
           <CloseIcon className="h-5 w-5" />
         </button>
@@ -107,7 +107,7 @@ export default function Lightbox({ images, index, alt, onIndex, onClose }: Light
             type="button"
             onClick={(e) => { stop(e); go(-1); }}
             aria-label="Imagen anterior"
-            className="btn absolute left-2 top-1/2 z-10 h-12 w-12 -translate-y-1/2 rounded-full bg-white/10 text-white hover:bg-white/25 sm:left-5"
+            className="btn btn-glass absolute left-2 top-1/2 z-10 h-12 w-12 -translate-y-1/2 rounded-full sm:left-5"
           >
             <ChevronLeft className="h-6 w-6" />
           </button>
@@ -165,7 +165,7 @@ export default function Lightbox({ images, index, alt, onIndex, onClose }: Light
             type="button"
             onClick={(e) => { stop(e); go(1); }}
             aria-label="Imagen siguiente"
-            className="btn absolute right-2 top-1/2 z-10 h-12 w-12 -translate-y-1/2 rounded-full bg-white/10 text-white hover:bg-white/25 sm:right-5"
+            className="btn btn-glass absolute right-2 top-1/2 z-10 h-12 w-12 -translate-y-1/2 rounded-full sm:right-5"
           >
             <ChevronRight className="h-6 w-6" />
           </button>

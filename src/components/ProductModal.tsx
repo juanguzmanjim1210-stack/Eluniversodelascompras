@@ -105,7 +105,7 @@ export default function ProductModal({ product, categories, currency, onClose, o
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="btn absolute right-2 top-1.5 h-9 w-9 rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200"
+            className="btn btn-ghost absolute right-2 top-1.5 h-9 w-9 rounded-full"
           >
             <CloseIcon className="h-4 w-4" />
           </button>
@@ -114,7 +114,7 @@ export default function ProductModal({ product, categories, currency, onClose, o
           type="button"
           onClick={onClose}
           aria-label="Cerrar"
-          className="btn absolute right-4 top-4 z-30 hidden h-11 w-11 rounded-full bg-white/90 text-slate-700 shadow-lg hover:bg-white md:inline-flex"
+          className="btn btn-ghost absolute right-4 top-4 z-30 hidden h-11 w-11 rounded-full md:inline-flex"
         >
           <CloseIcon className="h-5 w-5" />
         </button>
@@ -173,7 +173,7 @@ export default function ProductModal({ product, categories, currency, onClose, o
                       type="button"
                       onClick={() => go(-1)}
                       aria-label="Foto anterior"
-                      className="btn absolute left-3 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-white/90 text-slate-800 shadow-lg hover:bg-white md:opacity-0 md:group-hover/gallery:opacity-100"
+                      className="btn btn-ghost absolute left-3 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full md:opacity-0 md:group-hover/gallery:opacity-100"
                     >
                       <ChevronLeft className="h-5 w-5" />
                     </button>
@@ -181,7 +181,7 @@ export default function ProductModal({ product, categories, currency, onClose, o
                       type="button"
                       onClick={() => go(1)}
                       aria-label="Foto siguiente"
-                      className="btn absolute right-3 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-white/90 text-slate-800 shadow-lg hover:bg-white md:opacity-0 md:group-hover/gallery:opacity-100"
+                      className="btn btn-ghost absolute right-3 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full md:opacity-0 md:group-hover/gallery:opacity-100"
                     >
                       <ChevronRight className="h-5 w-5" />
                     </button>
@@ -251,7 +251,7 @@ export default function ProductModal({ product, categories, currency, onClose, o
               <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
                 <span className="text-3xl font-extrabold tracking-tight text-brand sm:text-4xl">{formatMoney(currency, price)}</span>
                 {discount && <span className="pb-1 text-lg font-medium text-slate-400 line-through">{formatMoney(currency, discount.compare)}</span>}
-                {discount && <span className="mb-1.5 rounded-lg bg-rose-500 px-2 py-0.5 text-sm font-extrabold text-white">-{discount.pct}%</span>}
+                {discount && <span className="mb-1.5 rounded-lg bg-[color:var(--c-red)] px-2 py-0.5 text-sm font-extrabold text-white">-{discount.pct}%</span>}
               </div>
               {discount && <p className="mt-1 text-sm font-semibold text-emerald-600">Ahorras {formatMoney(currency, discount.saving)}</p>}
             </div>
