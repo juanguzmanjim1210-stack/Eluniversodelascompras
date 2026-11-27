@@ -51,6 +51,13 @@ export default function Cart({
     if (!storeWhatsapp) { alert("La tienda no tiene WhatsApp configurado"); return; }
     setSending(true);
 
+    // Se abre la ventana aquí mismo, dentro del clic y antes de cualquier
+    // `await`. Más abajo hay varias peticiones en cadena; si `window.open`
+    // se llamara después, el navegador lo trataría como un popup sin origen
+    // y lo bloquearía silenciosamente, y el pedido nunca llegaría a WhatsApp.
+    const waWindow = window.open("", "_blank");
+    if (waWindow) waWindow.document.title = "Abriendo WhatsApp...";
+
     // Descontar stock de variantes
     for (const item of items) {
       if (item.variant) {
@@ -88,7 +95,15 @@ export default function Cart({
     message += `📅 Fecha: ${new Date().toLocaleString("es-MX")}\n`;
 
     const waUrl = storeWhatsapp.startsWith("http") ? storeWhatsapp.split("?")[0] : `https://wa.me/${storeWhatsapp.replace(/\D/g, "")}`;
-    window.open(`${waUrl}?text=${encodeURIComponent(message)}`, "_blank");
+    const target = `${waUrl}?text=${encodeURIComponent(message)}`;
+    if (waWindow && !waWindow.closed) {
+      // Reutiliza la ventana abierta al empezar: ya tiene permiso del navegador.
+      waWindow.location.href = target;
+      waWindow.focus();
+    } else {
+      // Si el navegador la cerró, se intenta abrir de todas formas.
+      window.open(target, "_blank");
+    }
 
     setSending(false);
     onClearCart();

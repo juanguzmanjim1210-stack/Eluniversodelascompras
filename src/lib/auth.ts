@@ -1,10 +1,9 @@
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { getAdminHash, setAdminHash } from "./data";
 
 const COOKIE_NAME = "admin_session";
-const DEV_FALLBACK_SECRET = "catalogo-admin-secret-key-2024-change-me";
 const DEFAULT_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
 let cachedSecret: string | null = null;
@@ -13,9 +12,21 @@ let warnedAboutSecret = false;
 /**
  * Secreto para firmar las sesiones del panel.
  *
- * En producción es obligatorio: si faltara, cualquier persona podría forjar
- * la cookie `admin_session` con el secreto por defecto. Por eso lanzamos un
- * error claro en lugar de degradarnos en silencio.
+ * Orden de prioridad:
+ *  1. `JWT_SECRET` del entorno (lo recomendado en producción).
+ *  2. Un secreto derivado de `DATABASE_URL` cuando falta el primero.
+ *
+ * El paso 2 existe porque, sin secreto, el panel no llegaba a abrirse en
+ * absoluto: `/api/auth/login` respondía 503 *antes* de comprobar la
+ * contraseña, así que el error se veía justo al escribirla.
+ *
+ * No se usa una cadena fija escrita en el código: cualquier persona con el
+ * repositorio podría usarla para forjar la cookie `admin_session`. Se
+ * deriva con SHA-256, lo que da un valor estable entre reinicios y entre
+ * funciones serverless (sale de una variable que casi nunca cambia),
+ * distinto en cada despliegue, y no expuesto en el cliente. Al salir de
+ * `DATABASE_URL` —que ya es un secreto— quien pudiera derivarlo tendría
+ * acceso a la base de datos de todos modos.
  */
 export function getJwtSecret(): string {
   if (cachedSecret) return cachedSecret;
@@ -26,18 +37,32 @@ export function getJwtSecret(): string {
     return secret;
   }
 
+  const databaseUrl = process.env.DATABASE_URL;
+  if (databaseUrl) {
+    const derived = createHash("sha256").update(databaseUrl).digest("hex");
+    if (!warnedAboutSecret) {
+      warnedAboutSecret = true;
+      console.warn(
+        "[auth] JWT_SECRET no definido: usando un secreto derivado de DATABASE_URL. Añade JWT_SECRET a las variables de entorno para poder rotarlo sin cerrar las sesiones abiertas."
+      );
+    }
+    cachedSecret = derived;
+    return derived;
+  }
+
   if (process.env.NODE_ENV === "production") {
     throw new Error(
-      "JWT_SECRET no está definido (o tiene menos de 16 caracteres). Añádelo a las variables de entorno del despliegue."
+      "Faltan JWT_SECRET y DATABASE_URL: no hay con qué firmar la sesión del panel."
     );
   }
 
   if (!warnedAboutSecret) {
     warnedAboutSecret = true;
-    console.warn("[auth] JWT_SECRET no definido: usando secreto de desarrollo. No sirve para producción.");
+    console.warn("[auth] Sin secretos disponibles: usando secreto de desarrollo. No sirve para producción.");
   }
-  cachedSecret = DEV_FALLBACK_SECRET;
-  return DEV_FALLBACK_SECRET;
+  const fallback = "catalogo-admin-secret-key-local-only";
+  cachedSecret = fallback;
+  return fallback;
 }
 
 /** Comparación de cadenas sin filtrar el tiempo de ejecución. */
