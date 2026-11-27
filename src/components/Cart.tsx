@@ -47,55 +47,24 @@ export default function Cart({
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  const [orderError, setOrderError] = useState<string | null>(null);
-
   const handleSendOrder = async () => {
-    if (orderError) setOrderError(null);
-
-    // El servidor valida precios y stock y descuenta el inventario.
-    // Si algo cambió mientras el cliente miraba el carrito, responde 409
-    // y mostramos el motivo en lugar de vender de más.
+    if (!storeWhatsapp) { alert("La tienda no tiene WhatsApp configurado"); return; }
     setSending(true);
-    let orderNumber: number | null = null;
-    try {
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: items.map((i) => ({
-            productId: i.product.id,
-            variantId: i.variant?.id ?? null,
-            quantity: i.quantity,
-          })),
-          customer: customerData,
-        }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        setOrderError(data?.error || "No se pudo registrar el pedido. Revisa el carrito.");
-        setSending(false);
-        return;
-      }
-      orderNumber = data?.number ?? null;
-    } catch {
-      setOrderError("Sin conexión con la tienda. Inténtalo de nuevo.");
-      setSending(false);
-      return;
-    }
 
-    // Si no hay WhatsApp configurado, el pedido ya quedó registrado igual.
-    if (!storeWhatsapp) {
-      setSending(false);
-      onClearCart();
-      setShowCheckout(false);
-      setCustomerData({ fullName: "", whatsapp: "", city: "", department: "", address: "" });
-      onClose();
-      if (onOrderSent) onOrderSent();
-      return;
+    // Descontar stock de variantes
+    for (const item of items) {
+      if (item.variant) {
+        try {
+          await fetch(`/api/products/${item.product.id}/variants/stock`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ variantId: item.variant.id, quantity: item.quantity }),
+          });
+        } catch { /* continue */ }
+      }
     }
 
     let message = `🛒 *NUEVO PEDIDO - ${storeName}*\n`;
-    if (orderNumber !== null) message += `🧾 *Pedido #${String(orderNumber).padStart(4, "0")}*\n`;
     message += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
     message += `👤 *DATOS DEL CLIENTE*\n`;
     message += `*• Nombre: ${customerData.fullName}*\n`;
@@ -253,14 +222,9 @@ export default function Cart({
               <span className="text-gray-600 text-sm">Total:</span>
               <span className="text-xl sm:text-2xl font-bold" style={{ color: primaryColor }}>{fmt(total)}</span>
             </div>
-            {orderError && (
-              <p role="alert" className="text-xs sm:text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                ⚠️ {orderError}
-              </p>
-            )}
             {showCheckout ? (
-              <button onClick={handleSendOrder} disabled={!isFormValid || sending} style={{ backgroundColor: primaryColor }} className="w-full text-white py-2.5 sm:py-3 rounded-xl font-semibold hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2 text-sm sm:text-base">
-                {sending ? "Registrando..." : storeWhatsapp ? <><WhatsAppIcon /> Enviar Pedido por WhatsApp</> : <>Registrar Pedido</>}
+              <button onClick={handleSendOrder} disabled={!isFormValid || sending || !storeWhatsapp} style={{ backgroundColor: primaryColor }} className="w-full text-white py-2.5 sm:py-3 rounded-xl font-semibold hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2 text-sm sm:text-base">
+                {sending ? "Enviando..." : <><WhatsAppIcon /> Enviar Pedido por WhatsApp</>}
               </button>
             ) : (
               <button onClick={() => setShowCheckout(true)} style={{ backgroundColor: primaryColor }} className="w-full text-white py-2.5 sm:py-3 rounded-xl font-semibold hover:opacity-90 transition flex items-center justify-center gap-2 text-sm sm:text-base">

@@ -82,43 +82,6 @@ export const productFeatures = pgTable("product_features", {
   value: text("value").notNull(),
 });
 
-/**
- * Pedidos creados desde el checkout del catálogo.
- *
- * Se calculan en el servidor: precios, stock y total se leen de la base de
- * datos, nunca del navegador. El cliente solo envía qué quiere comprar.
- */
-export const orders = pgTable("orders", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  /** Número corto y visible para el cliente, p. ej. "#0042". */
-  number: integer("number").notNull().unique(),
-  customerName: varchar("customer_name", { length: 255 }).notNull(),
-  customerPhone: varchar("customer_phone", { length: 60 }).notNull(),
-  customerCity: varchar("customer_city", { length: 255 }).notNull(),
-  customerDepartment: varchar("customer_department", { length: 255 }).notNull(),
-  customerAddress: text("customer_address").notNull(),
-  /** Suma calculada en el servidor, en la moneda de la tienda. */
-  total: numeric("total", { precision: 12, scale: 2 }).notNull().default("0"),
-  itemCount: integer("item_count").notNull().default(0),
-  status: varchar("status", { length: 20 }).notNull().default("pending"),
-  note: text("note"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const orderItems = pgTable("order_items", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
-  productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
-  variantId: uuid("variant_id").references(() => productVariants.id, { onDelete: "set null" }),
-  name: varchar("name", { length: 500 }).notNull(),
-  /** Variante elegida, legible: "Rojo / M". */
-  variantLabel: varchar("variant_label", { length: 255 }),
-  quantity: integer("quantity").notNull(),
-  /** Precio unitario congelado al crear el pedido. */
-  unitPrice: numeric("unit_price", { precision: 12, scale: 2 }).notNull().default("0"),
-});
-
 export const productVariants = pgTable("product_variants", {
   id: uuid("id").defaultRandom().primaryKey(),
   productId: uuid("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),

@@ -16,7 +16,6 @@ Un catálogo en línea moderno con panel de administración integrado y seguro.
 
 ### Panel de Administración
 - 🔐 **Contraseña editable** — cámbiala cuando quieras desde el panel
-- 🧾 **Pedidos** — estados, detalle, totales y resumen de ventas
 - 📦 Gestión ilimitada de productos
 - 🖼️ Hasta 10 imágenes por producto (URLs de imgbb.com)
 - 🏷️ Gestión de categorías
@@ -98,7 +97,7 @@ Todas las rutas que **modifican** datos exigen sesión de admin (cookie
 | `POST`/`DELETE /api/categories` | pública | 🔒 admin |
 | `PUT /api/store-settings` | pública | 🔒 admin |
 | `POST .../variants/stock` (`setStock`) | pública | 🔒 admin |
-| `POST .../variants/stock` (`quantity`) | pública | pública, con cantidad entera ≥ 1. El carrito ya no la usa: el descuento vive en `POST /api/orders` |
+| `POST .../variants/stock` (`quantity`) | pública | pública, con cantidad entera ≥ 1 |
 | `POST /api/auth/change-password` | pública | 🔒 admin + límite de intentos |
 
 Además:
@@ -112,38 +111,10 @@ Además:
 - **Stock**: `quantity` debe ser un entero entre 1 y 1000. Antes un valor
   negativo *sumaba* stock desde cualquier navegador sin sesión.
 
-### Checkout en el servidor (resuelto)
-
-El pedido ya **no** se arma desde el navegador. `POST /api/orders` recibe
-solo qué quiere comprar; precios, stock y total se leen de la base de datos
-dentro de una transacción:
-
-- **Precio**: el total se calcula en el servidor con `base_price`/`price`
-  reales. Cambiar un precio en la consola del navegador no cambia lo cobrado.
-- **Stock**: cada línea se descuenta con una condición
-  `stock >= cantidad` dentro de la misma transacción. Dos compradores a la
-  vez no pueden llevarse la última unidad, y el inventario nunca baja de 0.
-  Antes el navegador llamaba a `/variants/stock` línea por línea, sin
-  transacción ni validación de precios.
-- **Agotado**: si algo cambió mientras el cliente miraba el carrito, la API
-  responde `409` con el motivo y el carrito se queda como estaba.
-- **Pedido registrado**: cada compra guarda `orders` + `order_items` con un
-  número correlativo (`#0001`), los datos de entrega y el precio congelado
-  de cada línea.
-- **Cancelación**: al marcar un pedido como *Cancelado* en el panel, las
-  unidades vuelven al stock.
-- **Límite**: 8 intentos por IP cada 15 minutos en `/api/orders`.
-
-| Ruta | Acceso |
-|------|--------|
-| `POST /api/orders` | pública, con límite de intentos |
-| `GET /api/orders` | 🔒 admin |
-| `PATCH /api/orders/[id]` | 🔒 admin |
-
-En el panel de administración hay una pestaña **🧾 Pedidos** con el estado
-de cada compra (pendiente → preparando → enviado → entregado / cancelado),
-el detalle de artículos, el total, el enlace de WhatsApp del cliente y un
-resumen de pendientes y ventas.
+> **Pendiente (diseño):** el descuento de stock del checkout llega desde el
+> navegador. Funciona, pero lo ideal es moverlo a un endpoint de pedido en el
+> servidor con validación de precios y stock. Hoy queda mitigado con el
+> límite de rangos, no eliminado.
 
 ## 🌐 Despliegue
 
