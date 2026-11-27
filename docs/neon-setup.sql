@@ -80,3 +80,35 @@ CREATE TABLE IF NOT EXISTS product_variants (
   stock INTEGER NOT NULL DEFAULT 0,
   sku VARCHAR(100)
 );
+
+-- Pedidos: se crean desde el checkout del catálogo. El servidor calcula
+-- total y descuenta stock dentro de una transacción.
+CREATE TABLE IF NOT EXISTS orders (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  number INTEGER NOT NULL UNIQUE,
+  customer_name VARCHAR(255) NOT NULL,
+  customer_phone VARCHAR(60) NOT NULL,
+  customer_city VARCHAR(255) NOT NULL,
+  customer_department VARCHAR(255) NOT NULL,
+  customer_address TEXT NOT NULL,
+  total NUMERIC(12,2) NOT NULL DEFAULT 0,
+  item_count INTEGER NOT NULL DEFAULT 0,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending',
+  note TEXT,
+  created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS order_items (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  product_id UUID REFERENCES products(id) ON DELETE SET NULL,
+  variant_id UUID REFERENCES product_variants(id) ON DELETE SET NULL,
+  name VARCHAR(500) NOT NULL,
+  variant_label VARCHAR(255),
+  quantity INTEGER NOT NULL,
+  unit_price NUMERIC(12,2) NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items (order_id);

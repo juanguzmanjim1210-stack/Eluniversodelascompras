@@ -7,7 +7,7 @@ interface AdminPanelProps {
   onClose: () => void;
 }
 
-type Tab = "products" | "categories" | "settings" | "security" | "edit-product";
+type Tab = "products" | "orders" | "categories" | "settings" | "security" | "edit-product";
 
 export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -106,6 +106,9 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
                   <button onClick={() => setActiveTab("products")} className={`flex-1 px-3 py-3 text-xs font-medium transition whitespace-nowrap ${activeTab === "products" ? "text-blue-600 border-b-2 border-blue-600 bg-white" : "text-gray-500 hover:text-gray-700"}`}>
                     📦 Productos
                   </button>
+                  <button onClick={() => setActiveTab("orders")} className={`flex-1 px-3 py-3 text-xs font-medium transition whitespace-nowrap ${activeTab === "orders" ? "text-blue-600 border-b-2 border-blue-600 bg-white" : "text-gray-500 hover:text-gray-700"}`}>
+                    🧾 Pedidos
+                  </button>
                   <button onClick={() => setActiveTab("categories")} className={`flex-1 px-3 py-3 text-xs font-medium transition whitespace-nowrap ${activeTab === "categories" ? "text-blue-600 border-b-2 border-blue-600 bg-white" : "text-gray-500 hover:text-gray-700"}`}>
                     🏷️ Categorías
                   </button>
@@ -120,6 +123,7 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
 
               <div className="flex-1 overflow-y-auto">
                 {activeTab === "products" && <ProductsTab onEdit={openProductEditor} />}
+                {activeTab === "orders" && <OrdersTab />}
                 {activeTab === "categories" && <CategoriesTab />}
                 {activeTab === "settings" && <SettingsTab />}
                 {activeTab === "security" && <SecurityTab />}
@@ -468,6 +472,195 @@ function CategoriesTab() {
           ))
         )}
       </div>
+    </div>
+  );
+}
+
+// ============ ORDERS TAB ============
+
+type OrderStatus = "pending" | "preparing" | "shipped" | "delivered" | "cancelled";
+
+interface OrderRecord {
+  id: string;
+  number: number;
+  customerName: string;
+  customerPhone: string;
+  customerCity: string;
+  customerDepartment: string;
+  customerAddress: string;
+  total: string;
+  itemCount: number;
+  status: OrderStatus;
+  createdAt: string;
+  items: Array<{
+    id: string;
+    name: string;
+    variantLabel: string | null;
+    quantity: number;
+    unitPrice: string;
+  }>;
+}
+
+const STATUS_META: Record<OrderStatus, { label: string; className: string }> = {
+  pending: { label: "Pendiente", className: "bg-amber-100 text-amber-800" },
+  preparing: { label: "Preparando", className: "bg-blue-100 text-blue-800" },
+  shipped: { label: "Enviado", className: "bg-indigo-100 text-indigo-800" },
+  delivered: { label: "Entregado", className: "bg-green-100 text-green-800" },
+  cancelled: { label: "Cancelado", className: "bg-red-100 text-red-800" },
+};
+
+function OrdersTab() {
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<OrderStatus | "all">("all");
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const fetchOrders = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/orders?_t=${Date.now()}`, { cache: "no-store" });
+      if (res.status === 401) {
+        setError("Sesión expirada");
+      } else if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) setOrders(data);
+        setError(null);
+      } else {
+        setError("No se pudieron cargar los pedidos");
+      }
+    } catch {
+      setError("Sin conexión con el servidor");
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
+  const changeStatus = async (order: OrderRecord, status: OrderStatus) => {
+    if (status === "cancelled" && !confirm(`¿Cancelar el pedido #${String(order.number).padStart(4, "0")}? El stock vuelve a la tienda.`)) return;
+    setBusy(order.id);
+    try {
+      const res = await fetch(`/api/orders/${order.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) {
+        setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status } : o)));
+      } else {
+        const data = await res.json().catch(() => null);
+        alert(data?.error || "No se pudo actualizar el pedido");
+      }
+    } catch {
+      alert("Sin conexión con el servidor");
+    }
+    setBusy(null);
+  };
+
+  const visible = filter === "all" ? orders : orders.filter((o) => o.status === filter);
+  const pendingCount = orders.filter((o) => o.status === "pending").length;
+  const revenue = orders
+    .filter((o) => o.status !== "cancelled")
+    .reduce((sum, o) => sum + parseFloat(o.total || "0"), 0);
+
+  if (loading) return <div className="p-6 text-center text-gray-400">Cargando pedidos...</div>;
+
+  return (
+    <div className="p-4 space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white border rounded-xl p-3">
+          <p className="text-xs text-gray-500">Pendientes</p>
+          <p className="text-2xl font-bold text-amber-600">{pendingCount}</p>
+        </div>
+        <div className="bg-white border rounded-xl p-3">
+          <p className="text-xs text-gray-500">Ventas (sin cancelados)</p>
+          <p className="text-2xl font-bold text-green-600">${Math.round(revenue).toLocaleString("es-CO")}</p>
+        </div>
+      </div>
+
+      <div className="flex gap-1.5 flex-wrap">
+        {(["all", "pending", "preparing", "shipped", "delivered", "cancelled"] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium transition ${
+              filter === f ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            {f === "all" ? "Todos" : STATUS_META[f].label}
+          </button>
+        ))}
+      </div>
+
+      {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
+
+      {visible.length === 0 ? (
+        <p className="text-center text-gray-400 py-10">
+          {orders.length === 0 ? "Todavía no hay pedidos. Aparecerán aquí en cuanto un cliente compre." : "No hay pedidos con ese estado."}
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {visible.map((o) => (
+            <div key={o.id} className="bg-white border rounded-xl p-3 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="font-semibold text-sm">
+                    #{String(o.number).padStart(4, "0")} · {o.customerName}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(o.createdAt).toLocaleString("es-CO")}
+                    {o.itemCount > 0 && ` · ${o.itemCount} artículos`}
+                  </p>
+                </div>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${STATUS_META[o.status]?.className || "bg-gray-100 text-gray-700"}`}>
+                  {STATUS_META[o.status]?.label || o.status}
+                </span>
+              </div>
+
+              <ul className="text-xs text-gray-600 bg-gray-50 rounded-lg p-2 space-y-0.5">
+                {o.items.map((it) => (
+                  <li key={it.id} className="flex justify-between gap-2">
+                    <span className="truncate">
+                      {it.quantity}× {it.name}
+                      {it.variantLabel ? ` (${it.variantLabel})` : ""}
+                    </span>
+                    <span className="whitespace-nowrap font-medium">
+                      ${Math.round(parseFloat(it.unitPrice) * it.quantity).toLocaleString("es-CO")}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-bold text-gray-900">${Math.round(parseFloat(o.total)).toLocaleString("es-CO")}</p>
+                <a
+                  href={`https://wa.me/${o.customerPhone.replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-green-600 hover:underline"
+                >
+                  💬 WhatsApp
+                </a>
+              </div>
+
+              <p className="text-xs text-gray-500">
+                📍 {o.customerCity}, {o.customerDepartment} — {o.customerAddress}
+              </p>
+
+              <select
+                value={o.status}
+                disabled={busy === o.id}
+                onChange={(e) => changeStatus(o, e.target.value as OrderStatus)}
+                className="w-full text-xs border rounded-lg px-2 py-1.5 disabled:opacity-50"
+              >
+                {(Object.keys(STATUS_META) as OrderStatus[]).map((s) => (
+                  <option key={s} value={s}>{STATUS_META[s].label}</option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
