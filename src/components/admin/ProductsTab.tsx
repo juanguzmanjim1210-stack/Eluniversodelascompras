@@ -57,7 +57,6 @@ export default function ProductsTab({ onEdit }: { onEdit: (id: string) => void }
     if (!r.ok) return toast(errorText(r, "No se pudo crear el producto"), "error");
     setName(""); setCategoryId(""); setBasePrice(""); setShowNew(false);
     toast("Producto creado. Ahora agrégale fotos y variantes.");
-    // Se abre directamente el editor del producto recién creado.
     if (r.data?.id) onEdit(r.data.id);
     else fetchData();
   };
@@ -83,15 +82,14 @@ export default function ProductsTab({ onEdit }: { onEdit: (id: string) => void }
     toast(p.active ? "Marcado como agotado" : "Marcado como disponible");
   };
 
-  // Mismo orden manual de siempre: intercambia el sortOrder con el vecino.
   const moveProduct = async (index: number, direction: "up" | "down") => {
     const swapIdx = direction === "up" ? index - 1 : index + 1;
     if (swapIdx < 0 || swapIdx >= products.length) return;
     const a = products[index];
-    const b = products[swapIdx];
+    const bItem = products[swapIdx];
     const [ra, rb] = await Promise.all([
       api(`/api/products/${a.id}`, { method: "PUT", body: { ...a, sortOrder: swapIdx } }),
-      api(`/api/products/${b.id}`, { method: "PUT", body: { ...b, sortOrder: index } }),
+      api(`/api/products/${bItem.id}`, { method: "PUT", body: { ...bItem, sortOrder: index } }),
     ]);
     if (!ra.ok || !rb.ok) toast("No se pudo cambiar el orden", "error");
     fetchData();
@@ -174,78 +172,151 @@ export default function ProductsTab({ onEdit }: { onEdit: (id: string) => void }
             {visible.map((p) => {
               const idx = products.findIndex((x) => x.id === p.id);
               const units = p.variants.reduce((s, v) => s + v.stock, 0);
-              const categoryName = categories.find((c) => c.id === p.categoryId)?.name;
-              return (
-                <li key={p.id} className="admin-card flex flex-wrap items-center gap-3 p-3 sm:flex-nowrap sm:p-3.5">
-                  {!filtering && (
-                    <div className="flex shrink-0 flex-col gap-1">
-                      <button type="button" aria-label="Subir" onClick={() => moveProduct(idx, "up")} disabled={idx === 0} className="btn btn-ghost h-6 w-7 rounded-lg disabled:opacity-30">
-                        <ChevronUp className="h-3.5 w-3.5" />
-                      </button>
-                      <button type="button" aria-label="Bajar" onClick={() => moveProduct(idx, "down")} disabled={idx === products.length - 1} className="btn btn-ghost h-6 w-7 rounded-lg disabled:opacity-30">
-                        <ChevronDown className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  )}
+              const hasVariants = p.variants.length > 0;
+              const hasDiscount = p.comparePrice && parseFloat(p.comparePrice) > parseFloat(p.basePrice);
 
-                  <button type="button" onClick={() => onEdit(p.id)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-                    <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100 text-slate-300">
-                      {p.images[0] ? (
-                        <Photo src={p.images[0].url} sizes="56px" widths={THUMB_WIDTHS} alt="" className={`h-full w-full object-cover ${p.active ? "" : "grayscale"}`} />
-                      ) : (
-                        <ImageIcon className="h-6 w-6" />
+              return (
+                <li key={p.id} className="admin-card overflow-hidden">
+                  {/* ── Fila principal: foto + info ── */}
+                  <div className="flex items-stretch gap-0">
+                    {/* Foto cuadrada a la izquierda */}
+                    <button
+                      type="button"
+                      onClick={() => onEdit(p.id)}
+                      aria-label={`Editar ${p.name.trim()}`}
+                      className="relative shrink-0"
+                      style={{ width: 80, minHeight: 80 }}
+                    >
+                      <span className={`absolute inset-0 overflow-hidden ${p.images[0] ? "" : "flex items-center justify-center bg-slate-100 text-slate-300"}`}>
+                        {p.images[0] ? (
+                          <Photo
+                            src={p.images[0].url}
+                            sizes="80px"
+                            widths={THUMB_WIDTHS}
+                            alt=""
+                            className={`h-full w-full object-cover ${p.active ? "" : "grayscale"}`}
+                          />
+                        ) : (
+                          <ImageIcon className="h-6 w-6" />
+                        )}
+                      </span>
+                      {!p.active && (
+                        <span className="absolute inset-0 bg-white/50" />
                       )}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="line-clamp-2 break-words text-sm font-semibold leading-snug text-slate-900 sm:text-[15px]">{p.name.trim()}</span>
-                      <span className="mt-1 flex flex-wrap items-center gap-1.5">
-                        {categoryName && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">{categoryName.trim()}</span>}
+                    </button>
+
+                    {/* Contenido: nombre, chips, precio */}
+                    <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-3 py-2.5">
+                      <button
+                        type="button"
+                        onClick={() => onEdit(p.id)}
+                        className="text-left"
+                      >
+                        <span className="line-clamp-2 text-sm font-bold leading-snug text-slate-900">
+                          {p.name.trim()}
+                        </span>
+                      </button>
+
+                      {/* Chips de badge, categoría, variantes */}
+                      <div className="flex flex-wrap items-center gap-1">
                         {p.badge && (
-                          <span className="rounded-full px-2 py-0.5 text-[11px] font-extrabold text-white" style={{ backgroundColor: p.badgeColor || "#f59e0b" }}>
+                          <span
+                            className="rounded-md px-1.5 py-0.5 text-[10px] font-extrabold text-white"
+                            style={{ backgroundColor: p.badgeColor || "#f59e0b" }}
+                          >
                             {p.badge}
                           </span>
                         )}
-                        {p.variants.length > 0 && (
-                          <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${units > 0 ? "bg-slate-100 text-slate-500" : "bg-rose-50 text-rose-600"}`}>
-                            {units > 0 ? `${units} uds · ${p.variants.length} ${p.variants.length === 1 ? "variante" : "variantes"}` : "Sin stock"}
+                        {hasVariants && (
+                          <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${units > 0 ? "bg-slate-100 text-slate-500" : "bg-rose-50 text-rose-600"}`}>
+                            {hasVariants ? `${p.variants.length} var.` : ""}{units > 0 ? ` · ${units} uds` : " · Sin stock"}
                           </span>
                         )}
-                      </span>
-                    </span>
-                  </button>
+                      </div>
 
-                  <div className="shrink-0 text-right">
-                    <p className="text-[15px] font-semibold tabular-nums text-slate-900">{formatMoney("$", p.basePrice)}</p>
-                    {p.comparePrice && parseFloat(p.comparePrice) > parseFloat(p.basePrice) && (
-                      <p className="text-[11px] font-medium tabular-nums text-slate-400 line-through">{formatMoney("$", p.comparePrice)}</p>
-                    )}
+                      {/* Precio */}
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-sm font-bold tabular-nums text-slate-900">
+                          {formatMoney("$", p.basePrice)}
+                        </span>
+                        {hasDiscount && (
+                          <span className="text-[11px] tabular-nums text-slate-400 line-through">
+                            {formatMoney("$", p.comparePrice!)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Columna derecha: orden + interruptor */}
+                    <div className="flex shrink-0 flex-col items-center justify-between border-l border-slate-100 px-2 py-2">
+                      {!filtering ? (
+                        <div className="flex flex-col gap-0.5">
+                          <button
+                            type="button"
+                            aria-label="Subir"
+                            onClick={() => moveProduct(idx, "up")}
+                            disabled={idx === 0}
+                            className="btn btn-ghost h-7 w-8 rounded-lg disabled:opacity-25"
+                          >
+                            <ChevronUp className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Bajar"
+                            onClick={() => moveProduct(idx, "down")}
+                            disabled={idx === products.length - 1}
+                            className="btn btn-ghost h-7 w-8 rounded-lg disabled:opacity-25"
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span />
+                      )}
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={p.active}
+                        onClick={() => toggleActive(p)}
+                        title={p.active ? "Disponible" : "Agotado"}
+                      >
+                        <Toggle checked={p.active} />
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="ml-auto flex shrink-0 items-center gap-2 sm:ml-0">
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={p.active}
-                      onClick={() => toggleActive(p)}
-                      title={p.active ? "Disponible: toca para marcar agotado" : "Agotado: toca para marcar disponible"}
-                      className="flex items-center gap-2 rounded-xl px-2 py-1.5 transition hover:bg-slate-50"
-                    >
-                      <Toggle checked={p.active} />
-                      <span className={`hidden w-[4.5rem] text-left text-xs font-bold md:block ${p.active ? "text-emerald-600" : "text-rose-500"}`}>{p.active ? "Disponible" : "Agotado"}</span>
-                    </button>
-                    <button type="button" onClick={() => onEdit(p.id)} aria-label="Editar" title="Editar" className="btn btn-ghost h-10 w-10 rounded-xl">
-                      <EditIcon className="h-[18px] w-[18px]" />
-                    </button>
-                    <button type="button" onClick={() => handleDelete(p)} aria-label="Eliminar" title="Eliminar" className="btn btn-ghost h-10 w-10 rounded-xl hover:text-rose-500">
-                      <TrashIcon className="h-[18px] w-[18px]" />
-                    </button>
+                  {/* ── Barra de acciones ── */}
+                  <div className="flex items-center justify-between border-t border-slate-100 px-3 py-2">
+                    <span className={`text-xs font-bold ${p.active ? "text-emerald-600" : "text-rose-500"}`}>
+                      {p.active ? "✓ Disponible" : "✗ Agotado"}
+                    </span>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => onEdit(p.id)}
+                        aria-label="Editar"
+                        className="btn btn-ghost h-9 w-9 rounded-xl"
+                      >
+                        <EditIcon className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(p)}
+                        aria-label="Eliminar"
+                        className="btn btn-ghost h-9 w-9 rounded-xl hover:text-rose-500"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </li>
               );
             })}
           </ul>
         )}
-        {filtering && products.length > 0 && <p className="text-center text-xs text-slate-400">Con un filtro activo no se puede reordenar. Quita los filtros para usar las flechas.</p>}
+        {filtering && products.length > 0 && (
+          <p className="text-center text-xs text-slate-400">Con un filtro activo no se puede reordenar. Quita los filtros para usar las flechas.</p>
+        )}
       </div>
     </div>
   );

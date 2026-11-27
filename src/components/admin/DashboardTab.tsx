@@ -101,7 +101,7 @@ export default function DashboardTab({ goTo, openProduct }: { goTo: (tab: AdminT
       <PageHeader title="Resumen" subtitle="Así va tu tienda hoy" />
 
       <div className="space-y-5 px-4 pb-8 sm:px-6">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat label="Productos" value={stats.total} hint={`${stats.active} disponibles`} icon={<PackageIcon className="h-5 w-5" />} tone="blue" />
           <Stat label="Agotados" value={stats.inactive} hint="Marcados como agotados" icon={<AlertIcon className="h-5 w-5" />} tone="red" />
           <Stat label="Unidades en stock" value={stats.units.toLocaleString("es-CO")} hint="Suma de todas las variantes" icon={<LayersIcon className="h-5 w-5" />} tone="gold" />

@@ -113,8 +113,10 @@ export default function AdminPanel({ isOpen, onClose }: AdminPanelProps) {
       <div className="modal-backdrop absolute inset-0 bg-slate-950/60 backdrop-blur-md" onClick={onClose} />
 
       <div
-        className={`modal-panel relative flex w-full flex-col overflow-hidden bg-[#f3f6fc] shadow-2xl md:rounded-[1.75rem] ${
-          authed ? "md:h-[min(94dvh,900px)] md:max-w-6xl md:flex-row" : "md:max-w-md"
+        className={`modal-panel relative flex w-full flex-col overflow-hidden bg-[#f3f6fc] shadow-2xl ${
+          authed
+            ? "md:rounded-[1.75rem] md:h-[min(94dvh,900px)] md:max-w-6xl md:flex-row"
+            : "md:rounded-[1.75rem] md:max-w-md"
         }`}
       >
         {checkingAuth ? (
@@ -252,7 +254,7 @@ function Workspace({
           {NAV.map(({ key, label, Icon }) => {
             const active = current === key;
             return (
-              <button key={key} type="button" onClick={() => goTo(key)} aria-current={active ? "page" : undefined} className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-bold transition ${active ? "text-brand" : "text-slate-400"}`}>
+              <button key={key} type="button" onClick={() => goTo(key)} aria-current={active ? "page" : undefined} className={`flex flex-col items-center gap-0.5 py-2 text-[10px] font-bold transition leading-tight ${active ? "text-brand" : "text-slate-400"}`}>
                 <span className={`grid h-7 w-12 place-items-center rounded-full transition-colors duration-300 ${active ? "bg-brand-soft" : ""}`}>
                   <Icon className="h-5 w-5" />
                 </span>

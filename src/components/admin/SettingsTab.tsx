@@ -161,7 +161,7 @@ export default function SettingsTab() {
     <div>
       <PageHeader title="Tienda" subtitle="Nombre, logo, colores, anuncios y pie de página" />
 
-      <div className="grid gap-5 px-4 pb-6 sm:px-6 lg:grid-cols-2">
+      <div className="grid gap-4 px-4 pb-6 sm:px-5 sm:gap-5 lg:grid-cols-2">
         <Card title="Información" description="Lo primero que ven tus clientes" icon={<StoreIcon className="h-5 w-5" />}>
           <Field label="Nombre de la tienda">
             <input value={f.storeName} onChange={(e) => set("storeName", e.target.value)} placeholder="Nombre de la tienda" className="field" />
